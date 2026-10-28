@@ -8,8 +8,21 @@ TestResults/
 __pycache__/
 *.pyc
 
-# Unity (generated)
+# Unity (generated)。.meta は git に入れる(入れないと GUID が変わる)
 [Ll]ibrary/
 [Tt]emp/
 [Ll]ogs/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
 UserSettings/
+MemoryCaptures/
+Recordings/
+.vs/
+.idea/
+# Unity が m0/ の直下に作る csproj / sln(Ekiden.sln だけ残す)
+/m0/*.csproj
+/m0/*.sln
+!/m0/Ekiden.sln
+*.apk
+*.aab
