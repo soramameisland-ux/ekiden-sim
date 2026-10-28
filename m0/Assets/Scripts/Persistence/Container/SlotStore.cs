@@ -127,23 +127,67 @@ namespace Ekiden.Persistence.Container
         /// <summary>回復の順(§4.5): ① A/B の最新の有効な世代 ② もう一方 ③ 手動セーブ(confirmManual が true のとき)④ premigrate(最新)⑤ conflict(saved_at の新しい順)。すべて失敗なら null(ファイルは消さない)。</summary>
         public SlotRecovery Recover(int slot, Func<bool> confirmManual = null)
         {
-            try
+            return RecoveryCandidates(slot, confirmManual).FirstOrDefault();
+        }
+
+        /// <summary>回復の候補を、試す順に遅延で返す(§4.5)。コンテナとして有効でも、中身(ゲームの状態)が復元できないことがあるので、呼ぶ側が先頭から順に試す。
+        /// 手動セーブは <paramref name="confirmManual"/> が true を返したときだけ(利用者への確認は、そこまで来たときに 1 回)。</summary>
+        public IEnumerable<SlotRecovery> RecoveryCandidates(int slot, Func<bool> confirmManual = null)
+        {
+            var autos = new List<SlotRecovery>();
+            int bad = 0;
+            foreach (char g in new[] { 'a', 'b' })
             {
-                SlotLoad l = LoadAuto(slot);
-                return new SlotRecovery { Source = RecoverySource.Auto, Header = l.Header, Payload = l.Payload, Path = AutoPath(slot, l.Generation), NewestWasBroken = l.BrokenGenerations > 0 };
+                string path = AutoPath(slot, g);
+                if (!_fs.Exists(path)) continue;
+                HeaderInfo ah;
+                JsonValue ap;
+                if (TryLoad(path, out ah, out ap)) autos.Add(new SlotRecovery { Source = RecoverySource.Auto, Header = ah, Payload = ap, Path = path });
+                else bad++;
             }
-            catch (LoadException) { }
+            autos = autos.OrderByDescending(a => a.Header.SaveCounter).ToList();
+            for (int i = 0; i < autos.Count; i++)
+            {
+                autos[i].NewestWasBroken = bad > 0;
+                yield return autos[i];
+            }
             HeaderInfo h;
             JsonValue p;
             if (TryLoad(ManualPath(slot), out h, out p) && (confirmManual == null || confirmManual()))
-                return new SlotRecovery { Source = RecoverySource.Manual, Header = h, Payload = p, Path = ManualPath(slot) };
+                yield return new SlotRecovery { Source = RecoverySource.Manual, Header = h, Payload = p, Path = ManualPath(slot) };
             foreach (string path in _fs.List("backups/premigrate_slot" + slot + "_v").OrderByDescending(x => x, StringComparer.Ordinal))
-                if (TryLoad(path, out h, out p)) return new SlotRecovery { Source = RecoverySource.PreMigrate, Header = h, Payload = p, Path = path };
+                if (TryLoad(path, out h, out p)) yield return new SlotRecovery { Source = RecoverySource.PreMigrate, Header = h, Payload = p, Path = path };
             var conflicts = new List<SlotRecovery>();
             foreach (string path in _fs.List("backups/conflict_slot" + slot + "_"))
                 if (TryLoad(path, out h, out p)) conflicts.Add(new SlotRecovery { Source = RecoverySource.Conflict, Header = h, Payload = p, Path = path });
-            return conflicts.OrderByDescending(c => c.Header.Num("saved_at", 0)).FirstOrDefault();
+            foreach (SlotRecovery c in conflicts.OrderByDescending(c => c.Header.Num("saved_at", 0))) yield return c;
         }
+
+        /// <summary>中断セーブを読む(再開できるか確かめたあと。<see cref="CanResume"/>)。なければ・壊れていれば null。</summary>
+        public SlotLoad ReadSuspend()
+        {
+            HeaderInfo h;
+            JsonValue p;
+            return TryLoad(SuspendPath, out h, out p) ? new SlotLoad { Header = h, Payload = p, Generation = 's' } : null;
+        }
+
+        /// <summary>手動セーブを読む。なければ・壊れていれば null。</summary>
+        public SlotLoad ReadManual(int slot)
+        {
+            HeaderInfo h;
+            JsonValue p;
+            return TryLoad(ManualPath(slot), out h, out p) ? new SlotLoad { Header = h, Payload = p, Generation = 'm' } : null;
+        }
+
+        /// <summary>残っている中断セーブがどのスロットのものか(なければ・壊れていれば −1)。ほかのスロットのものは触らないために使う。</summary>
+        public int SuspendSlot()
+        {
+            SlotLoad s = ReadSuspend();
+            return s == null ? -1 : (int)s.Header.Num("slot", -1);
+        }
+
+        /// <summary>中断セーブを捨てる(再開の条件に合わなかったとき・使い切ったとき)。</summary>
+        public void DeleteSuspend() { _fs.Delete(SuspendPath); }
 
         /// <summary>スロットの削除(確認つき・取り消せない): a・b・m と、そのスロットの中断セーブ(あれば)を消す。</summary>
         public void DeleteSlot(int slot)

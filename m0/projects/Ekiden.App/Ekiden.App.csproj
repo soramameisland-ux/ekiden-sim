@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- App 層(Unity なし): 起動・依存の組み立て・保存の呼び出し位置(09 §15.2)。画面(Presentation)はこれを呼ぶ -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>Ekiden.App</AssemblyName>
+    <RootNamespace>Ekiden.App</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/App/**/*.cs" />
+    <ProjectReference Include="../Ekiden.Domain/Ekiden.Domain.csproj" />
+    <ProjectReference Include="../Ekiden.Persistence/Ekiden.Persistence.csproj" />
+    <ProjectReference Include="../Ekiden.Platform/Ekiden.Platform.csproj" />
+  </ItemGroup>
+</Project>

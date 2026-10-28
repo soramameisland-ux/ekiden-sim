@@ -19,6 +19,7 @@
 | `verify/` | Python の参照モデル(`ref_model_03〜10.py`)・ゴールデン生成(`gen_golden_*.py`)・`lint_tables.py`。ゲーム本体ではない |
 | `m0/` | C# の Domain / Persistence / テスト / SimCli(.NET SDK だけで動く。詳しくは `m0/README.md`) |
 | `m0/` は **Unity プロジェクトの根でもある**(`Assets/` `Packages/` `ProjectSettings/`。Unity 6.3 LTS = 6000.3.x)。`.meta` は commit する。Unity が作る `m0/*.csproj` `*.sln` `*.slnx` と `Library/` は commit しない | `Assets/Scripts/Verification` = T1/T3 の実行(SimCli と共有)、`Assets/Scripts/DevTools` = Unity 専用の確認の入口 |
+| `m0/Assets/Scripts/App/` | **App 層の入口 `GameHost`**(Unity なし。`netstandard2.1`)。自動セーブ・中断セーブ・読み込み・保存の失敗の通知・スロットの見出し(09 §17.7)。画面(Unity)はこれを呼ぶ |
 | `m0/Assets/Scripts/Domain/` | 全規則(`netstandard2.1`・C# 9。Unity・時刻・ファイルを参照しない)。`Game/` が自校 + 世界の 1 回のプレイ |
 
 ## 必要な環境
@@ -30,7 +31,7 @@
 
 ```
 cd m0
-dotnet test Ekiden.sln -c Release          # 506 件(Domain 386 + Persistence 120)。約 1.5 分。全部緑が前提
+dotnet test Ekiden.sln -c Release          # 529 件(Domain 386 + Persistence 120 + App 23)。約 1.5 分。全部緑が前提
 dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)
