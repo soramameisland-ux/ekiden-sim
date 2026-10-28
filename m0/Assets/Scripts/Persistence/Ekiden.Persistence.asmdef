@@ -1,7 +1,7 @@
 {
   "name": "Ekiden.Persistence",
   "rootNamespace": "Ekiden.Persistence",
-  "references": [ "Ekiden.Domain" ],
+  "references": [ "Ekiden.Domain", "Ekiden.Platform.Abstractions" ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
