@@ -1,0 +1,15 @@
+# .NET build output
+bin/
+obj/
+TestResults/
+*.user
+
+# Python
+__pycache__/
+*.pyc
+
+# Unity (generated)
+[Ll]ibrary/
+[Tt]emp/
+[Ll]ogs/
+UserSettings/

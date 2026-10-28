@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Ekiden.SimCli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../projects/Ekiden.Domain/Ekiden.Domain.csproj" />
+    <ProjectReference Include="../../projects/Ekiden.Persistence/Ekiden.Persistence.csproj" />
+    <ProjectReference Include="../../projects/Ekiden.Platform/Ekiden.Platform.csproj" />
+  </ItemGroup>
+</Project>

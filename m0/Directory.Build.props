@@ -1,0 +1,11 @@
+<Project>
+  <!-- 09 §15.1: 言語は C# 9 の範囲。Domain は netstandard2.1 の API だけ。Unity と SimCli(.NET 8)で同じソースを共有する -->
+  <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

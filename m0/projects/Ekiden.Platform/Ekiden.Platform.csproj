@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Platform/Abstractions(インターフェース)と Platform/Fake(テスト・SimCli 用)。ストア別の実装は M5 -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>Ekiden.Platform</AssemblyName>
+    <RootNamespace>Ekiden.Platform</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/Platform/Abstractions/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/Platform/Fake/**/*.cs" />
+    <ProjectReference Include="../Ekiden.Domain/Ekiden.Domain.csproj" />
+  </ItemGroup>
+</Project>

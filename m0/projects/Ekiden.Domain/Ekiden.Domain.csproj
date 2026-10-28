@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Unity の asmdef(Assets/Scripts/Domain/Ekiden.Domain.asmdef)と同じソースを共有する。UnityEngine・System.IO・時刻を参照しない(09 §15.3 D-1〜D-11) -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>Ekiden.Domain</AssemblyName>
+    <RootNamespace>Ekiden.Domain</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/Domain/**/*.cs" />
+  </ItemGroup>
+</Project>
