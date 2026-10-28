@@ -361,7 +361,7 @@
 
 **ゲーム本体の保存(`GameSnapshot`。M1 準備)**: 実体の選手を持つ自校 + 36 校の世界(`GameSession`)は、`{ schema_version, world, team, session }` の 1 つの JSON にする。
 `world` = `WorldSnapshot`(自校は `is_player` の学校として施設・資金・累計ポイントだけを持ち、名簿は空)、`team` = `TeamSnapshot`(上の形)、
-`session` = `{ year_wins(今年度の優勝の bit)、race_power(第三戦の週の戦力。Q6)、next_ticket_kind、year_settled(年度末の精算まで済んだ = 強化の画面)、scout(今年度のスカウトの行動 [[候補の番号, 段階]]。段階 1 視察 / 2 声かけ / 3 練習会)、guided(今週、個別指導のメニューを指定した選手 = 取り消しでポイントが戻る)、orders(提出された区間オーダー。第一〜第三戦の 3 要素で、各々 null = おまかせ / 区間 → 選手 ID の配列)、qualifier_entries(予選会の登録 12 名。null = おまかせ)、stats(年度ごとの記録)、year_result(null / 年度の途中の { year, qualified, order: { fall, national, newyear } }。終わった大会だけ)}`。
+`session` = `{ year_wins(今年度の優勝の bit)、race_power(第三戦の週の戦力。Q6)、next_ticket_kind、year_settled(年度末の精算まで済んだ = 強化の画面)、scout(今年度のスカウトの行動 [[候補の番号, 段階]]。段階 1 視察 / 2 声かけ / 3 練習会)、guided(今週、個別指導のメニューを指定した選手 = 取り消しでポイントが戻る)、orders(提出された区間オーダー。第一〜第三戦の 3 要素で、各々 null = おまかせ / 区間 → 選手 ID の配列)、qualifier_entries(予選会の登録 12 名。null = おまかせ)、stats(年度ごとの記録)、year_result(null / 年度の途中の { year, qualified, order: { fall, national, newyear } }。終わった大会だけ。**予選会も大会もまだ行われていない年度は null**: 画面が先に年度の準備 `PrepareYear` を呼んだかどうかで、保存の中身が変わらないようにする)}`。
 - 取り出しは**週の境目**。`GameSession` の週の境目は、**次の週の最初の処理(`BeginWeek`: 前年度の記録を送る・月初のポイント・期限切れの補正・派生値・締切の週のおまかせ登録)まで済んだ状態**(画面の登録・月間計画はここから開く)。復元は派生値だけ作り直す(`Refresh`。L-51)。
 - 年度末は、精算のあと(`year_settled` = true。強化の画面)と入学者発表のあとでも保存できる。精算のあとは学校の状態が変わっているので、復元は `BeginYear` をやり直さず、後半(成長 → 卒業 → 入学)に要る最小の年度の状態だけ作る。
 - **年度の途中の出場権・他校の大会用の選手は保存しない**(年度の途中では変わらない)。復元は `BeginYear` をやり直して `year_result` を戻す。
@@ -1087,7 +1087,7 @@ verify/              参照モデル(Python)。仕様の正本の検算
 - **週の順**(06 §7.1): 週の最初(年度の最初なら前年度の記録を送る・月の最初ならスカウトと指導のポイント・期限切れの補正・派生値 `Refresh`・エントリー締切なら登録)→ 全選手の週の解決(03 §6)と絆 → 予選会(10 月第 3 週)・大会(第 25・28・36 週)と大会後の処理(04 §10)→ イベント → 2 月の最初の週に招聘の宣言(おまかせ)→ 月末(絆の減衰・士気・やる気の規則 M1・M4〜M6)→ 年度末(05 §12: 名声・資金と強化・成長 → 卒業と退部 → 招聘の入学 → 割り当て)。
 - **世界との関係**: 他校・名声・割り当ては抽象の自校と**同じ道**(`WorldSim.BeginYear` `PlayQualifier` `PlayRace` `EndYear`)。自校だけ `IPlayerSide` の差し込みで実体の選手が受け持つ。抽象の自校の結果は**ビット同一**(T3 の SHA-256 は変わらない)。
 - **乱数**: 週の解決・イベント・大会は既存の鍵(label 1・2・4・5)。新しい鍵は label 9 の 1 本だけ(年度末の卒業・退部の抽選。新規ゲームの部員の間引きは年度 0)。
-- **結果**: T3(実体の自校)バイト一致(上の §5.6)。T4c(実体の自校の統計)は 05 §14.11。性能: 45 年度の通しが約 3 秒(1 年度 0.05 秒)。試験は 552 件(Domain 409 + Persistence 120 + App 23)。読み取り API(`Views`。08b)と App 層(下)を加えた。
+- **結果**: T3(実体の自校)バイト一致(上の §5.6)。T4c(実体の自校の統計)は 05 §14.11。性能: 45 年度の通しが約 3 秒(1 年度 0.05 秒)。試験は 559 件(Domain 415 + Persistence 121 + App 23)。読み取り API(`Views`。08b)と App 層(下)を加えた。
 - **当日(04 §14.5)**: `GameSession.Race.cs`(オーダー・予報・前評判・当日を開く・予選会の登録)・`RaceDay.cs`(当日変更・指示・檄・レース進行)。当日の状態(当日変更・指示・檄)は**通常のセーブには入れない**(`GameFlow.CanSave` は練習が解決される前だけ。提出したオーダーは保存する)。アプリの中断では、当日の決定を `RaceDayRecord` にして**中断セーブ**に入れる(§4.6。K1)。
 - **操作と進行制御(08 §13.6)**: `GameSession.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`GameSession.Scout.cs`(スカウト)・`GameFlow.cs`(停止)。週は段階(`ResolveTraining` → `PlayWeekRaces` → `SelectWeekEvents` → `ResolveWeekEvents` → `FinishWeek` → 年度末は `SettleYear` → `TurnoverYear` → `AdvanceWeek`)に分け、おまかせの `StepWeek` と `GameFlow` が同じ段階を呼ぶ(何も操作しない流れ = おまかせ、バイト一致)。`WorldSim.EndYear` は精算(`EndYearSettle`)と後半(`EndYearTurnover`)に分けた(抽象の自校の結果はビット同一)。
 - **App 層の入口(§4.4〜§4.6・08 §6.5。`Assets/Scripts/App/`・asmdef `Ekiden.App`・Unity なし)**: `GameHost`(`NewGame` / `Open` / `Advance` / `SaveManual` / `OnAppPause` / `OnAppResume` / `Tick`)が `GameSession` + `GameFlow` + `SlotStore` をつなぐ。`SaveService` が書き込みの段取り、`SlotCatalog` が SC-01・03・40 のスロットの見出し。

@@ -153,7 +153,7 @@ namespace Ekiden.Domain.Game
         {
             var ex = new GameSessionExtras { YearWins = _yearWins, RacePower = _racePower, NextTicketKind = _nextTicketKind };
             ex.Stats.AddRange(Stats);
-            ex.YearInProgress = _ys == null ? null : _ys.Result;
+            ex.YearInProgress = _ys == null || (_ys.Result.Qualified.Count == 0 && _ys.Result.Order.Count == 0) ? null : _ys.Result;     // まだ何も行われていない年度は null(画面が先に年度の準備 = PrepareYear を呼んだかで保存の形が変わらないように)
             ex.YearSettled = _ys != null && _ys.Settled;
             foreach (var kv in _scout) ex.Scout[kv.Key] = kv.Value;
             foreach (int id in _guidedThisWeek) ex.Guided.Add(id);

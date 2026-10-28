@@ -59,7 +59,13 @@ namespace Ekiden.Domain.Team
         /// <summary>その週のその選手のメニュー(03 §5.1 の優先順位): 故障中 > 個別指定 > ピーキング > 安全網(解決の中)> 月間計画。camp = 合宿の週(テーマが th.camp)。</summary>
         public Menu MenuFor(TeamState s, Runner r, out bool camp, out bool individual)
         {
-            int yw = YearWeek(s), month = yw / 4, wk = yw % 4;
+            return MenuFor(s, r, YearWeek(s), out camp, out individual);
+        }
+
+        /// <summary>同じ規則で、年度内の週 <paramref name="yw"/> のメニュー(画面が『次の週』の予測に使う。月の途中なら月間計画は変わらない)。</summary>
+        public Menu MenuFor(TeamState s, Runner r, int yw, out bool camp, out bool individual)
+        {
+            int month = yw / 4, wk = yw % 4;
             string theme = s.MonthlyPlan[r.Group];
             camp = theme == "th.camp";
             individual = false;
