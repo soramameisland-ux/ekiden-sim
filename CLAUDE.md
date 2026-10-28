@@ -20,6 +20,11 @@
 | `m0/` | C# の Domain / Persistence / テスト / SimCli(.NET SDK だけで動く。詳しくは `m0/README.md`) |
 | `m0/Assets/Scripts/Domain/` | 全規則(`netstandard2.1`・C# 9。Unity・時刻・ファイルを参照しない)。`Game/` が自校 + 世界の 1 回のプレイ |
 
+## 必要な環境
+
+- **.NET 8 の SDK(ランタイム込み)**。テストと SimCli は `net8.0` を対象にしている。.NET 10 などの新しい SDK だけだとビルドは通るが、`testhost` が『.NET 8.0 が見つからない』で起動しない。`winget install Microsoft.DotNet.SDK.8`(Windows)などで 8.0 を足す。`global.json` は置いていないので、SDK は新しい方が使われても構わない(ランタイムだけ 8.0 が要る)。
+- Python 3(参照モデルと検算用。外部ライブラリなし)。
+
 ## よく使うコマンド
 
 ```
