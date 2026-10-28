@@ -77,7 +77,7 @@ namespace Ekiden.Domain.Game
                 bool c, individual;
                 Menu menu = _week.MenuFor(s, r, next, out c, out individual);
                 var planned = new[] { new PlannedWeek { Menu = menu, MonthIndex = next / 4, Camp = c, Individual = individual } };
-                ForecastResult fr = Forecaster.Run(Master, r, planned, s.Fac, s.Settings.AutoSafetyF >= 0, r.BondAvg, s.ModsFor(r));        // Run は複製で予測する(選手の状態は変えない)
+                ForecastResult fr = Forecaster.Run(Master, r, planned, s.Fac, s.Settings.AutoSafetyF > 0, r.BondAvg, s.ModsFor(r), SafetyF);        // Run は複製で予測する(選手の状態は変えない)
                 v.Rows.Add(new WarnRowView
                 {
                     Row = RowOf(r, null), Fatigue = r.Fatigue, NextFatigue = fr.F[0], HasIndividualMenu = individual && s.IndividualMenus.ContainsKey(r.Id),

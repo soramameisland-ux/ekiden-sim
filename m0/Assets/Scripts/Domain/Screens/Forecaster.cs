@@ -68,14 +68,14 @@ namespace Ekiden.Domain.Screens
     public static class Forecaster
     {
         public static ExpectedWeekReport ExpectedWeek(TrainingMaster m, Runner r, Menu menu, FacilityLevels fac, int monthIndex, bool camp = false, bool safety = true,
-                                                      bool individual = false, double? bondAvg = null, WeekMods? mods = null)
+                                                      bool individual = false, double? bondAvg = null, WeekMods? mods = null, int safetyF = TrainingMaster.K_SAFETY_F)
         {
             WeekMods wm = mods ?? WeekMods.None;
             var rep = new ExpectedWeekReport();
             bool injured = r.IsInjured;
             int f0 = r.Fatigue;
             if (injured) menu = m.Injured;
-            else if (safety && !individual && f0 >= TrainingMaster.K_SAFETY_F)
+            else if (safety && !individual && f0 >= safetyF)
             {
                 menu = m.Safe;
                 rep.Safety = true;
@@ -179,7 +179,7 @@ namespace Ekiden.Domain.Screens
         }
 
         /// <summary>r0 の状態から、週のリストを順に進めた予測。r0 は変えない。</summary>
-        public static ForecastResult Run(TrainingMaster m, Runner r0, IReadOnlyList<PlannedWeek> weeks, FacilityLevels fac, bool safety = true, double? bondAvg = null, WeekMods? mods = null)
+        public static ForecastResult Run(TrainingMaster m, Runner r0, IReadOnlyList<PlannedWeek> weeks, FacilityLevels fac, bool safety = true, double? bondAvg = null, WeekMods? mods = null, int safetyF = TrainingMaster.K_SAFETY_F)
         {
             Runner r = r0.Clone();
             var res = new ForecastResult();
@@ -187,7 +187,7 @@ namespace Ekiden.Domain.Screens
             ExpectedWeekReport last = null;
             foreach (PlannedWeek w in weeks)
             {
-                ExpectedWeekReport rep = ExpectedWeek(m, r, w.Menu, fac, w.MonthIndex, w.Camp, safety, w.Individual, bondAvg, mods);
+                ExpectedWeekReport rep = ExpectedWeek(m, r, w.Menu, fac, w.MonthIndex, w.Camp, safety, w.Individual, bondAvg, mods, safetyF);
                 res.F.Add(rep.FEnd);
                 res.Weeks.Add(rep);
                 surv *= 1.0 - rep.InjuryP;

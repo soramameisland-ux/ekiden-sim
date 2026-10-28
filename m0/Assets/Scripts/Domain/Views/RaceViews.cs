@@ -23,6 +23,7 @@ namespace Ekiden.Domain.Views
         public bool Entered;
         public bool CanEnter;                        // 登録できる(故障していない)
         public string BlockedReason;                 // できない理由(キー: "injured")。できるなら null
+        public FormOutlookView Outlook;              // 調子の見込み(大会の週まで 8 週以内のとき。それ以外は null)
     }
 
     /// <summary>エントリー(SC-21)。登録 11 / 16・出走に必要 10・留学生の枠・締切。</summary>
@@ -53,6 +54,7 @@ namespace Ekiden.Domain.Views
         public double Fit;                           // その選手のこの区間の適性値(特殊能力の加算を含む)
         public char Mark;
         public double ExpectedSec;                   // 予想タイム(基準タイム = 調子 0・環境なし。04 §7)
+        public FormOutlookView Outlook;              // 配置された選手の調子の見込み(8 週以内のとき。未配置は null)
     }
 
     /// <summary>区間への配置の候補(その区間の適性値の高い順)。</summary>
@@ -63,6 +65,7 @@ namespace Ekiden.Domain.Views
         public char Mark;
         public double ExpectedSec;
         public int? AssignedSection;                 // いま別の区間に配置されている(その区間の番号)
+        public FormOutlookView Outlook;              // 調子の見込み(8 週以内のとき)
     }
 
     /// <summary>区間オーダー(SC-22)。</summary>

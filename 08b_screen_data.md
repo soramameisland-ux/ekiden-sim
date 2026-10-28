@@ -168,7 +168,7 @@
 | G-12 | SC-32 | ~~運営~~ **解決**(`Ops()`)| 施設の効果は `FacilityEffectView`(コード + 値)、文は `fx.*` | 済 | — |
 | G-13 | SC-33・34・35 | ~~OB 名簿・歴史・全国の大学~~ **解決**(`Obs()` `History()` `WorldOverview()`)。残りは G-03・G-04・G-09 | OB の View は `GraduateRowView` と共通 | 済 | — |
 | G-14 | SC-19 | **能力の前月の増減**: 状態に無い。`GameFlow` は月の初めの能力を覚えるようにした(月末レポート用)が、保存しないので復元後は不明 | 選手に『前月の能力』を持たせる(保存が増える)か、月の初めのスナップショットを保存の対象にする | 中 | L-62 ② |
-| G-15 | SC-16・21・22 | 次の大会の調子の見込み(R-05 ⑥・エントリーの『調子の見込み』)の出し分け。`Forecaster` は疲労の推移までで、調子の分布の View が無い | `Forecaster` の調子の分布を `Plan()` / `Entry()` に | 中 | — |
+| ~~G-15~~ | SC-16・21・22 | ~~次の大会の調子の見込み~~(**済**: `FormOutlook(runnerId, kind)` → `FormOutlookView`。`Plan()` の `OutlookRace` / `ThemeOptionView.GoodChance`・`Entry()` の `Outlook`・`Order()` / `OrderCandidates()` の `Outlook`)| `Forecaster` の調子の分布を大会の週まで | — | — |
 | G-16 | SC-01・03 | ~~セーブの見出し・プレイ時間~~ **解決** | `SlotCatalog.List` = `SlotSummary`(校名のキー・開始校・難易度・年度・月・プレイ時間・保存日時・手動の有無・『続きから』が中断した場所からか)。`GameHost` がプレイ時間を数えてヘッダに入れる | 済 | — |
 | G-17 | SC-13・33 | 卒業した留学生の出身国が OB に残らない(`Pref = 0` だけ)| `OBRecord` に国を足す(保存が増える)か、`HighSchoolName` と同様にキーで持つ | 低 | — |
 

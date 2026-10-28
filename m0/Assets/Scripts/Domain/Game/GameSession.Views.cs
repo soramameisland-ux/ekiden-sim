@@ -190,6 +190,9 @@ namespace Ekiden.Domain.Game
                 MonthIndex = month, WeekOfMonth = wk, Focus = s.Plan.Focus, TargetRace = s.Plan.TargetRace, RecommendedTheme = PlanRules.AutoPlan(s.Plan.Focus, month),
                 CampMonth = month == 4, GuidanceLeft = s.GuidanceLeft, PlanAuto = s.Settings.PlanAuto,
             };
+            RaceKind outlookKind; int outlookWeeks;
+            if (OutlookTarget(out outlookKind, out outlookWeeks)) { pv.OutlookRace = outlookKind; pv.OutlookWeeks = outlookWeeks; }
+            EntryOutlook entryOutlook = NewEntryOutlook();
             for (int g = 0; g < 3; g++)
             {
                 List<Runner> members = s.Runners.Where(r => r.Group == g).OrderBy(r => r.Id).ToList();
@@ -198,13 +201,13 @@ namespace Ekiden.Domain.Game
                 var themes = new List<string>(ThemeOrder.Where(t => Master.Themes.ContainsKey(t)));
                 themes.AddRange(Master.Themes.Keys.Where(t => !themes.Contains(t)).OrderBy(t => t, StringComparer.Ordinal));
                 if (s.CustomWeeks != null && s.CustomWeeks[g] != null) themes.Add("th.custom");
-                foreach (string th in themes) gp.Options.Add(ThemeOption(members, g, th, pv.RecommendedTheme, gp.SelectedTheme));
+                foreach (string th in themes) gp.Options.Add(ThemeOption(members, g, th, pv.RecommendedTheme, gp.SelectedTheme, pv.OutlookRace, entryOutlook));
                 pv.Groups.Add(gp);
             }
             return pv;
         }
 
-        private ThemeOptionView ThemeOption(List<Runner> members, int group, string theme, string recommended, string selected)
+        private ThemeOptionView ThemeOption(List<Runner> members, int group, string theme, string recommended, string selected, RaceKind? outlookRace, EntryOutlook entryOutlook)
         {
             TeamState s = State;
             int yw = Yw, month = yw / 4, wk = yw % 4;
@@ -225,7 +228,7 @@ namespace Ekiden.Domain.Game
                     bool individual = false;
                     IndividualMenu im;
                     if (r.IsInjured) menu = Master.Injured;
-                    else if (s.IndividualMenus.TryGetValue(r.Id, out im) && im.UntilAbsWeek >= s.AbsWeek + off) { menu = new Menu(im.Menu.Key1, im.Menu.Key2, im.Menu.Mileage); individual = true; }
+                    else if (s.IndividualMenus.TryGetValue(r.Id, out im) && im.UntilAbsWeek > s.AbsWeek + off) { menu = new Menu(im.Menu.Key1, im.Menu.Key2, im.Menu.Mileage); individual = true; }
                     else
                     {
                         int taper = TeamWeek.TaperIndex(s, r, yw + off);
@@ -233,7 +236,7 @@ namespace Ekiden.Domain.Game
                     }
                     planned.Add(new PlannedWeek { Menu = menu, MonthIndex = month, Camp = theme == "th.camp", Individual = individual });
                 }
-                ForecastResult f = Forecaster.Run(Master, r, planned, s.Fac, true, r.BondAvg, s.ModsFor(r));
+                ForecastResult f = Forecaster.Run(Master, r, planned, s.Fac, s.Settings.AutoSafetyF > 0, r.BondAvg, s.ModsFor(r), SafetyF);
                 fEndSum += f.End.Fatigue;
                 o.FatigueEndMax = Math.Max(o.FatigueEndMax, f.End.Fatigue);
                 if (f.FMax >= GameFlow.WarnFatigue) o.Attention++;
@@ -241,6 +244,12 @@ namespace Ekiden.Domain.Game
                 o.SafetyWeeks += f.SafetyWeeks;
                 double[] before = FractionalStats(r), after = FractionalStats(f.End);
                 for (int t = 0; t < 5; t++) gain[t] += RaceTables.Rating(after, (SectionType)t) - RaceTables.Rating(before, (SectionType)t);
+            }
+            if (outlookRace.HasValue && members.Count > 0)
+            {
+                double good = 0;
+                foreach (Runner r in members) good += OutlookOf(r, outlookRace.Value, themeMenus, entryOutlook).PGood;
+                o.GoodChance = good / members.Count;
             }
             if (members.Count > 0)
             {
@@ -273,6 +282,7 @@ namespace Ekiden.Domain.Game
             };
             List<int> entered = s.Entries[k];
             v.Registered = entered.Count;
+            EntryOutlook eo = NewEntryOutlook();
             foreach (Runner r in s.Runners.OrderBy(x => x.Id))
             {
                 var dv = r.Stats.Select(x => (double)x).ToArray();
@@ -287,6 +297,7 @@ namespace Ekiden.Domain.Game
                 {
                     Row = RowOf(r, null), BestType = best, BestFit = bestP, BestMark = bestP >= 70.0 ? '◎' : (bestP >= 60.0 ? '〇' : '△'),
                     Entered = entered.Contains(r.Id), CanEnter = !r.IsInjured, BlockedReason = r.IsInjured ? "injured" : null,
+                    Outlook = OutlookOf(r, kind, null, eo, true),
                 });
             }
             v.Entered = entered.OrderByDescending(id => TeamState.LongP(s.FindRunner(id))).ThenBy(id => id).ToList();
@@ -314,6 +325,7 @@ namespace Ekiden.Domain.Game
                 Open = qualified && yw >= TeamWeek.EntryDeadlineWeeks[k] && yw <= Calendar.RaceWeeks[k] && !_weekResolved && s.Entries[k].Count > 0,
             };
             double total = 0;
+            EntryOutlook eo = NewEntryOutlook();
             for (int i = 0; i < secs.Count; i++)
             {
                 var c = new OrderSectionView { Section = i, Distance = secs[i].Distance, Type = secs[i].Type, Mountain = secs[i].Type == SectionType.Climb || secs[i].Type == SectionType.Descent };
@@ -325,6 +337,7 @@ namespace Ekiden.Domain.Game
                     c.Fit = fit.Key;
                     c.Mark = fit.Value;
                     c.ExpectedSec = RaceMath.BaseTime(secs[i].Distance, secs[i].Terrain, fit.Key);
+                    c.Outlook = OutlookOf(s.FindRunner(order[i]), kind, null, eo, true);
                     total += c.ExpectedSec;
                 }
                 v.Sections.Add(c);
@@ -361,6 +374,7 @@ namespace Ekiden.Domain.Game
             IReadOnlyList<int> submitted = OrderOf(kind);
             int[] order = submitted != null ? submitted.ToArray() : SuggestOrder(kind);
             var list = new List<OrderCandidateView>();
+            EntryOutlook eo = NewEntryOutlook();
             foreach (int id in s.Entries[(int)kind])
             {
                 Runner r = s.FindRunner(id);
@@ -370,7 +384,7 @@ namespace Ekiden.Domain.Game
                 list.Add(new OrderCandidateView
                 {
                     Row = RowOf(r, null), Fit = fit.Key, Mark = fit.Value, ExpectedSec = RaceMath.BaseTime(secs[section].Distance, secs[section].Terrain, fit.Key),
-                    AssignedSection = at >= 0 ? (int?)at : null,
+                    AssignedSection = at >= 0 ? (int?)at : null, Outlook = OutlookOf(r, kind, null, eo, true),
                 });
             }
             return list.OrderByDescending(c => c.Fit).ThenBy(c => c.Row.Id).ToList();

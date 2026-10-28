@@ -41,6 +41,7 @@ namespace Ekiden.Persistence.Tests
                 gs.Order(k);
                 gs.OrderCandidates(k, 0);
                 gs.Preview(k);
+                foreach (Ekiden.Domain.Entities.Runner r in gs.State.Runners.Take(4)) gs.FormOutlook(r.Id, k);
             }
             foreach (EventDef def in gs.Catalog.Events.Take(30))
                 gs.EventDialog(new FiredEvent { Def = def, R = gs.State.Runners[0], P = gs.State.Runners.Count > 1 ? gs.State.Runners[1] : null });

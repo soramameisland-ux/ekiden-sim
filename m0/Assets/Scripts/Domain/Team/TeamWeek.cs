@@ -88,9 +88,15 @@ namespace Ekiden.Domain.Team
         /// <summary>ピーキング(03 §5.3): その大会の登録メンバーに、大会週 t の 3 週前から <c>TAPER[1..4]</c>(重なるときは後ろから詰める)。Short は t−1 と t だけ(<c>TAPER[3..4]</c>)。None は適用しない。-1 = 適用なし。</summary>
         public static int TaperIndex(TeamState s, Runner r, int yw)
         {
+            return TaperIndex(s, yw, k => s.Entries[k].Contains(r.Id));
+        }
+
+        /// <summary>同じ規則で、『大会 k に登録されている』かどうかを呼ぶ側が決める版(登録の前は、おまかせ登録の見込みで調整週を予測する)。</summary>
+        public static int TaperIndex(TeamState s, int yw, Func<int, bool> entered)
+        {
             for (int k = 0; k < 3; k++)
             {
-                if (!s.Entries[k].Contains(r.Id)) continue;
+                if (!entered(k)) continue;
                 PeakingMode mode = s.Plan.Peaking[k];
                 if (mode == PeakingMode.None) continue;
                 int t = Calendar.RaceWeeks[k];
