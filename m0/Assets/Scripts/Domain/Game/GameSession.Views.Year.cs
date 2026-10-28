@@ -67,6 +67,21 @@ namespace Ekiden.Domain.Game
             return v;
         }
 
+        /// <summary>卒業生・OB の行(SC-13・SC-33 で共通)。</summary>
+        private GraduateRowView GraduateRow(OBRecord ob)
+        {
+            var g = new GraduateRowView
+            {
+                RunnerId = ob.RunnerId, Name = ob.Name, Kana = ob.Kana, Pref = ob.Pref, Overseas = ob.Pref == 0, Power = ob.Power, Rank = DisplayRules.RankLetter(ob.Power),
+                HighSchoolNameKey = ob.HighSchoolName.Length > 0 ? ob.HighSchoolName : null, SectionWins = ob.SectionWins, RelayWins = ob.RaceWins,
+                Pb5000 = ob.T5000, Pb10000 = ob.T10000, PbHalf = ob.THalf, Career = ob.CareerPath, HallOfFame = ob.HallOfFame, Ticket = ob.RecruitSource == RecruitSource.Ticket,
+            };
+            if (ob.Pref >= 1 && ob.Pref <= 47) g.PrefName = Geo.ById(ob.Pref).Name;
+            g.StatRanks = ob.FinalStats.Select(x => DisplayRules.RankLetter(x)).ToArray();
+            foreach (string id in ob.Skills) g.Skills.Add(new SkillView { Id = id, Rank = SkillRankOf(id) });
+            return g;
+        }
+
         // ------------------------------------------------------------ 卒業・進路(SC-13)
         /// <summary>直近の年度末の卒業と退部。まだ一度もなければ null。</summary>
         public GraduationView Graduation()
@@ -74,18 +89,7 @@ namespace Ekiden.Domain.Game
             if (LastTurnover == null) return null;
             var v = new GraduationView { Year = _turnoverYear };
             foreach (OBRecord ob in LastTurnover.Graduates.OrderByDescending(o => o.HallOfFame))      // 殿堂入りを先頭に(安定な整列。残りは ID の昇順のまま)
-            {
-                var g = new GraduateRowView
-                {
-                    RunnerId = ob.RunnerId, Name = ob.Name, Kana = ob.Kana, Pref = ob.Pref, Overseas = ob.Pref == 0, Power = ob.Power, Rank = DisplayRules.RankLetter(ob.Power),
-                    HighSchoolNameKey = ob.HighSchoolName.Length > 0 ? ob.HighSchoolName : null, SectionWins = ob.SectionWins, RelayWins = ob.RaceWins,
-                    Pb5000 = ob.T5000, Pb10000 = ob.T10000, PbHalf = ob.THalf, Career = ob.CareerPath, HallOfFame = ob.HallOfFame, Ticket = ob.RecruitSource == RecruitSource.Ticket,
-                };
-                if (ob.Pref >= 1 && ob.Pref <= 47) g.PrefName = Geo.ById(ob.Pref).Name;
-                g.StatRanks = ob.FinalStats.Select(x => DisplayRules.RankLetter(x)).ToArray();
-                foreach (string id in ob.Skills) g.Skills.Add(new SkillView { Id = id, Rank = SkillRankOf(id) });
-                v.Graduates.Add(g);
-            }
+                v.Graduates.Add(GraduateRow(ob));
             foreach (Runner r in LastTurnover.Quit) v.Quit.Add(RowOf(r, null));
             return v;
         }

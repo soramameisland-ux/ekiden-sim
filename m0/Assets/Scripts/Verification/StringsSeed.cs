@@ -27,6 +27,7 @@ namespace Ekiden.Verification
             AddPlaces(d);
             AddProblems(d);
             AddTickets(d);
+            AddClub(d);
             return d;
         }
 
@@ -53,6 +54,27 @@ namespace Ekiden.Verification
         private static void AddTickets(Dictionary<string, string> d)
         {
             foreach (var kv in Milestones) d[kv.Key + ".name"] = kv.Value;
+        }
+
+        private static readonly Dictionary<string, string> Effects = new Dictionary<string, string>
+        {
+            { "xp_all", "全経験値 {value}" }, { "injury_prob", "故障の確率 {value}" }, { "injury_dur", "故障の期間 {value}" }, { "recovery_r", "疲労の回復 {value}" },
+            { "xp_rec", "回復力の経験値 {value}" }, { "xp_spd_kck", "スピード・スパートの経験値 {value}" }, { "xp_clb_dwn", "登坂・下りの経験値 {value}" }, { "xp_dur", "頑丈さの経験値 {value}" },
+            { "scout_sd", "候補の見積もりの誤差 ±{value}" }, { "gift_kind", "候補の素養の種類が見える" },
+        };
+
+        /// <summary>運営・全国の大学・OB の画面の語(地方・校格・進路・OB の役割・施設の効果の文)。</summary>
+        private static void AddClub(Dictionary<string, string> d)
+        {
+            var region = new Dictionary<Region, string>
+            {
+                { Region.Hokkaido, "北海道" }, { Region.Tohoku, "東北" }, { Region.Kanto, "関東" }, { Region.Chubu, "中部" }, { Region.Kinki, "近畿" }, { Region.Chugoku, "中国" }, { Region.Shikoku, "四国" }, { Region.Kyushu, "九州" },
+            };
+            foreach (Region r in Enum.GetValues(typeof(Region))) d["region." + r.ToString().ToLowerInvariant() + ".name"] = region[r];
+            d["tier.elite.name"] = "強豪"; d["tier.mid.name"] = "中堅"; d["tier.low.name"] = "弱小";
+            d["career.corporate.name"] = "実業団"; d["career.teacher.name"] = "教員"; d["career.employment.name"] = "一般就職"; d["career.gradschool.name"] = "院進学";
+            d["obrole.coach.name"] = "コーチ"; d["obrole.scouthelper.name"] = "スカウト協力"; d["obrole.sponsor.name"] = "スポンサー";
+            foreach (string code in Ekiden.Domain.Views.FacilityEffectView.Codes) d["fx." + code] = Need(Effects, code, "施設の効果");
         }
 
         private static void AddEvents(Dictionary<string, string> d)

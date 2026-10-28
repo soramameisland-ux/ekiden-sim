@@ -138,19 +138,44 @@ namespace Ekiden.Domain.World
 
         public static readonly RaceKind[] AllRaces = { RaceKind.Fall, RaceKind.National, RaceKind.NewYear };
 
+        /// <summary>第一戦の出場権の順(前年度の評価ポイントの多い順、同じなら名声の高い順。安定な整列)。上位 20 校が出る(04 §3.1)。画面(SC-35)は自校の位置を見せる。</summary>
+        public List<School> FallOrder()
+        {
+            var order = new List<School>(Schools);
+            Race.RaceSimulator.StableSort(order, (a, b) => a.PrevPoints != b.PrevPoints ? b.PrevPoints.CompareTo(a.PrevPoints) : b.Prestige.CompareTo(a.Prestige));
+            return order;
+        }
+
+        /// <summary>第二戦の出場権の順(名声の高い順。安定な整列)。上位 30 校が出る。</summary>
+        public List<School> PrestigeOrder()
+        {
+            var order = new List<School>(Schools);
+            Race.RaceSimulator.StableSort(order, (a, b) => b.Prestige.CompareTo(a.Prestige));
+            return order;
+        }
+
+        /// <summary>第三戦のシード校(前年度の第三戦の上位 10 校。10 校に満たなければ名声の上位 10 校)。それ以外は予選会を走る。</summary>
+        public List<int> SeedIds()
+        {
+            var seeds = new List<int>();
+            foreach (School s in Schools) if (s.LastNewYearRank != null && s.LastNewYearRank.Value < 10) seeds.Add(s.Id);
+            if (seeds.Count < 10)
+            {
+                seeds.Clear();
+                List<School> byPrestige = PrestigeOrder();
+                for (int i = 0; i < 10; i++) seeds.Add(byPrestige[i].Id);
+            }
+            return seeds;
+        }
+
         /// <summary>年度の最初(05 §9・04 §3): 出場権を決め、各校の大会用の選手を用意する。</summary>
         public YearState BeginYear(int year, IPlayerSide player = null)
         {
             var st = new YearState { Year = year, Player = player, Result = new YearResult { Year = year } };
-            var orderPrev = new List<School>(Schools);
-            Race.RaceSimulator.StableSort(orderPrev, (a, b) => a.PrevPoints != b.PrevPoints ? b.PrevPoints.CompareTo(a.PrevPoints) : b.Prestige.CompareTo(a.Prestige));
+            List<School> orderPrev = FallOrder(), byPrestige = PrestigeOrder();
             st.FallIds = new List<int>(); for (int i = 0; i < 20; i++) st.FallIds.Add(orderPrev[i].Id);
-            var byPrestige = new List<School>(Schools);
-            Race.RaceSimulator.StableSort(byPrestige, (a, b) => b.Prestige.CompareTo(a.Prestige));
             st.NationalIds = new List<int>(); for (int i = 0; i < 30; i++) st.NationalIds.Add(byPrestige[i].Id);
-            st.Seeds = new List<int>();
-            foreach (School s in Schools) if (s.LastNewYearRank != null && s.LastNewYearRank.Value < 10) st.Seeds.Add(s.Id);
-            if (st.Seeds.Count < 10) { st.Seeds.Clear(); for (int i = 0; i < 10; i++) st.Seeds.Add(byPrestige[i].Id); }
+            st.Seeds = SeedIds();
             st.Rosters = new Dictionary<int, List<RaceRunner>>();
             foreach (School s in Schools)
             {
