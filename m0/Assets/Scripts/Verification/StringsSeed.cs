@@ -28,6 +28,7 @@ namespace Ekiden.Verification
             AddProblems(d);
             AddTickets(d);
             AddClub(d);
+            AddHighlights(d);
             return d;
         }
 
@@ -75,6 +76,19 @@ namespace Ekiden.Verification
             d["career.corporate.name"] = "実業団"; d["career.teacher.name"] = "教員"; d["career.employment.name"] = "一般就職"; d["career.gradschool.name"] = "院進学";
             d["obrole.coach.name"] = "コーチ"; d["obrole.scouthelper.name"] = "スカウト協力"; d["obrole.sponsor.name"] = "スポンサー";
             foreach (string code in Ekiden.Domain.Views.FacilityEffectView.Codes) d["fx." + code] = Need(Effects, code, "施設の効果");
+        }
+
+        private static readonly Dictionary<string, string> Highlights = new Dictionary<string, string>
+        {
+            { "hl.lead_change", "{school}が{other}を抜いて首位に立った" }, { "hl.gap_lose", "{school}は先頭との差が{sec}秒開いた" }, { "hl.gap_gain", "{school}は先頭との差を{sec}秒縮めた" },
+            { "hl.brake", "{school}の走者がブレーキ(約{pct}%の遅れ)" }, { "hl.stall", "{school}の走者が失速(約{pct}%の遅れ)" }, { "hl.boost", "{school}の走者が好走(約{pct}%の短縮)" },
+            { "hl.section_prize", "{school}の走者が{section}区の区間賞" }, { "hl.rank_up", "{school}が順位を{n}つ上げた" }, { "hl.rank_down", "{school}が順位を{n}つ落とした" },
+        };
+
+        /// <summary>レースの見どころ(04 §9.3。SC-25・26)の文。</summary>
+        private static void AddHighlights(Dictionary<string, string> d)
+        {
+            foreach (string key in Ekiden.Domain.Views.HighlightView.AllKeys) d[key] = Need(Highlights, key, "見どころ");
         }
 
         private static void AddEvents(Dictionary<string, string> d)

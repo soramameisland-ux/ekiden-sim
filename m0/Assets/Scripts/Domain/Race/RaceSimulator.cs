@@ -32,6 +32,7 @@ namespace Ekiden.Domain.Race
         public int[] Sections;               // 区間ごとの所要時間(ds = 0.1 秒)
         public int[] Cum;                    // 累積(ds)。繰り上げのあった組は、繰り上げ後の公式タイムで数える
         public double[] IncidentPos;         // 区間ごとの『異変』の通知位置(1/3 か 2/3。ブレーキ・失速のどちらにも使う。04 §9.2)
+        public bool[] Boost;                 // 区間ごとの好走(04 §7.2。ブレーキがなく 3% で −2%)。見どころの判定に使う(結果には影響しない)
         public int[] Flow;                   // 区間ごとの展開(04 §7.3): 0 = 一斉スタート・集団の先頭 / 1 = 全体の先頭(2 区以降)/ 2 = 集団走の追走側 / 3 = 単独走
         public int TotalDs;
         public int Rank;
@@ -54,7 +55,7 @@ namespace Ekiden.Domain.Race
             for (int i = 1; i < n; i++) if (secs[i].Distance > secs[longest].Distance) longest = i;      // max は最初の最大(同値は前の区間)
             var state = new List<TeamResult>();
             foreach (RaceTeam t in teams)
-                state.Add(new TeamResult { Id = t.Id, Sections = new int[n], Cum = new int[n], Flow = new int[n], IncidentPos = new double[n], GekiLeft = t.Geki });
+                state.Add(new TeamResult { Id = t.Id, Sections = new int[n], Cum = new int[n], Boost = new bool[n], Flow = new int[n], IncidentPos = new double[n], GekiLeft = t.Geki });
             var arrivalsT = new double[teams.Count];
             var startsT = new double[teams.Count];
             for (int si = 0; si < n; si++)
@@ -114,6 +115,7 @@ namespace Ekiden.Domain.Race
                     double brake = dr.Brake, stall = dr.Stall;
                     TeamResult res = state[ti];
                     res.IncidentPos[si] = dr.BrakePos;
+                    res.Boost[si] = dr.Boost < 0.0;
                     if (res.GekiLeft > 0 && (team.GekiUse != null || gekiPolicy))
                     {
                         double loss = Math.Max(brake, stall);

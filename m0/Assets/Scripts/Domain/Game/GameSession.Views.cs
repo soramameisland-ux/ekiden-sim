@@ -422,6 +422,8 @@ namespace Ekiden.Domain.Game
                     });
                 }
             }
+            foreach (Highlight h in RaceHighlights.Top(RaceHighlights.Detect(res, School.Id)))
+                v.Highlights.Add(HighlightOf(h, s => team != null ? team.Lineup[s].RunnerId : 0));
             return v;
         }
     }

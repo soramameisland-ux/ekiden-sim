@@ -78,13 +78,41 @@ namespace Ekiden.Domain.Game
             return list;
         }
 
+        /// <summary>見どころの判定(<see cref="RaceHighlights"/>)を画面の形に。<paramref name="runnerOf"/>(区間)は自校のその区間の走者。</summary>
+        private HighlightView HighlightOf(Highlight h, Func<int, int> runnerOf)
+        {
+            var v = new HighlightView
+            {
+                Section = h.Section, Kind = h.Kind, Key = HighlightView.KeyOf(h.Kind, h.Delta), SchoolId = h.TeamId, SchoolNameKey = "school." + h.TeamId + ".name", IsOwn = h.IsOwn,
+                RunnerId = h.IsOwn ? runnerOf(h.Section) : 0,
+            };
+            switch (h.Kind)
+            {
+                case HighlightKind.LeadChange:
+                    v.OtherSchoolId = h.OtherTeamId; v.OtherSchoolNameKey = "school." + h.OtherTeamId + ".name"; v.Ds = (int)h.Magnitude; break;
+                case HighlightKind.GapMove:
+                case HighlightKind.SectionPrize:
+                    v.Ds = (int)h.Magnitude; break;
+                case HighlightKind.RankMove:
+                    v.RankDelta = h.Delta; break;
+                default:
+                    v.Percent = h.Magnitude * 100.0; break;
+            }
+            return v;
+        }
+
         public RaceLiveView RaceLive(RaceDay rd)
         {
             var v = new RaceLiveView { Kind = rd.Kind, Sections = rd.Sections, Resolved = rd.Resolved, Finished = rd.Resolved >= rd.Sections, Started = rd.Started, GekiLeft = rd.GekiLeft };
             if (!v.Finished) v.Next = LegOf(rd, rd.Resolved);
             Incident inc = rd.NextIncident();
             if (inc != null) { v.IncidentKind = inc.Kind; v.IncidentLoss = inc.Loss; v.IncidentPos = inc.Pos; }
-            if (rd.Resolved > 0) v.Standings.AddRange(CondenseStandings(rd.Standings(rd.Resolved - 1), id => "school." + id + ".name"));
+            if (rd.Resolved > 0)
+            {
+                v.Standings.AddRange(CondenseStandings(rd.Standings(rd.Resolved - 1), id => "school." + id + ".name"));
+                foreach (Highlight h in RaceHighlights.Digest(RaceHighlights.Detect(rd.Preview(), School.Id, rd.Resolved)))
+                    v.Highlights.Add(HighlightOf(h, s => rd.View(s).Runner.RunnerId));
+            }
             return v;
         }
     }

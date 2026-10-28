@@ -73,5 +73,6 @@ namespace Ekiden.Domain.Views
         public string IncidentKind;                 // "brake" / "stall"(なければ null)
         public double IncidentLoss, IncidentPos;    // 檄を使わないときの損失(基準タイムに対する割合)と通知の位置(1/3 か 2/3)
         public readonly List<StandingLineView> Standings = new List<StandingLineView>();    // 最後に通過した中継所(まだ通過していなければ空)
+        public readonly List<HighlightView> Highlights = new List<HighlightView>();         // 通過した区間のダイジェスト(区間ごとに最大 2 件。区間の順。最後の区間が『いまの見どころ』)
     }
 }

@@ -38,6 +38,8 @@ namespace Ekiden.Domain.Race
         public const double NoiseSd = 0.008, BrakeP = 0.02, BrakeLo = 0.03, BrakeHi = 0.10, BoostP = 0.03, BoostAdj = -0.02;
         public const double G_PACK = 15.0, G_CHASE = 60.0, PackAdj = -0.003, SoloAdj = 0.002, ChaseSkillAdj = -0.005;
         public const double PackSkillMult = 2.0, SoloWeakExtra = 0.003;
+        // 見どころ(§9.3。表示の規則で、結果には影響しない)
+        public const int HighlightGapDs = 200, HighlightRankMove = 3, HighlightPerSection = 2, HighlightResultMax = 5;
         // 個性(10 §6)
         public static readonly double[] K_RUN_SCALE = { 1.5, 1.0, 0.5 };                    // StyleRun: Pack / Free / Solo
         public static readonly double[] K_STYLE_CHASE_ADJ = { -0.002, 0.0, 0.002 };         // StyleFlow: Chase / Even / Lead

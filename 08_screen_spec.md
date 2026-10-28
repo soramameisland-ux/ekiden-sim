@@ -997,7 +997,7 @@ T = 8(目標)、S = 年間ポイント − 2×T(視察する人数。ランク1�
 
 **読み取り API(Views。`m0/Assets/Scripts/Domain/Views/` + `GameSession.Views*.cs`)**: 画面は Domain の状態を直接読まず、規則(R-01〜R-17)で組み立てた表示用の型を受け取る。状態を変えず、語は文字列テーブルのキーで返し、隠す情報(素質・体質・成長タイプ・未判明の素養)は型に入れない。実装済み: `Home` / `RosterRows` / `RunnerRow` / `RunnerDetail` / `Plan` / `Entry` / `Order` / `OrderCandidates` / `RaceResult` / `MonthReportView` / `YearSummary` / `Graduation` / `Enrollment` / `Ops` / `WorldOverview` / `Obs` / `History` / `ScoutCandidates` / `ScoutCandidate` / `ScoutMap` / `ScoutTargets` / `AnnualPlanView` / `Preview` / `EventDialog` / `ConditionWarning` / `InjuryDialog` / `RaceDayView` / `RaceLive`。画面ごとの対応(○ △ ✗)と足りないもの(G-01〜G-17)は **`08b_screen_data.md`**。
 
-**未実装(M1 の続き)**: 観戦モードの演出(ダイジェストの見どころの判定 §9.3、中継所ごとの要約。08b G-02)/ 檄の先行使用と走者ごとの効き `f_k`(04 §9.2。L-60)/ 新規ゲームの画面(R-13: 名前・難易度の選択)/ 予選会の当日(SC-26 のみ。当日変更・指示なし)。月末レポートの `rank_up` `form_up` `big_growth` `gift_reveal` は R-10 どおりに実装した(L-57・L-64 解決)。
+**未実装(M1 の続き)**: 観戦モードの演出(中継所ごとの要約。見どころの判定は実装済み = `RaceHighlights`・`RaceLive().Highlights`・`RaceResult().Highlights`)/ 檄の先行使用と走者ごとの効き `f_k`(04 §9.2。L-60)/ 新規ゲームの画面(R-13: 名前・難易度の選択)/ 予選会の当日(SC-26 のみ。当日変更・指示なし)。月末レポートの `rank_up` `form_up` `big_growth` `gift_reveal` は R-10 どおりに実装した(L-57・L-64 解決)。
 
 ### 13.5 M0 の C# 実装(段階 9)
 

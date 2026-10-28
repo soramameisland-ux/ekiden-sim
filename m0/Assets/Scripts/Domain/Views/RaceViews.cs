@@ -104,6 +104,43 @@ namespace Ekiden.Domain.Views
         public int RunnerId;                         // 自校の選手が取ったときだけ(他校は 0)
     }
 
+    /// <summary>見どころ 1 件(04 §9.3。SC-25 のダイジェスト・SC-26 の『大会の見どころ』)。文は <see cref="Key"/> の語に、校名・数値を当てはめる。</summary>
+    public sealed class HighlightView
+    {
+        public int Section;
+        public HighlightKind Kind;
+        public string Key = "";                      // 文字列表の鍵(<c>hl.lead_change</c> など)
+        public int SchoolId;
+        public string SchoolNameKey = "";
+        public bool IsOwn;
+        public int RunnerId;                         // 自校の走者(他校は 0。他校の選手は出さない)
+        public int OtherSchoolId = -1;               // 首位交代: それまでの首位
+        public string OtherSchoolNameKey = "";
+        public int Ds;                               // 首位交代・差の変化・区間賞: 関わるタイム(ds)。差の変化は正 = 離れた
+        public double Percent;                       // ブレーキ・失速・好走: 時間の割合(%)
+        public int RankDelta;                        // 順位の変動: 正 = 上がった
+
+        /// <summary>文字列表に必要な鍵(<c>hl.</c> + 下の語)。</summary>
+        public static readonly string[] AllKeys =
+        {
+            "hl.lead_change", "hl.gap_lose", "hl.gap_gain", "hl.brake", "hl.stall", "hl.boost", "hl.section_prize", "hl.rank_up", "hl.rank_down",
+        };
+
+        public static string KeyOf(HighlightKind kind, int delta)
+        {
+            switch (kind)
+            {
+                case HighlightKind.LeadChange: return "hl.lead_change";
+                case HighlightKind.GapMove: return delta > 0 ? "hl.gap_lose" : "hl.gap_gain";
+                case HighlightKind.Brake: return "hl.brake";
+                case HighlightKind.Stall: return "hl.stall";
+                case HighlightKind.Boost: return "hl.boost";
+                case HighlightKind.SectionPrize: return "hl.section_prize";
+                default: return delta > 0 ? "hl.rank_up" : "hl.rank_down";
+            }
+        }
+    }
+
     /// <summary>自校の区間ごとの結果。</summary>
     public sealed class OwnLegView
     {
@@ -119,7 +156,7 @@ namespace Ekiden.Domain.Views
         public bool Brake, Stall, Geki, Kuriage;     // 出来事(ブレーキ・失速・檄を使った・繰り上げスタート)
     }
 
-    /// <summary>大会の結果(SC-26)。総合・区間賞・自校の区間ごと・評価ポイント。記録の更新と大会の見どころは未実装(08b・L-60)。</summary>
+    /// <summary>大会の結果(SC-26)。総合・区間賞・自校の区間ごと・評価ポイント。大会の見どころは `Highlights`。記録の更新は未実装(08b G-03)。</summary>
     public sealed class RaceResultView
     {
         public RaceKind Kind;
@@ -133,5 +170,6 @@ namespace Ekiden.Domain.Views
         public List<ResultRowView> Overall = new List<ResultRowView>();
         public List<SectionPrizeView> Prizes = new List<SectionPrizeView>();
         public List<OwnLegView> OwnLegs = new List<OwnLegView>();
+        public List<HighlightView> Highlights = new List<HighlightView>();      // 大会の見どころ(最大 5 件。区間の順)
     }
 }

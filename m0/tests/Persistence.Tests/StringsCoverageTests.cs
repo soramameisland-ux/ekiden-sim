@@ -54,6 +54,26 @@ namespace Ekiden.Persistence.Tests
         }
 
         [Test]
+        public void EveryHighlightKeyIsInTheTable_WithTheValuesItsViewCarries()
+        {
+            Dictionary<string, string> table = Real();
+            var need = new Dictionary<string, string[]>
+            {
+                { "hl.lead_change", new[] { "{school}", "{other}" } }, { "hl.gap_lose", new[] { "{school}", "{sec}" } }, { "hl.gap_gain", new[] { "{school}", "{sec}" } },
+                { "hl.brake", new[] { "{school}", "{pct}" } }, { "hl.stall", new[] { "{school}", "{pct}" } }, { "hl.boost", new[] { "{school}", "{pct}" } },
+                { "hl.section_prize", new[] { "{school}", "{section}" } }, { "hl.rank_up", new[] { "{school}", "{n}" } }, { "hl.rank_down", new[] { "{school}", "{n}" } },
+            };
+            CollectionAssert.AreEquivalent(need.Keys, HighlightView.AllKeys, "試験の表と View の鍵が同じ");
+            foreach (var kv in need)
+            {
+                Assert.IsTrue(table.ContainsKey(kv.Key), kv.Key);
+                foreach (string ph in kv.Value) StringAssert.Contains(ph, table[kv.Key], kv.Key);
+            }
+            var loc = new TableLocalization(table, true, null);
+            Assert.AreEqual("青嵐大が北洋大を抜いて首位に立った", loc.Get("hl.lead_change", "school", "青嵐大", "other", "北洋大"));
+        }
+
+        [Test]
         public void TheRealTable_HasNoLintIssues_AndAsksNothingOfTheFontBeyondWhatItUses()
         {
             Dictionary<string, string> table = Real();
