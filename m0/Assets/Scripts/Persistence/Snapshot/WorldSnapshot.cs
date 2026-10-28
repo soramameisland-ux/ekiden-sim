@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Ekiden.Domain.Numerics;
+using Ekiden.Domain.Race;
 using Ekiden.Domain.Rng;
 using Ekiden.Domain.Tickets;
 using Ekiden.Domain.Training;
@@ -48,6 +49,7 @@ namespace Ekiden.Persistence.Snapshot
             var schools = new JsonArray();
             foreach (School s in w.Schools) schools.Add(CaptureSchool(s));
             o["schools"] = schools;
+            o["history"] = CaptureHistory(w.History);
             o["player"] = agent == null ? (JsonValue)JsonNull.Instance : CapturePlayer(agent);
             return o;
         }
@@ -55,6 +57,42 @@ namespace Ekiden.Persistence.Snapshot
         private static JsonNumber N(long v) { return new JsonNumber(v); }
         private static JsonNumber D(double v) { return new JsonNumber(v); }
         private static JsonBool B(bool v) { return JsonBool.Of(v); }
+
+        /// <summary>履歴(02 §4.9 の <c>history</c>)。大会の順位表は『学校 ID・合計タイム・繰り上げ(0/1)』の組を順位順に、記録は大会ごと(区間の添字順。なければ null)。</summary>
+        internal static JsonObject CaptureHistory(RaceHistory h)
+        {
+            var o = new JsonObject();
+            var races = new JsonArray();
+            foreach (RaceEntry e in h.Races)
+            {
+                var ro = new JsonObject();
+                ro["year"] = N(e.Year);
+                ro["kind"] = N((int)e.Kind);
+                var rows = new JsonArray();
+                foreach (RaceRow r in e.Rows) rows.Add(new JsonArray(new JsonValue[] { N(r.SchoolId), N(r.TotalDs), N(r.Kuriage ? 1 : 0) }));
+                ro["rows"] = rows;
+                races.Add(ro);
+            }
+            o["race_records"] = races;
+            var course = new JsonArray();
+            for (int k = 0; k < 3; k++)
+            {
+                var kind = new JsonArray();
+                if (h.Course[k] != null)
+                    foreach (CourseRecord c in h.Course[k])
+                        kind.Add(c == null ? (JsonValue)JsonNull.Instance : new JsonObject { ["school_id"] = N(c.SchoolId), ["runner_id"] = N(c.RunnerId), ["time_ds"] = N(c.TimeDs), ["year"] = N(c.Year) });
+                course.Add(kind);
+            }
+            o["course_records"] = course;
+            var team = new JsonArray();
+            for (int k = 0; k < 3; k++)
+            {
+                TeamRecord t = h.Team[k];
+                team.Add(t == null ? (JsonValue)JsonNull.Instance : new JsonObject { ["school_id"] = N(t.SchoolId), ["total_ds"] = N(t.TotalDs), ["year"] = N(t.Year) });
+            }
+            o["team_records"] = team;
+            return o;
+        }
 
         private static JsonObject CaptureSchool(School s)
         {
@@ -177,11 +215,49 @@ namespace Ekiden.Persistence.Snapshot
             ulong seed = ulong.Parse(Str(rng, "master_seed"), CultureInfo.InvariantCulture);
             var schools = new List<School>();
             foreach (JsonValue sv in Arr(o, "schools")) schools.Add(RestoreSchool((JsonObject)sv));
-            WorldSim w = WorldSim.Restore(new KeyedRngFactory(seed), Dbl(Obj(o, "world"), "elite_pref_bonus"), schools);
+            RaceHistory history = o.ContainsKey("history") ? RestoreHistory(Obj(o, "history")) : new RaceHistory();           // 追加の項目: ないセーブは空の履歴(09 §6)
+            WorldSim w = WorldSim.Restore(new KeyedRngFactory(seed), Dbl(Obj(o, "world"), "elite_pref_bonus"), schools, history);
             PlayerAgent agent = null;
             JsonValue pv = o.Get("player");
             if (!pv.IsNull) agent = RestorePlayer((JsonObject)pv, w);
             return new Restored { World = w, Agent = agent, NextYear = Int(Obj(o, "clock"), "next_year"), MasterSeed = seed };
+        }
+
+        internal static RaceHistory RestoreHistory(JsonObject o)
+        {
+            var h = new RaceHistory();
+            foreach (JsonValue rv in Arr(o, "race_records"))
+            {
+                var ro = (JsonObject)rv;
+                var e = new RaceEntry { Year = Int(ro, "year"), Kind = (RaceKind)Int(ro, "kind") };
+                foreach (JsonValue row in Arr(ro, "rows"))
+                {
+                    var a = (JsonArray)row;
+                    e.Rows.Add(new RaceRow { SchoolId = (int)((JsonNumber)a[0]).Int, TotalDs = (int)((JsonNumber)a[1]).Int, Kuriage = ((JsonNumber)a[2]).Int != 0 });
+                }
+                h.Races.Add(e);
+            }
+            JsonArray course = Arr(o, "course_records");
+            for (int k = 0; k < 3; k++)
+            {
+                var kind = (JsonArray)course[k];
+                if (kind.Count == 0) continue;
+                h.Course[k] = new CourseRecord[kind.Count];
+                for (int si = 0; si < kind.Count; si++)
+                {
+                    if (kind[si].IsNull) continue;
+                    var c = (JsonObject)kind[si];
+                    h.Course[k][si] = new CourseRecord { SchoolId = Int(c, "school_id"), RunnerId = Int(c, "runner_id"), TimeDs = Int(c, "time_ds"), Year = Int(c, "year") };
+                }
+            }
+            JsonArray team = Arr(o, "team_records");
+            for (int k = 0; k < 3; k++)
+            {
+                if (team[k].IsNull) continue;
+                var t = (JsonObject)team[k];
+                h.Team[k] = new TeamRecord { SchoolId = Int(t, "school_id"), TotalDs = Int(t, "total_ds"), Year = Int(t, "year") };
+            }
+            return h;
         }
 
         private static School RestoreSchool(JsonObject o)

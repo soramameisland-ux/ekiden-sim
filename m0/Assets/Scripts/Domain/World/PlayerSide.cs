@@ -49,6 +49,7 @@ namespace Ekiden.Domain.World
         public int RaceId;
         public List<RaceTeam> Teams;
         public List<TeamResult> Results;
+        public List<RecordUpdate> Records = new List<RecordUpdate>();      // この大会で更新された記録(区間の順、最後に大会記録)
     }
 
     /// <summary>1 年度の途中の状態(出場権・各校の大会用の選手・ここまでの結果)。<see cref="WorldSim.BeginYear"/> が作る。年度の途中でセーブするときは、<see cref="Result"/> だけを保存し、

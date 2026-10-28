@@ -72,6 +72,44 @@ namespace Ekiden.Persistence.Tests
         }
 
         [Test]
+        public void History_RoundTripsExactly_AndASaveWithoutItRestoresAnEmptyHistory()
+        {
+            var w = WorldSim.Create(new KeyedRngFactory(Seed), 6);
+            for (int y = 1; y <= 4; y++) w.PlayYear(y);
+            JsonObject snap = WorldSnapshot.Capture(w, null, 5);
+            Assert.IsTrue(snap.ContainsKey("history"));
+            var h = (JsonObject)snap["history"];
+            CollectionAssert.AreEqual(new[] { "race_records", "course_records", "team_records" }, h.Keys.ToArray());
+            Assert.AreEqual(30, ((JsonArray)h["race_records"]).Count, "予熱 6 + 4 年度 × 3 大会");
+            var first = (JsonObject)((JsonArray)h["race_records"])[0];
+            CollectionAssert.AreEqual(new[] { "year", "kind", "rows" }, first.Keys.ToArray());
+            Assert.AreEqual(3, ((JsonArray)((JsonArray)first["rows"])[0]).Count, "学校 ID・合計タイム・繰り上げ");
+            WorldSnapshot.Restored r = WorldSnapshot.Restore((JsonObject)JsonValue.Parse(snap.ToJson()));
+            RaceHistory a = w.History, b = r.World.History;
+            Assert.AreEqual(a.Races.Count, b.Races.Count);
+            for (int i = 0; i < a.Races.Count; i++)
+            {
+                Assert.AreEqual(a.Races[i].Year, b.Races[i].Year);
+                Assert.AreEqual(a.Races[i].Kind, b.Races[i].Kind);
+                CollectionAssert.AreEqual(a.Races[i].Rows.Select(x => x.SchoolId + ":" + x.TotalDs + ":" + x.Kuriage).ToArray(), b.Races[i].Rows.Select(x => x.SchoolId + ":" + x.TotalDs + ":" + x.Kuriage).ToArray());
+            }
+            for (int k = 0; k < 3; k++)
+            {
+                CollectionAssert.AreEqual(a.Course[k].Select(c => c.SchoolId + ":" + c.RunnerId + ":" + c.TimeDs + ":" + c.Year).ToArray(), b.Course[k].Select(c => c.SchoolId + ":" + c.RunnerId + ":" + c.TimeDs + ":" + c.Year).ToArray());
+                Assert.AreEqual(a.Team[k].SchoolId + ":" + a.Team[k].TotalDs + ":" + a.Team[k].Year, b.Team[k].SchoolId + ":" + b.Team[k].TotalDs + ":" + b.Team[k].Year);
+            }
+            // 追加の項目なので、ないセーブも読める(空の履歴)
+            snap.Remove("history");
+            WorldSnapshot.Restored old = WorldSnapshot.Restore((JsonObject)JsonValue.Parse(snap.ToJson()));
+            Assert.IsEmpty(old.World.History.Races);
+            Assert.IsNull(old.World.History.Team[0]);
+            Assert.IsNull(old.World.History.Course[0]);
+            // 続けると、また履歴が貯まる
+            old.World.PlayYear(5);
+            Assert.AreEqual(3, old.World.History.Races.Count);
+        }
+
+        [Test]
         public void Parallel_GivesTheSamePerWorldResult_AsSequential()
         {
             ulong[] seeds = Enumerable.Range(1, 6).Select(i => (ulong)i * 1000003UL + 17UL).ToArray();

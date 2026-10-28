@@ -31,7 +31,7 @@
 
 ```
 cd m0
-dotnet test Ekiden.sln -c Release          # 577 件(Domain 432 + Persistence 122 + App 23)。約 1.5 分。全部緑が前提
+dotnet test Ekiden.sln -c Release          # 583 件(Domain 437 + Persistence 123 + App 23)。約 1.5 分。全部緑が前提
 dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)

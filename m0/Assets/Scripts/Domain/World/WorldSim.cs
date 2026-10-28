@@ -21,6 +21,9 @@ namespace Ekiden.Domain.World
         public readonly List<School> Schools = new List<School>();
         public readonly IRngFactory Rngs;
 
+        /// <summary>過去の大会の順位表と区間記録・大会記録(02 §4.8。予熱の年度から)。</summary>
+        public RaceHistory History { get; private set; } = new RaceHistory();
+
         /// <summary>強豪県の候補の能力の基準値への加算(02 §6。既定 3.0)。検算のために 0 にして、参照モデル(これを持たない)と比べられる。</summary>
         public double ElitePrefBonus { get; private set; } = WorldK.ElitePrefBonus;
 
@@ -83,10 +86,11 @@ namespace Ekiden.Domain.World
         }
 
         /// <summary>保存した状態から世界を組み立てる(09 §5。読み込み)。乱数は鍵つきで状態を持たないので、学校・選手の状態だけで続きを進められる。</summary>
-        public static WorldSim Restore(IRngFactory rngs, double elitePrefBonus, IEnumerable<School> schools)
+        public static WorldSim Restore(IRngFactory rngs, double elitePrefBonus, IEnumerable<School> schools, RaceHistory history = null)
         {
             var w = new WorldSim(rngs) { ElitePrefBonus = elitePrefBonus };
             w.Schools.AddRange(schools);
+            if (history != null) w.History = history;
             return w;
         }
 
@@ -273,7 +277,8 @@ namespace Ekiden.Domain.World
             foreach (TeamResult t in sim) order.Add(t.Id);
             st.Result.Order[kind] = order;
             st.Result.Winner[kind] = order[0];
-            return new RaceOutcome { Kind = kind, RaceId = rid, Teams = teams, Results = sim };
+            List<RecordUpdate> records = History.Record(st.Year, kind, sim, teams);
+            return new RaceOutcome { Kind = kind, RaceId = rid, Teams = teams, Results = sim, Records = records };
         }
 
         /// <summary>年度末: 名声ポイント → 名声・基準名声・指導体制 → 資金の精算 → 成長と卒業 → 入学の割り当て(自校は <see cref="IPlayerSide"/> の hook)。
