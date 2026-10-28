@@ -193,7 +193,7 @@ namespace Ekiden.Persistence.Snapshot
         private static JsonObject CaptureOb(OBRecord b, int absWeek)
         {
             ObRole role = b.Role != ObRole.None && b.Until <= absWeek ? ObRole.None : b.Role;       // 期限の切れた役割は書かない(ExpireTimed と同じ。I-19)
-            return O(("runner_id", N(b.RunnerId)), ("name", S(b.Name)), ("kana", S(b.Kana)), ("origin_index", N(b.Pref)), ("high_school_name", S(b.HighSchoolName)), ("school_id", N(b.SchoolId)),
+            return O(("runner_id", N(b.RunnerId)), ("name", S(b.Name)), ("kana", S(b.Kana)), ("origin_index", N(b.Pref)), ("origin_country", N(b.Country)), ("high_school_name", S(b.HighSchoolName)), ("school_id", N(b.SchoolId)),
                 ("enroll_year", N(b.EnrollYear)), ("grad_year", N(b.GradYear)), ("final_stats", Ints(b.FinalStats)), ("skills", Strs(b.Skills)),
                 ("pb", O(("t5000", N(b.T5000)), ("t10000", N(b.T10000)), ("t_half", N(b.THalf)))),
                 ("career", O(("race_wins", N(b.RaceWins)), ("section_wins", N(b.SectionWins)), ("records", N(b.Records)))),
@@ -411,7 +411,7 @@ namespace Ekiden.Persistence.Snapshot
         {
             var b = new OBRecord
             {
-                RunnerId = Int(j, "runner_id"), Name = Str(j, "name"), Kana = Str(j, "kana"), Pref = Int(j, "origin_index"), HighSchoolName = Str(j, "high_school_name"), SchoolId = Int(j, "school_id"),
+                RunnerId = Int(j, "runner_id"), Name = Str(j, "name"), Kana = Str(j, "kana"), Pref = Int(j, "origin_index"), Country = j.ContainsKey("origin_country") ? Int(j, "origin_country") : 0, HighSchoolName = Str(j, "high_school_name"), SchoolId = Int(j, "school_id"),
                 EnrollYear = Int(j, "enroll_year"), GradYear = Int(j, "grad_year"), HallOfFame = Bool(j, "hall_of_fame"), Role = (ObRole)Index(RoleNames, Str(j, "role")), Until = Int(j, "role_until"),
                 RecruitSource = (RecruitSource)Index(RecruitNames, Str(j, "recruit_source")), Look = RestoreAppearance(Obj(j, "appearance")),
             };

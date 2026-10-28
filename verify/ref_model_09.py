@@ -948,7 +948,8 @@ def team_save(rng, n=24, year=4, with_world_stub=False):
     obs = []
     for k in range(rng.randint(0, 9)):
         career = rng.choice(["Corporate", "Teacher", "Employment", "GradSchool"])
-        obs.append(dict(runner_id=5000 + k, name=f"卒{k}", kana=f"そつ{k}", origin_index=rng.randint(0, 47), high_school_name=f"高校{k}", school_id=0, enroll_year=year - 4 - k % 3, grad_year=year - 1 - k % 3,
+        origin = rng.randint(0, 47)
+        obs.append(dict(runner_id=5000 + k, name=f"卒{k}", kana=f"そつ{k}", origin_index=origin, origin_country=(k % 24) + 1 if origin == 0 else 0, high_school_name=f"高校{k}", school_id=0, enroll_year=year - 4 - k % 3, grad_year=year - 1 - k % 3,
                         final_stats=[rng.randint(40, 90) for _ in range(10)], skills=sorted(rng.sample(SKILLS_TEAM, rng.choice([0, 1]))),
                         pb=dict(t5000=rng.randint(7900, 9000), t10000=rng.randint(16500, 19000), t_half=rng.randint(36000, 41000)),
                         career=dict(race_wins=rng.randint(0, 3), section_wins=rng.randint(0, 5), records=rng.randint(0, 1)), career_path=career, hall_of_fame=rng.random() < 0.1,

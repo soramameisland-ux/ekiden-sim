@@ -77,6 +77,7 @@ namespace Ekiden.Domain.Game
                 Pb5000 = ob.T5000, Pb10000 = ob.T10000, PbHalf = ob.THalf, Career = ob.CareerPath, HallOfFame = ob.HallOfFame, Ticket = ob.RecruitSource == RecruitSource.Ticket,
             };
             if (ob.Pref >= 1 && ob.Pref <= 47) g.PrefName = Geo.ById(ob.Pref).Name;
+            if (ob.Country >= 1 && ob.Country <= Geo.Countries.Length) g.CountryName = Geo.Countries[ob.Country - 1];
             g.StatRanks = ob.FinalStats.Select(x => DisplayRules.RankLetter(x)).ToArray();
             foreach (string id in ob.Skills) g.Skills.Add(new SkillView { Id = id, Rank = SkillRankOf(id) });
             return g;

@@ -76,6 +76,7 @@ namespace Ekiden.Domain.Views
         public string Name = "", Kana = "";
         public int Pref;                            // 出身県(留学生は 0)
         public string PrefName = "";
+        public string CountryName = "";             // 留学生の出身国(OB に国が残っているときだけ。ないセーブは空)
         public string HighSchoolNameKey;            // "hs.{id}.name"。なければ null
         public bool Overseas;
         public double Power;                        // 卒業時の力

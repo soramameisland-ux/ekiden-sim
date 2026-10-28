@@ -36,6 +36,25 @@ namespace Ekiden.Domain.Tests
         }
 
         [Test]
+        public void OverseasGraduates_KeepTheirCountry_AndShowItInTheGraduationAndOBViews()
+        {
+            Assert.AreEqual(5, OBRecord.FromGraduate(new Runner { Overseas = true, Country = 5 }, 3, 1, CareerPath.Employment).Country);
+            Assert.AreEqual(0, OBRecord.FromGraduate(new Runner { Overseas = false, Country = 5, Pref = 12 }, 3, 1, CareerPath.Employment).Country, "留学生でなければ国は残さない");
+            GameSession gs = ToYearEndBeforeSettle(35UL, Difficulty.Mid, 1);
+            gs.SettleYear();
+            Runner senior = gs.State.Runners.First(r => r.Grade >= 4);
+            senior.Overseas = true; senior.Country = 3; senior.Pref = 0;
+            int id = senior.Id;
+            gs.TurnoverYear();
+            GraduateRowView g = gs.Graduation().Graduates.Single(x => x.RunnerId == id);
+            Assert.IsTrue(g.Overseas);
+            Assert.AreEqual(Geo.Countries[2], g.CountryName);
+            Assert.AreEqual("", g.PrefName);
+            Assert.AreEqual(Geo.Countries[2], gs.Obs().Rows.Single(x => x.Grad.RunnerId == id).Grad.CountryName, "OB 名簿でも同じ行");
+            foreach (GraduateRowView o in gs.Graduation().Graduates.Where(x => x.RunnerId != id && !x.Overseas)) Assert.AreEqual("", o.CountryName);
+        }
+
+        [Test]
         public void Summary_IsNullUntilTheYearIsSettled()
         {
             GameSession gs = ToYearEndBeforeSettle(31UL, Difficulty.Mid, 1);

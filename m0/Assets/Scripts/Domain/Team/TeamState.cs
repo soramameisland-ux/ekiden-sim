@@ -108,6 +108,7 @@ namespace Ekiden.Domain.Team
     public sealed class OBRecord
     {
         public int Pref;
+        public int Country;                 // 留学生の出身国(1〜: Geo.Countries の添字 + 1。留学生でなければ 0。画面用。追加の項目)
         public CareerPath CareerPath = CareerPath.Employment;
         public double Power;                    // 卒業時の力
         public ObRole Role = ObRole.None;
@@ -139,7 +140,7 @@ namespace Ekiden.Domain.Team
         {
             var o = new OBRecord
             {
-                Pref = r.Overseas ? 0 : r.Pref, CareerPath = path, RunnerId = r.Id, Name = r.FamilyName + r.GivenName, Kana = r.FamilyKana + r.GivenKana, HighSchoolName = highSchoolName,
+                Pref = r.Overseas ? 0 : r.Pref, Country = r.Overseas ? r.Country : 0, CareerPath = path, RunnerId = r.Id, Name = r.FamilyName + r.GivenName, Kana = r.FamilyKana + r.GivenKana, HighSchoolName = highSchoolName,
                 EnrollYear = enrollYear, GradYear = gradYear, RaceWins = r.RelayWins, SectionWins = r.SectionWins, Records = r.Records, HallOfFame = hallOfFame,
                 RecruitSource = r.RecruitSource, Look = r.Look, Style = r.Style, Gifts = (Gift[])r.Gifts.Clone(),
             };

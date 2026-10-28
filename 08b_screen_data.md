@@ -170,7 +170,7 @@
 | ~~G-14~~ | SC-19 | ~~能力の前月の増減~~(**済**: `Runner.MonthStartStats` / `PrevMonthStats`(`monthly.stats_start` / `stats_prev`。追加の項目)。`StatView.DeltaThisMonth` / `DeltaLastMonth`。月の最初に `RollMonthStats`)| 選手に月の初めの能力を持たせる(保存が増える)| — | L-62 ② |
 | ~~G-15~~ | SC-16・21・22 | ~~次の大会の調子の見込み~~(**済**: `FormOutlook(runnerId, kind)` → `FormOutlookView`。`Plan()` の `OutlookRace` / `ThemeOptionView.GoodChance`・`Entry()` の `Outlook`・`Order()` / `OrderCandidates()` の `Outlook`)| `Forecaster` の調子の分布を大会の週まで | — | — |
 | G-16 | SC-01・03 | ~~セーブの見出し・プレイ時間~~ **解決** | `SlotCatalog.List` = `SlotSummary`(校名のキー・開始校・難易度・年度・月・プレイ時間・保存日時・手動の有無・『続きから』が中断した場所からか)。`GameHost` がプレイ時間を数えてヘッダに入れる | 済 | — |
-| G-17 | SC-13・33 | 卒業した留学生の出身国が OB に残らない(`Pref = 0` だけ)| `OBRecord` に国を足す(保存が増える)か、`HighSchoolName` と同様にキーで持つ | 低 | — |
+| ~~G-17~~ | SC-13・33 | ~~卒業した留学生の出身国~~(**済**: `OBRecord.Country`(`origin_country`。追加の項目)。`GraduateRowView.CountryName`)| OB に国を足す | — | — |
 
 ### 4.1 この作業で直したもの
 
@@ -191,4 +191,4 @@
 2. **App 層の入口**(自動セーブ・中断セーブの呼び出し位置 = `SuspendCheckpoint` の接続。L-62 ③)。
 3. M1 の縦切りに要る View の残り: `Scout*`(G-10)・`Ops`(G-12)・`World` / `OB` / `History`(G-13)・`RaceDay` の画面向けの型。
 4. ~~G-02(見どころ)・G-03(記録)・G-04(歴代)~~(済)。
-5. ~~G-14(前月の増減)~~(済。追加の項目で済んだ)。残りは G-06 の残り・G-07・G-08・G-17。
+5. ~~G-14(前月の増減)~~(済。追加の項目で済んだ)。残りは G-06 の残り・G-07・G-08。

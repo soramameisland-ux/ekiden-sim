@@ -26,6 +26,20 @@ namespace Ekiden.Persistence.Tests
         }
 
         [Test]
+        public void ObCountry_SurvivesASaveAndLoad_AndAnOldSaveWithoutItReadsAsNone()
+        {
+            GameSession gs = Play(Difficulty.Mid, 5);
+            gs.State.Obs.Add(OBRecord.FromGraduate(new Runner { Overseas = true, Country = 7, FamilyName = "留", GivenName = "学" }, 1, 1, CareerPath.Employment));
+            JsonObject snap = GameSnapshot.Capture(gs);
+            GameSession back = GameSnapshot.Restore((JsonObject)JsonValue.Parse(snap.ToJson()));
+            Assert.AreEqual(7, back.State.Obs.Last().Country);
+            JsonObject team = (JsonObject)snap["team"];
+            foreach (JsonValue ob in (JsonArray)team["ob_records"]) ((JsonObject)ob).Remove("origin_country");
+            GameSession old = GameSnapshot.Restore((JsonObject)JsonValue.Parse(snap.ToJson()));
+            Assert.IsTrue(old.State.Obs.All(o => o.Country == 0));
+        }
+
+        [Test]
         public void MonthStats_SurviveASaveAndLoad_AndRollTheSameAfterwards()
         {
             GameSession gs = Play(Difficulty.Mid, 48 + 6);
