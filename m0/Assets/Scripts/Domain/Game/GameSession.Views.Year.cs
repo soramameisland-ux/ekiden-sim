@@ -112,6 +112,18 @@ namespace Ekiden.Domain.Game
                 };
                 (e.Targeted ? v.Targeted : v.Natural).Add(e);
             }
+            // 惜しかった候補: 競り負け(差の小さい順)→ 奨学金枠 → 定員。同じ理由の中では評価の高い順
+            foreach (AllocationMiss m in _lastMisses.OrderBy(x => x.Reason == MissReason.Outbid ? 0 : (x.Reason == MissReason.Scholarship ? 1 : 2))
+                                                    .ThenBy(x => x.Reason == MissReason.Outbid ? x.Margin : 0.0).ThenByDescending(x => x.Candidate.V).ThenBy(x => x.Candidate.Index))
+            {
+                ScoutCandidateView c = CandidateOf(m.Candidate);
+                c.Stage = ScoutStage.Invited; c.CanObserve = c.CanTalk = c.CanInvite = false;
+                v.Missed.Add(new MissedCandidateView
+                {
+                    Candidate = c, Reason = m.Reason, ReasonKey = "miss." + m.Reason.ToString().ToLowerInvariant(), WinnerSchoolId = m.WinnerSchoolId,
+                    WinnerNameKey = m.WinnerSchoolId >= 0 ? "school." + m.WinnerSchoolId + ".name" : "", Margin = m.Reason == MissReason.Outbid ? m.Margin : 0.0,
+                });
+            }
             return v;
         }
     }

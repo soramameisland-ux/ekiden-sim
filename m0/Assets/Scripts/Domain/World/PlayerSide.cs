@@ -38,6 +38,12 @@ namespace Ekiden.Domain.World
         /// <summary>入学の割り当てへの自校の提示(おまかせのスカウト。05 §7.3)。</summary>
         PlayerOffer Offer(WorldSim world, IReadOnlyList<WorldRunner> pool, IRngFactory rngs);
 
+        /// <summary>自校が狙った候補か(声かけまで済ませた候補。入れなかった理由の記録に使う)。</summary>
+        bool Targeted(WorldRunner candidate);
+
+        /// <summary>割り当ての結果、自校が狙ったのに入らなかった候補と理由(<see cref="Intake"/> の前)。</summary>
+        void Missed(IReadOnlyList<AllocationMiss> misses);
+
         /// <summary>割り当てで自校に入学する候補と、招聘の選手を受け取る。戻り値は、抽象の自校の名簿 (<see cref="School.Roster"/>) に足す選手(実体の選手を持つ側は、自分で <c>Runner</c> に展開して空を返す)。</summary>
         List<WorldRunner> Intake(List<WorldRunner> allocated, WorldRunner ticket);
     }

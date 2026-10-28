@@ -63,6 +63,10 @@ namespace Ekiden.Domain.World
 
         void IPlayerSide.Graduating(IReadOnlyList<WorldRunner> graduates) { CountGraduates(graduates); }
 
+        bool IPlayerSide.Targeted(WorldRunner candidate) { return false; }         // 検算用の抽象の自校は、入れなかった理由を持たない
+
+        void IPlayerSide.Missed(IReadOnlyList<AllocationMiss> misses) { }
+
         PlayerOffer IPlayerSide.Offer(WorldSim world, IReadOnlyList<WorldRunner> pool, IRngFactory rngs) { return MakeOffer(ChooseTargets(world.Schools, pool, rngs)); }
 
         List<WorldRunner> IPlayerSide.Intake(List<WorldRunner> allocated, WorldRunner ticket)

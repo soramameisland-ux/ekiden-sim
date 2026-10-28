@@ -29,6 +29,7 @@ namespace Ekiden.Verification
             AddTickets(d);
             AddClub(d);
             AddHighlights(d);
+            d["miss.quota"] = "定員がいっぱいだった"; d["miss.scholarship"] = "奨学金枠がいっぱいだった"; d["miss.outbid"] = "他校に競り負けた";
             return d;
         }
 

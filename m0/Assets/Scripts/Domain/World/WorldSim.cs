@@ -354,7 +354,10 @@ namespace Ekiden.Domain.World
             // 入学
             List<WorldRunner> pool2 = PoolGenerator.Generate(Rngs, year, WorldK.K_POOL_N, ElitePrefBonus);
             PlayerOffer offer = agent != null ? agent.Offer(this, pool2, Rngs) : null;
-            Dictionary<int, List<WorldRunner>> intake = Allocator.Allocate(Schools, pool2, Rngs, year, agent != null ? agent.School : null, offer, agent != null ? agent.PlayerP10 : null, agent != null ? agent.PlayerRosterCount : null);
+            var misses = new List<AllocationMiss>();
+            Dictionary<int, List<WorldRunner>> intake = Allocator.Allocate(Schools, pool2, Rngs, year, agent != null ? agent.School : null, offer, agent != null ? agent.PlayerP10 : null, agent != null ? agent.PlayerRosterCount : null,
+                                                                             agent != null ? (Func<WorldRunner, bool>)agent.Targeted : null, misses);
+            if (agent != null) agent.Missed(misses);
             foreach (School s in Schools)
             {
                 List<WorldRunner> add = intake[s.Id];

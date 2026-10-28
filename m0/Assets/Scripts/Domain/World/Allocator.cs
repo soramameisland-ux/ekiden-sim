@@ -8,6 +8,18 @@ namespace Ekiden.Domain.World
     /// <summary>自校(プレイヤー)が候補に出す提示スコアの追加分(好感度・奨学金・OB・乱数を除く部分は <see cref="WorldMath.OfferBase"/>)。</summary>
     public delegate double PlayerOffer(WorldRunner candidate);
 
+    /// <summary>自校が狙った候補が入れなかった理由(08a SC-14『惜しかった候補』)。</summary>
+    public enum MissReason { Quota, Scholarship, Outbid }
+
+    /// <summary>自校が狙ったのに、自校に入らなかった候補 1 人。</summary>
+    public sealed class AllocationMiss
+    {
+        public WorldRunner Candidate;
+        public MissReason Reason;
+        public int WinnerSchoolId = -1;      // 入った学校(Outbid のとき。それ以外も入った学校がわかれば入れる。どこにも入らなければ −1)
+        public double Margin;                // Outbid: 入った学校の提示スコア − 自校の提示スコア(小さいほど惜しい)
+    }
+
     /// <summary>勧誘の確定(3 月の割り当て。05 §8)と他校の狙い撃ち(§9.2)。</summary>
     public static class Allocator
     {
@@ -54,7 +66,8 @@ namespace Ekiden.Domain.World
 
         /// <summary>候補を V の高い順に処理し、各候補は空き定員(上位級は奨学金枠も)のある学校のうち提示スコア最大の学校に入る。戻り値: 学校 ID → 入学する候補。</summary>
         public static Dictionary<int, List<WorldRunner>> Allocate(IReadOnlyList<School> schools, IReadOnlyList<WorldRunner> pool, IRngFactory rngs, int year,
-                                                                  School player, PlayerOffer playerOffer, double? playerP10 = null, int? playerRosterCount = null)
+                                                                  School player, PlayerOffer playerOffer, double? playerP10 = null, int? playerRosterCount = null,
+                                                                  Func<WorldRunner, bool> playerTarget = null, List<AllocationMiss> misses = null)
         {
             var p10 = new Dictionary<int, double>();
             var slots = new Dictionary<int, int>();
@@ -75,7 +88,7 @@ namespace Ekiden.Domain.World
             foreach (WorldRunner r in order)
             {
                 School best = null;
-                double bestS = -1e9;
+                double bestS = -1e9, playerS = double.NaN;
                 bool topTier = r.V >= WorldK.K_V_TOP;
                 foreach (School s in schools)
                 {
@@ -88,6 +101,7 @@ namespace Ekiden.Domain.World
                     if (s.IsPlayer)
                     {
                         sc += (playerOffer != null ? playerOffer(r) : 0.0) + noise;
+                        playerS = sc;
                     }
                     else
                     {
@@ -95,6 +109,14 @@ namespace Ekiden.Domain.World
                         sc += (hot ? WorldK.RivalTargetInterest + chase : uBase * WorldK.RivalBaseInterest) + noise;
                     }
                     if (sc > bestS) { best = s; bestS = sc; }
+                }
+                if (misses != null && player != null && playerTarget != null && !ReferenceEquals(best, player) && playerTarget(r))         // 自校が狙ったのに入らない: 理由は処理の時点の空きで決まる
+                {
+                    var miss = new AllocationMiss { Candidate = r, WinnerSchoolId = best != null ? best.Id : -1 };
+                    if (slots[player.Id] <= 0) miss.Reason = MissReason.Quota;
+                    else if (topTier && scholLeft[player.Id] <= 0) miss.Reason = MissReason.Scholarship;
+                    else { miss.Reason = MissReason.Outbid; miss.Margin = bestS - playerS; }
+                    misses.Add(miss);
                 }
                 if (best == null) continue;
                 slots[best.Id] -= 1;

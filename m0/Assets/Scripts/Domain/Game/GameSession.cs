@@ -370,6 +370,7 @@ namespace Ekiden.Domain.Game
 
         public IReadOnlyDictionary<int, int> LastIntakeStars { get { return _lastIntakeStars; } }
 
+        private List<AllocationMiss> _lastMisses = new List<AllocationMiss>();        // 狙ったが入らなかった候補(入学者発表用。保存しない)
         private HashSet<int> _lastIntakeTargeted = new HashSet<int>();
         private Dictionary<int, int> _lastIntakeStars = new Dictionary<int, int>();
 
@@ -553,6 +554,10 @@ namespace Ekiden.Domain.Game
             };
         }
 
+        bool IPlayerSide.Targeted(WorldRunner candidate) { return _targets != null && _targets.Contains(candidate.Index); }
+
+        void IPlayerSide.Missed(IReadOnlyList<AllocationMiss> misses) { _lastMisses = new List<AllocationMiss>(misses); }
+
         List<WorldRunner> IPlayerSide.Intake(List<WorldRunner> allocated, WorldRunner ticket)
         {
             TeamState s = State;
@@ -562,6 +567,7 @@ namespace Ekiden.Domain.Game
                 WorldRunner lowest = allocated[0];
                 foreach (WorldRunner r in allocated) if (r.Q < lowest.Q) lowest = r;
                 allocated.Remove(lowest);
+                if (_targets != null && _targets.Contains(lowest.Index)) _lastMisses.Add(new AllocationMiss { Candidate = lowest, Reason = MissReason.Quota });        // 招聘枠が定員を占めた
             }
             _lastIntake = new List<int>();
             _intakeYear = Year;

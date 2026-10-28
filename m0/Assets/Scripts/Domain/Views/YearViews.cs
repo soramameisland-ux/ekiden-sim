@@ -3,6 +3,7 @@ using Ekiden.Domain.Entities;
 using Ekiden.Domain.Race;
 using Ekiden.Domain.Team;
 using Ekiden.Domain.Tickets;
+using Ekiden.Domain.World;
 
 namespace Ekiden.Domain.Views
 {
@@ -107,11 +108,23 @@ namespace Ekiden.Domain.Views
         public char[] StatRanks = new char[0];
     }
 
+    /// <summary>狙ったが入れなかった候補(08a SC-14『惜しかった候補』)。<see cref="Reason"/> は文字列表のキー(<c>miss.quota</c> / <c>miss.scholarship</c> / <c>miss.outbid</c>)。</summary>
+    public sealed class MissedCandidateView
+    {
+        public ScoutCandidateView Candidate;        // 名前・出身・評価★・市場評価・上位級か(Stage は声かけまで済ませたものとして Invited)
+        public MissReason Reason;
+        public string ReasonKey = "";
+        public int WinnerSchoolId = -1;             // 入った学校(どこにも入らなければ −1)
+        public string WinnerNameKey = "";
+        public double Margin;                       // 競り負けた差(提示スコア。小さいほど惜しい。ほかの理由は 0)
+    }
+
     /// <summary>入学者発表(08a SC-14)。狙った選手を先に、続けて自然に入った選手(それぞれ入部の順)。</summary>
     public sealed class EnrollmentView
     {
         public int Year;                            // 入学の年度(終えた年度 + 1)
         public readonly List<EnrolleeRowView> Targeted = new List<EnrolleeRowView>();
         public readonly List<EnrolleeRowView> Natural = new List<EnrolleeRowView>();
+        public readonly List<MissedCandidateView> Missed = new List<MissedCandidateView>();      // 惜しかった候補(競り負けを差の小さい順、続けて奨学金枠・定員の順。それぞれ評価の高い順)
     }
 }
