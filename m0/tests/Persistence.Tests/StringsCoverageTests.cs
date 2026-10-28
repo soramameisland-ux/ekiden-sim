@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Ekiden.Domain.Tickets;
+using Ekiden.Domain.Views;
 using Ekiden.Persistence.Strings;
 using Ekiden.Platform;
 using Ekiden.Verification;
@@ -35,6 +37,20 @@ namespace Ekiden.Persistence.Tests
             string[] missing = defaults.Keys.Where(k => !table.ContainsKey(k)).OrderBy(k => k, StringComparer.Ordinal).ToArray();
             Assert.IsEmpty(missing, "表にない(m0 で `SimCli strings seed` を実行して足す): " + string.Join(", ", missing.Take(10)));
             Assert.GreaterOrEqual(defaults.Count, 200, "イベント・特殊能力・練習・施設・能力・大会などのキー");
+        }
+
+        [Test]
+        public void EveryTicketMilestoneHasAName_AndTheAnniversaryTakesTheYears()
+        {
+            Dictionary<string, string> table = Real();
+            var ids = new[]
+            {
+                TicketMilestones.WinFall, TicketMilestones.WinNational, TicketMilestones.WinNewYear, TicketMilestones.Podium, TicketMilestones.Seed, TicketMilestones.Sweep,
+                TicketMilestones.Clear, TicketMilestones.Rank3, TicketMilestones.Rank6, TicketMilestones.Rank9, TicketMilestones.Anniversary(10), TicketMilestones.Anniversary(70),
+            };
+            foreach (string id in ids) Assert.IsTrue(table.ContainsKey(TicketMilestoneView.Of(id).NameKey), id);
+            var loc = new TableLocalization(table, true, null);
+            Assert.AreEqual("継続の記念(30年度)", loc.Get("tm.anniv.name", "years", "30"));
         }
 
         [Test]

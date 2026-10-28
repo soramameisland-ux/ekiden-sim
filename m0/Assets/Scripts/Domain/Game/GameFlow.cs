@@ -45,6 +45,9 @@ namespace Ekiden.Domain.Game
         public int More;                                                                   // 『ほか n 件』
         public List<string> Deferred = new List<string>();                                  // 止まらずにここへ回ったお知らせ(§6.3)
         public double Morale;
+        public double StartFatigue, StartForm, StartMorale;                                 // 月の初めのチームの平均(疲労・調子)と士気
+        public bool StartKnown;                                                              // 月の初めを見ていたか(月の途中から復元したときは false = 変化は出さない)
+        public string[] Themes = new string[3];                                              // 今月のテーマ(グループ A / B / C)
     }
 
     /// <summary>
@@ -76,6 +79,10 @@ namespace Ekiden.Domain.Game
         private readonly List<WeekOutcome> _monthWeeks = new List<WeekOutcome>();
         private readonly List<string> _monthDeferred = new List<string>();
         private HashSet<int> _monthStartInjured = new HashSet<int>();
+        private Dictionary<int, int[]> _monthStartStats = new Dictionary<int, int[]>();       // 月の初めの能力(選手 ID → 10 能力)
+        private Dictionary<int, int> _monthStartForm = new Dictionary<int, int>();
+        private double _monthStartFatigue, _monthStartFormAvg, _monthStartMorale;
+        private bool _monthStartKnown;
         private int _warnedMonth = -1;
         private bool _resuming;                             // 中断セーブからの再開: 週の初めの停止は出さず、練習の解決の直前の通知(ResolvingWeek)も出さない
         private RaceDayRecord _resume;                      // 練習の解決のあと、この記録を当日に戻す(<see cref="ResumeRace"/>)
@@ -180,7 +187,7 @@ namespace Ekiden.Domain.Game
         private void BuildBeforeStops()
         {
             int yw = TeamWeek.YearWeek(S);
-            if (yw % 4 == 0) _monthStartInjured = new HashSet<int>(S.Runners.Where(r => r.IsInjured).Select(r => r.Id));
+            if (yw % 4 == 0) CaptureMonthStart();
             YearState ys = Session.PrepareYear();
             var qualifies = new HashSet<string>();
             for (int i = 0; i < 3; i++)
@@ -357,37 +364,83 @@ namespace Ekiden.Domain.Game
             _queue.Enqueue(new Stop { Kind = StopKind.YearEndTurnover, Key = "YearEnd:Turnover", Week = _week, Year = res, Turnover = Session.LastTurnover, IntakeIds = Session.LastIntakeIds });
         }
 
-        // ------------------------------------------------------------ 月末レポート(R-10。項目の作り方は暫定: 故障・成長・復帰・お知らせ・覚醒)
+        private void CaptureMonthStart()
+        {
+            _monthStartInjured = new HashSet<int>(S.Runners.Where(r => r.IsInjured).Select(r => r.Id));
+            _monthStartStats = S.Runners.ToDictionary(r => r.Id, r => (int[])r.Stats.Clone());
+            _monthStartForm = S.Runners.ToDictionary(r => r.Id, r => r.Form);
+            _monthStartFatigue = Average(S.Runners.Select(r => (double)r.Fatigue));
+            _monthStartFormAvg = Average(S.Runners.Select(r => (double)r.Form));
+            _monthStartMorale = S.Morale;
+            _monthStartKnown = true;
+        }
+
+        private static double Average(IEnumerable<double> xs)
+        {
+            double sum = 0;
+            int n = 0;
+            foreach (double x in xs) { sum += x; n++; }
+            return n == 0 ? 0.0 : sum / n;
+        }
+
+        // ------------------------------------------------------------ 月末レポート(R-10)
         private MonthReport BuildMonthReport(int month)
         {
-            var rep = new MonthReport { MonthIndex = month, Morale = S.Morale };
+            var rep = new MonthReport { MonthIndex = month, Morale = S.Morale, StartKnown = _monthStartKnown };
+            rep.StartFatigue = _monthStartKnown ? _monthStartFatigue : Average(S.Runners.Select(r => (double)r.Fatigue));
+            rep.StartForm = _monthStartKnown ? _monthStartFormAvg : Average(S.Runners.Select(r => (double)r.Form));
+            rep.StartMorale = _monthStartKnown ? _monthStartMorale : S.Morale;
+            for (int g = 0; g < 3; g++) rep.Themes[g] = S.MonthlyPlan[g];
             rep.Weeks.AddRange(_monthWeeks);
             rep.Deferred.AddRange(_monthDeferred);
             var items = new List<FlowRules.ReportItem>();
-            var gain = new Dictionary<int, int>();
             foreach (WeekOutcome w in _monthWeeks)
             {
                 for (int i = 0; i < w.Reports.Count; i++)
                 {
                     int id = w.RunnerIds[i];
                     WeekReport r = w.Reports[i];
-                    if (r.NewInjury == InjurySeverity.Severe) items.Add(new FlowRules.ReportItem { Kind = "injury_severe", Key = "inj:" + id, Score = 100 });
-                    else if (r.NewInjury == InjurySeverity.Moderate) items.Add(new FlowRules.ReportItem { Kind = "injury_moderate", Key = "inj:" + id, Score = 90 });
-                    gain.TryGetValue(id, out int g);
-                    gain[id] = g + r.Levelups;
+                    Runner ir = S.FindRunner(id);
+                    double power = ir != null ? TeamState.LongP(ir) : 0.0;                       // 故障の score = 力 P
+                    if (r.NewInjury == InjurySeverity.Severe) items.Add(new FlowRules.ReportItem { Kind = "injury_severe", Key = "inj:" + id, Score = power, RunnerId = id });
+                    else if (r.NewInjury == InjurySeverity.Moderate) items.Add(new FlowRules.ReportItem { Kind = "injury_moderate", Key = "inj:" + id, Score = power, RunnerId = id });
                 }
                 foreach (FiredEvent f in w.Events)
                 {
-                    if (f.Def.Category == EventCategory.Awakening) items.Add(new FlowRules.ReportItem { Kind = "awaken", Key = f.Def.Id + ":" + (f.R == null ? 0 : f.R.Id), Score = 1 });
-                    else if (!f.Def.Interactive) items.Add(new FlowRules.ReportItem { Kind = "notice", Key = f.Def.Id, Score = 1 });
+                    if (f.Def.Category == EventCategory.Awakening)
+                    {
+                        Effect skill = f.Choice == null ? null : f.Choice.Fx.FirstOrDefault(x => x.Op == EffectOp.Skill);
+                        SkillDef sd = skill == null ? null : Session.Catalog.Skills.FirstOrDefault(x => x.Id == skill.SkillId);
+                        double rankScore = sd == null ? 0 : (sd.Rank == SkillRank.Gold ? 3 : (sd.Rank == SkillRank.Blue ? 2 : 1));      // 金 > 青 > 赤
+                        items.Add(new FlowRules.ReportItem { Kind = "awaken", Key = f.Def.Id + ":" + (f.R == null ? 0 : f.R.Id), Score = rankScore, RunnerId = f.R == null ? 0 : f.R.Id, EventId = f.Def.Id, SkillId = skill == null ? null : skill.SkillId });
+                    }
+                    else if (!f.Def.Interactive) items.Add(new FlowRules.ReportItem { Kind = "notice", Key = f.Def.Id, Score = 0, EventId = f.Def.Id });
                 }
             }
-            foreach (var kv in gain.OrderBy(k => k.Key))
-                if (kv.Value >= 2) items.Add(new FlowRules.ReportItem { Kind = "big_growth", Key = "gain:" + kv.Key, Score = kv.Value });
+            if (_monthStartKnown)
+            {
+                foreach (Runner r in S.Runners.OrderBy(x => x.Id))
+                {
+                    int[] start;
+                    if (!_monthStartStats.TryGetValue(r.Id, out start)) continue;                    // 月の途中で入部した選手は比べない
+                    int total = 0;
+                    for (int i = 0; i < r.Stats.Length; i++)
+                    {
+                        total += r.Stats[i] - start[i];
+                        char was = DisplayRules.RankLetter(start[i]), now = DisplayRules.RankLetter(r.Stats[i]);
+                        if (DisplayRules.RankValue(now) > DisplayRules.RankValue(was))
+                            items.Add(new FlowRules.ReportItem { Kind = "rank_up", Key = "rank:" + r.Id + ":" + i, Score = DisplayRules.RankValue(now), RunnerId = r.Id, Value = i, Letter = now });
+                    }
+                    if (total >= 3) items.Add(new FlowRules.ReportItem { Kind = "big_growth", Key = "gain:" + r.Id, Score = total, RunnerId = r.Id, Value = total });
+                    int startForm;
+                    if (_monthStartForm.TryGetValue(r.Id, out startForm) && r.Form > startForm)
+                        items.Add(new FlowRules.ReportItem { Kind = "form_up", Key = "form:" + r.Id, Score = r.Form - startForm, RunnerId = r.Id, Value = r.Form - startForm });
+                }
+            }
             foreach (int id in _monthStartInjured.OrderBy(x => x))
             {
                 Runner r = S.FindRunner(id);
-                if (r != null && !r.IsInjured) items.Add(new FlowRules.ReportItem { Kind = "return", Key = "ret:" + id, Score = 1 });
+                if (r != null && !r.IsInjured) items.Add(new FlowRules.ReportItem { Kind = "return", Key = "ret:" + id, Score = TeamState.LongP(r), RunnerId = id });
             }
             rep.Items = FlowRules.SelectReportItems(items);
             rep.More = items.Count - rep.Items.Count;

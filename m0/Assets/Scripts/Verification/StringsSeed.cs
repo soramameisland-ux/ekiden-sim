@@ -24,6 +24,9 @@ namespace Ekiden.Verification
             AddEvents(d);
             AddWorldAndTraining(d);
             AddEnums(d);
+            AddPlaces(d);
+            AddProblems(d);
+            AddTickets(d);
             return d;
         }
 
@@ -37,6 +40,19 @@ namespace Ekiden.Verification
                 if (!merged.ContainsKey(kv.Key)) { merged[kv.Key] = kv.Value; added.Add(kv.Key); }
             added.Sort(StringComparer.Ordinal);
             return merged;
+        }
+
+        private static readonly Dictionary<string, string> Milestones = new Dictionary<string, string>
+        {
+            { "tm.win.fall", "第一戦の初優勝" }, { "tm.win.national", "第二戦の初優勝" }, { "tm.win.newyear", "第三戦の初優勝" }, { "tm.podium", "初の表彰台" },
+            { "tm.seed", "初のシード" }, { "tm.sweep", "初の三冠" }, { "tm.clear", "クリア" },
+            { "tm.rank.3", "監督ランク 3" }, { "tm.rank.6", "監督ランク 6" }, { "tm.rank.9", "監督ランク 9" }, { "tm.anniv", "継続の記念({years}年度)" },
+        };
+
+        /// <summary>特別招聘券の獲得の節目(07 §4)。継続の記念は年数の分だけ要るので、{years} を埋める 1 つのキーにする。</summary>
+        private static void AddTickets(Dictionary<string, string> d)
+        {
+            foreach (var kv in Milestones) d[kv.Key + ".name"] = kv.Value;
         }
 
         private static void AddEvents(Dictionary<string, string> d)
@@ -82,6 +98,49 @@ namespace Ekiden.Verification
             string s;
             if (!names.TryGetValue(id, out s)) throw new InvalidOperationException(what + "の名称が決まっていない ID: " + id + "(StringsSeed に足す)");
             return s;
+        }
+
+        /// <summary>36 校の大学名(世界の学校 ID 0〜35。固定の顔ぶれ。地域・階層の並びは WorldSim の計画どおり)。いずれも架空の仮の名(実在校名との照合は未了。02 §3.3・L-32)。</summary>
+        private static readonly string[] SchoolNames =
+        {
+            "青嵐大学", "東雲大学", "紫峰大学",                                                                                       // 関東・強豪 3
+            "朝霧大学", "蒼穹大学", "双葉台大学", "若鷹大学", "北斗学院大学", "紅葉ヶ丘大学", "銀嶺大学",                               // 関東・中堅 7
+            "翠光大学", "白嶺大学", "緑風大学", "星ヶ峰大学", "晴嵐大学", "武陽大学", "清流大学", "暁星台大学", "桜花台大学", "光陵大学", // 関東・下位 10
+            "錦雲大学", "浪華学院大学", "朱雀大学", "葦原大学", "比叡台大学", "紀伊野大学",                                             // 近畿 1 + 2 + 3
+            "高嶺大学", "信濃野大学", "伊吹大学", "越路大学",                                                                         // 中部 1 + 1 + 2
+            "玄洋大学", "阿蘇野大学",                                                                                                 // 九州 1 + 1
+            "陸奥嶺大学", "北上野大学", "石狩野大学", "瀬戸嶺大学",                                                                   // 東北 2・北海道 1・中国 1
+        };
+
+        /// <summary>高校名の語(県ごとの高校 j 番目に、(j + 県番号) mod 12 番目を使う。同じ県の中で重ならない)。</summary>
+        private static readonly string[] HighSchoolWords = { "青嶺", "朝凪", "白樺台", "緑陽", "若潮", "光風", "北辰", "南星", "錦城", "桜台", "双葉", "紫苑" };
+
+        private static void AddPlaces(Dictionary<string, string> d)
+        {
+            if (SchoolNames.Length != WorldSim.SchoolCount) throw new InvalidOperationException("大学名の数(" + SchoolNames.Length + ")が学校の数(" + WorldSim.SchoolCount + ")と違う");
+            for (int i = 0; i < SchoolNames.Length; i++) d["school." + i + ".name"] = SchoolNames[i];
+            int id = 1;
+            foreach (Prefecture p in Geo.Prefectures)
+                for (int j = 0; j < p.HighSchoolCount; j++) d["hs." + id++ + ".name"] = p.Name + HighSchoolWords[(j + p.Id) % HighSchoolWords.Length] + "高校";
+            if (id - 1 != Geo.HighSchoolTotal) throw new InvalidOperationException("高校の数(" + (id - 1) + ")が " + Geo.HighSchoolTotal + " と違う");
+        }
+
+        /// <summary>登録・配置の検証の指摘(<see cref="Ekiden.Domain.Views.ViewProblem"/>)。<c>{n}</c> = 指摘の Value(上限・必要人数など)。</summary>
+        private static readonly Dictionary<string, string> Problems = new Dictionary<string, string>
+        {
+            { "entry.short", "出走に必要な {n} 人に足りません。このままでは棄権になります" },
+            { "entry.intl", "留学生の登録は {n} 人までです" },
+            { "entry.injured", "故障中の選手が登録されています。差し替えてください" },
+            { "order.count", "区間の数({n})と同じ人数を配置してください" },
+            { "order.dup", "同じ選手が二重に配置されています" },
+            { "order.intl", "留学生の出走は {n} 人までです" },
+            { "order.injured", "故障中の選手は配置できません" },
+            { "order.not_entered", "登録されていない選手が配置されています" },
+        };
+
+        private static void AddProblems(Dictionary<string, string> d)
+        {
+            foreach (string code in Ekiden.Domain.Views.ViewProblem.Codes) d["problem." + code] = Need(Problems, code, "検証の指摘");
         }
 
         private static void AddEnums(Dictionary<string, string> d)

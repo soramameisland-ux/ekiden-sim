@@ -122,7 +122,7 @@ namespace Ekiden.Domain.Team
 
         // 殿堂・レジェンド・OB 一覧のための記録(02 §4.7)。規則には作用しない
         public int RunnerId;
-        public string Name = "", Kana = "", HighSchoolName = "";
+        public string Name = "", Kana = "", HighSchoolName = "";    // HighSchoolName = 出身高校の文字列キー("hs.{id}.name")。高校がなければ空
         public int SchoolId, EnrollYear, GradYear;
         public int[] FinalStats = new int[StatInfo.Count];
         public readonly List<string> Skills = new List<string>();

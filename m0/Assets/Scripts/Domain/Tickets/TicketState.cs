@@ -162,5 +162,16 @@ namespace Ekiden.Domain.Tickets
             if (yearsCompleted > 0 && yearsCompleted % 10 == 0 && t.Earn(Anniversary(yearsCompleted), year)) n++;
             return n;
         }
+
+        /// <summary><see cref="EarnAtYearEnd"/> で新たに入手する節目(状態は変えない。年度の結果の画面が、精算の時点で『このあと券が入る』を見せるため)。</summary>
+        public static List<string> PeekAtYearEnd(TicketState t, int managerRank, int yearsCompleted)
+        {
+            var list = new List<string>();
+            if (managerRank >= 3 && !t.Milestones.Contains(Rank3)) list.Add(Rank3);
+            if (managerRank >= 6 && !t.Milestones.Contains(Rank6)) list.Add(Rank6);
+            if (managerRank >= 9 && !t.Milestones.Contains(Rank9)) list.Add(Rank9);
+            if (yearsCompleted > 0 && yearsCompleted % 10 == 0 && !t.Milestones.Contains(Anniversary(yearsCompleted))) list.Add(Anniversary(yearsCompleted));
+            return list;
+        }
     }
 }

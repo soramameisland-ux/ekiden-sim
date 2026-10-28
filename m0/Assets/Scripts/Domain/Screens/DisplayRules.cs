@@ -13,6 +13,18 @@ namespace Ekiden.Domain.Screens
     {
         public const double K_UI_HINT_LATE = 0.85, K_UI_HINT_CAP = 0.95;
 
+        /// <summary>候補の評価★(05 §6.1。市場評価 V から): V &lt; 42 → 1 / &lt; 48 → 2 / &lt; 54 → 3 / &lt; 60 → 4 / それ以上 → 5。</summary>
+        public static int Stars(double v)
+        {
+            return v < 42.0 ? 1 : (v < 48.0 ? 2 : (v < 54.0 ? 3 : (v < 60.0 ? 4 : 5)));
+        }
+
+        /// <summary>ランク文字の大小(S = 7 … G = 0)。月末レポートの『ランクアップ』の判定と score に使う(R-10)。</summary>
+        public static int RankValue(char letter)
+        {
+            return "GFEDCBAS".IndexOf(letter);
+        }
+
         /// <summary>R-01: 能力・力 P・適性値のランク。S ≥ 90 / A ≥ 80 / B ≥ 70 / C ≥ 60 / D ≥ 50 / E ≥ 40 / F ≥ 30 / G。</summary>
         public static char RankLetter(double v)
         {

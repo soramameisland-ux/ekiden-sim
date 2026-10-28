@@ -46,10 +46,13 @@ namespace Ekiden.Domain.Screens
         }
 
         /// <summary>テーマ(4 週)の能力別の XP(xu)の合計(走行量を含む)。</summary>
-        public static double[] ThemeGains(TrainingMaster m, string themeId)
+        public static double[] ThemeGains(TrainingMaster m, string themeId) { return ThemeGains(m, m.Themes[themeId]); }
+
+        /// <summary>週メニューの並び(テーマの 4 週、または自由編集 <c>th.custom</c> の 4 週)の能力別の XP(xu)の合計(走行量を含む)。</summary>
+        public static double[] ThemeGains(TrainingMaster m, IEnumerable<Menu> weeks)
         {
             var tot = new double[StatInfo.Count];
-            foreach (Menu menu in m.Themes[themeId])
+            foreach (Menu menu in weeks)
             {
                 for (int i = 0; i < tot.Length; i++) tot[i] += m.KeySessions[menu.Key1].Gain[i];
                 for (int i = 0; i < tot.Length; i++) tot[i] += m.KeySessions[menu.Key2].Gain[i];
@@ -59,9 +62,11 @@ namespace Ekiden.Domain.Screens
         }
 
         /// <summary>そのテーマの XP の配分を、選手の乗数 gm(null = 乗数なし)で重み付けした平均の乗数。1.00 = 標準。</summary>
-        public static double FitValue(TrainingMaster m, double[] gm, string themeId)
+        public static double FitValue(TrainingMaster m, double[] gm, string themeId) { return FitValue(m, gm, m.Themes[themeId]); }
+
+        public static double FitValue(TrainingMaster m, double[] gm, IEnumerable<Menu> weeks)
         {
-            double[] g = ThemeGains(m, themeId);
+            double[] g = ThemeGains(m, weeks);
             double tot = 0.0;
             foreach (double x in g) tot += x;
             double acc = 0.0;
@@ -75,6 +80,12 @@ namespace Ekiden.Domain.Screens
         public static double FitView(TrainingMaster m, Style style, IReadOnlyList<Gift> gifts, bool revealed, string themeId)
         {
             return FitValue(m, Individuality.GrowthMult(style, revealed ? gifts : new Gift[0]), themeId);
+        }
+
+        /// <summary>同上。テーマの代わりに週メニューの並び(自由編集 <c>th.custom</c> など)で。</summary>
+        public static double FitView(TrainingMaster m, Style style, IReadOnlyList<Gift> gifts, bool revealed, IEnumerable<Menu> weeks)
+        {
+            return FitValue(m, Individuality.GrowthMult(style, revealed ? gifts : new Gift[0]), weeks);
         }
     }
 }

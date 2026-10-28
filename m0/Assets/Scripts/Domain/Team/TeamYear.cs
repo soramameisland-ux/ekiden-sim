@@ -17,6 +17,24 @@ namespace Ekiden.Domain.Team
         public readonly List<Runner> Quit = new List<Runner>();
     }
 
+    /// <summary>年度末の精算の内訳(05 §4.1。金額は万円)。画面(SC-12)の収支の表示用で、規則には作用しない。保存しない(年度末の画面は中断できない。09 §4.6)。</summary>
+    public sealed class Settlement
+    {
+        public int FundsBefore;                 // 精算前の資金
+        public double IncomeFormula;            // 800 + 名声 + 0.0012 × 名声² + 25 × 評価ポイント
+        public double IncomeMod;                // funds_year の補正
+        public double Staff;                    // スタッフ給与
+        public double Upkeep;                   // 施設の維持
+        public int Members;                     // 部員数(卒業前)
+        public double MembersExpense;           // 15 × 部員数
+        public int FundsAfterOps;               // 収支のあと・強化の前の資金(万円に丸めたもの)
+        public int FundsAfter;                  // 自動の強化のあと(手動の強化のときは FundsAfterOps と同じ。強化は画面の操作)
+        public FacilityLevels FacBefore, FacAfter;
+
+        public double Income { get { return IncomeFormula + IncomeMod; } }
+        public double Expense { get { return Staff + Upkeep + MembersExpense; } }
+    }
+
     public static class TeamYear
     {
         public const int MinRunners = 5;                 // 在籍人数の下限(02 I-07)
@@ -62,7 +80,7 @@ namespace Ekiden.Domain.Team
                 double uCorp = g.Uniform(), uOther = g.Uniform();
                 double power = TeamState.LongP(r.Stats);
                 CareerPath path = ChoosePath(power, uCorp, uOther);
-                OBRecord ob = OBRecord.FromGraduate(r, year, EnrollYear(r), path, "", IsHallOfFame(r, power));
+                OBRecord ob = OBRecord.FromGraduate(r, year, EnrollYear(r), path, r.HighSchool > 0 ? "hs." + r.HighSchool + ".name" : "", IsHallOfFame(r, power));
                 s.Obs.Add(ob);
                 res.Graduates.Add(ob);
                 Remove(s, r);
@@ -95,16 +113,26 @@ namespace Ekiden.Domain.Team
         /// 年度の収支(05 §4.1)と強化(§4.2。順番と上限は <see cref="FacilityPolicy"/>)。収入 = 名声と評価ポイントの式 + <c>funds_year</c> の補正(期間中の年度末に 1 回)、
         /// 支出 = スタッフ + 施設の維持 + 部員の費用(卒業前の人数)。資金は万円の整数に丸める。<paramref name="rank"/> = 監督ランク(強化の上限を決める)。<paramref name="upgrade"/> = false のときは収支だけ(強化は画面の操作 <c>UpgradeFacility</c> / <c>UpgradeRecommended</c>)。
         /// </summary>
-        public static void Settle(TeamState s, double prestige, int yearPoints, int rank, bool upgrade = true)
+        public static Settlement Settle(TeamState s, double prestige, int yearPoints, int rank, bool upgrade = true)
         {
             FacilityLevels f = s.Fac;
-            double income = WorldMath.Income(prestige, yearPoints) + s.ModSum(ModKind.FundsYear);
+            double formula = WorldMath.Income(prestige, yearPoints), mod = s.ModSum(ModKind.FundsYear);
+            double income = formula + mod;
             double staff = WorldMath.StaffExpense(f.Coach, f.Trainer, f.Nutri, f.Scout);
             double upkeep = WorldMath.FacilityUpkeep(f.Dorm, f.Track, f.Hill, f.Gym, f.Medical);
+            var rec = new Settlement
+            {
+                FundsBefore = s.Funds, IncomeFormula = formula, IncomeMod = mod, Staff = staff, Upkeep = upkeep,
+                Members = s.Runners.Count, MembersExpense = WorldMath.RunnerExpense(s.Runners.Count), FacBefore = f,
+            };
             double funds = Q6.Round(s.Funds + (income - staff - upkeep - WorldMath.RunnerExpense(s.Runners.Count)));
+            rec.FundsAfterOps = Rounding.HalfUp(funds);
             if (upgrade) FacilityPolicy.Upgrade(ref f, ref funds, rank);
             s.Funds = Rounding.HalfUp(funds);
             s.Fac = f;
+            rec.FundsAfter = s.Funds;
+            rec.FacAfter = f;
+            return rec;
         }
     }
 }

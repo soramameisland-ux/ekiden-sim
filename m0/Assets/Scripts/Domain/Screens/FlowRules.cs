@@ -77,10 +77,16 @@ namespace Ekiden.Domain.Screens
             }
         }
 
+        /// <summary>月末レポートの材料 1 件。<c>Kind</c> / <c>Key</c> / <c>Score</c> が選択の規則(TV-12)の入力。残りは画面に出すための付随情報(選択には使わない)。</summary>
         public struct ReportItem
         {
             public string Kind, Key;
             public double Score;
+            public int RunnerId;                // 選手に関する項目(0 = なし)
+            public string EventId;              // awaken・notice の元のイベント
+            public string SkillId;              // awaken: 覚醒した特殊能力(skill. 接頭辞なし)
+            public int Value;                   // rank_up: 能力の添字 / big_growth: 能力の増加の合計 / form_up: 調子の差
+            public char Letter;                 // rank_up: 新しいランク文字
         }
 
         /// <summary>優先度の高い順、同じ種別は score の大きい順に最大 3 件、全体で 7 件。戻り値は表示する項目。『ほか n件』は items.Count − 戻り値の数。</summary>

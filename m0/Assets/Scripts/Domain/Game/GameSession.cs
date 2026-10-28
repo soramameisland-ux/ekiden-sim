@@ -70,6 +70,7 @@ namespace Ekiden.Domain.Game
         public bool IsYearSettled { get { return _ys != null && _ys.Settled; } }
 
         public TrainingMaster Master { get; }
+        public EventCatalog Catalog { get; }
         private readonly TeamWeek _week;
         private readonly EventPhase _phase;
         private readonly IChoicePolicy _policy = new DefaultChoicePolicy();
@@ -91,6 +92,7 @@ namespace Ekiden.Domain.Game
             World = world;
             School = school;
             Master = master;
+            Catalog = catalog;
             _week = new TeamWeek(master);
             _phase = new EventPhase(catalog, rngs, new ApproxEventWorld(seed));
         }
@@ -353,10 +355,23 @@ namespace Ekiden.Domain.Game
         /// <summary>直近の年度末の卒業と退部。</summary>
         public YearTurnover LastTurnover { get; private set; }
 
+        /// <summary>直近の年度末の精算の内訳(年度の結果の画面 SC-12)。保存しないので、復元した直後は null。</summary>
+        public Settlement LastSettlement { get; private set; }
+
+        private int _settlementYear = -1, _turnoverYear = -1, _intakeYear = -1;
+
         /// <summary>直近の年度末に入学した選手の ID(入学者発表の画面)。</summary>
         public IReadOnlyList<int> LastIntakeIds { get { return _lastIntake; } }
 
         private List<int> _lastIntake = new List<int>();
+
+        /// <summary>直近の入学者のうち、声かけ・練習会で狙っていた選手の ID と、候補のときの評価★(入学者発表の画面 SC-14)。保存しない。</summary>
+        public IReadOnlyCollection<int> LastIntakeTargeted { get { return _lastIntakeTargeted; } }
+
+        public IReadOnlyDictionary<int, int> LastIntakeStars { get { return _lastIntakeStars; } }
+
+        private HashSet<int> _lastIntakeTargeted = new HashSet<int>();
+        private Dictionary<int, int> _lastIntakeStars = new Dictionary<int, int>();
 
         private void AutoDeclare(int year, int month)
         {
@@ -480,13 +495,15 @@ namespace Ekiden.Domain.Game
 
         void IPlayerSide.Finance()
         {
-            TeamYear.Settle(State, School.Prestige, School.YearPoints, School.Rank(), AutoUpgrade);
+            LastSettlement = TeamYear.Settle(State, School.Prestige, School.YearPoints, School.Rank(), AutoUpgrade);
+            _settlementYear = Year;
             SyncSchool();
         }
 
         void IPlayerSide.Graduating(IReadOnlyList<WorldRunner> graduates)
         {
             LastTurnover = TeamYear.GraduateAndQuit(State, Year, Rngs);
+            _turnoverYear = Year;
         }
 
         WorldRunner IPlayerSide.TicketStep(int year, YearResult res, IRngFactory rngs)
@@ -547,9 +564,14 @@ namespace Ekiden.Domain.Game
                 allocated.Remove(lowest);
             }
             _lastIntake = new List<int>();
+            _intakeYear = Year;
+            _lastIntakeTargeted = new HashSet<int>();
+            _lastIntakeStars = new Dictionary<int, int>();
             foreach (WorldRunner c in allocated)
             {
                 Runner r = RunnerFactory.FromCandidate(c, s.NextRunnerId++, enrollWeek, Rngs, s.SchoolPref, _targets.Contains(c.Index));
+                if (_targets.Contains(c.Index)) _lastIntakeTargeted.Add(r.Id);
+                _lastIntakeStars[r.Id] = DisplayRules.Stars(c.V);
                 NameGenerator.Assign(r, Rngs, TakenIn(s));
                 s.Runners.Add(r);
                 s.InitBonds(r);
@@ -569,6 +591,7 @@ namespace Ekiden.Domain.Game
                 s.Runners.Add(t);
                 s.InitBonds(t);
                 _lastIntake.Add(t.Id);
+                _lastIntakeStars[t.Id] = DisplayRules.Stars(sr.V);
             }
             _ticketRecruit = null;
             return new List<WorldRunner>();                                          // 自校の選手は実体で持つ(世界の抽象の名簿には足さない)
