@@ -64,7 +64,7 @@ Unity のプロジェクトの根は `m0/` 自身(`Assets/` `Packages/` `Project
 - **ゲート A(済)**: Unity で Domain・Persistence・Platform.Abstractions がコンパイルエラー 0(asmdef の参照が `dotnet` の `.csproj` と食い違っていた問題は直した)。
 - **ゲート B**: IL2CPP でも T1 のベクタが参照モデルと全行一致し、そのビルドの中で T3 の ①②③ が一致する。端末・ビルドをまたいだビット一致は**求めない**(09 §8.4)ので、SHA-256 が SimCli(.NET)と違っても不合格にはしない(記録に残す)。
   1. Editor(Mono): メニュー **Ekiden → Verify → Run T1 + T3 in Editor (Mono)**(出力は `Logs/verify/editor/`)。
-  2. IL2CPP: メニュー **Ekiden → Verify → Build Windows IL2CPP player**(`Builds/verify-win-il2cpp/EkidenVerify.exe`。初回は数分。Visual Studio の「C++ によるデスクトップ開発」と Unity の Windows Build Support (IL2CPP) が要る)。
+  2. IL2CPP: メニュー **Ekiden → Verify → Build Windows IL2CPP player**(`Builds/verify-win-il2cpp/EkidenVerify.exe`。初回は数分。Visual Studio の「C++ によるデスクトップ開発」と Unity の Windows Build Support (IL2CPP) が要る。**モジュールを足したあとは Unity を再起動する**。しないと『ビルドに失敗しました』になる)。
   3. 実行(PowerShell。`m0` で):
      ```
      New-Item -ItemType Directory -Force Logs\verify\il2cpp | Out-Null
