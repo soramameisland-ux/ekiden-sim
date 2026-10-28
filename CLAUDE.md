@@ -31,7 +31,7 @@
 
 ```
 cd m0
-dotnet test Ekiden.sln -c Release          # 611 件(Domain 463 + Persistence 125 + App 23)。約 1.5 分。全部緑が前提
+dotnet test Ekiden.sln -c Release          # 614 件(Domain 466 + Persistence 125 + App 23)。約 1.5 分。全部緑が前提
 dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)
@@ -79,7 +79,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 
 - 文字列は `m0/Assets/Strings/ja.json`(正)。ID を足したら `SimCli strings seed`(足りないキーだけ足す)。本文を編集するときは ja.json を直接。`EventDef.Hint` は設計メモで表に入れない(L-63)。
 - 仕様 00〜10 は一巡済み。**M0(段階 0〜10)完了**。M1 準備として、実体の自校 + 世界(`GameSession`)・手動操作の入口・スカウト・進行制御・区間オーダー・当日(L-56)・**中断セーブ(レース進行中を含む。09 §4.6。L-62)**まで Domain / Persistence に入っている。
-- **画面向けの読み取り API(Views)**: `m0/Assets/Scripts/Domain/Views/` + `Game/GameSession.Views*.cs`。画面ごとの対応(○ △ ✗)と足りないもの(G-01〜G-17)は **`08b_screen_data.md`**。Views は状態を変えず、語は文字列テーブルのキーで返し、隠す情報(素質・体質・成長タイプ・未判明の素養)を型に入れない。新しい View を足すときは、実際の状態と**独立に計算した値**との突き合わせ + 変異(わざと壊してテストが落ちること)で確かめる。
+- **画面向けの読み取り API(Views)**: `m0/Assets/Scripts/Domain/Views/` + `Game/GameSession.Views*.cs`。画面ごとの対応(○ △ ✗)と足りないもの(G-01〜G-17)は **`08b_screen_data.md`**。Views は状態を変えず、語は文字列テーブルのキーで返し、隠す情報(素質・体質・成長タイプ・未判明の素養)を型に入れない。新しい View を足すときは、実際の状態と**独立に計算した値**との突き合わせ + 変異(わざと壊してテストが落ちること)で確かめる。型の形は `ViewSchemaTests`(リフレクション)が守る: 隠す情報の名前(`Potential` `Q` `A0` など)を持たず、`Runner` / `TeamState` / `School` などの実体を抱え込まない(例外は表に書く)。
 - **次**: M1 の段階 1 以降(Unity 上での 1 年度の縦切り。01 §13。UI Toolkit の技術検証を含む)。Unity のゲート A・B は合格。Unity Editor・IL2CPP・実機での T3〜T5 の確認は、この環境ではできない(ローカルが要る)。
 - **残っている課題**: L-59(軽傷の出走。仕様は出られる / C# は外している)・L-60(檄の先行使用と走者ごとの効き)・L-61(予選会の当日の操作)・L-52〜L-55(名前の表・予選会の疲労と調子の反映・区間記録・`rival_same_hs` の近似・資金の使い道 L-05・型に合わせた育成の自動化 L-24)・観戦モードの演出・月末レポートの項目・新規ゲームの画面(Unity の層)。
 
