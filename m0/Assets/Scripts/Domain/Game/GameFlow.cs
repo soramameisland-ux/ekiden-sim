@@ -400,6 +400,7 @@ namespace Ekiden.Domain.Game
                 {
                     int id = w.RunnerIds[i];
                     WeekReport r = w.Reports[i];
+                    if (r.GiftRevealed) items.Add(new FlowRules.ReportItem { Kind = "gift_reveal", Key = "gift:" + id, Score = 0, RunnerId = id });
                     Runner ir = S.FindRunner(id);
                     double power = ir != null ? TeamState.LongP(ir) : 0.0;                       // 故障の score = 力 P
                     if (r.NewInjury == InjurySeverity.Severe) items.Add(new FlowRules.ReportItem { Kind = "injury_severe", Key = "inj:" + id, Score = power, RunnerId = id });

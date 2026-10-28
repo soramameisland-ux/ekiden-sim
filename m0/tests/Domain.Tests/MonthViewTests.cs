@@ -98,15 +98,16 @@ namespace Ekiden.Domain.Tests
                     }
                     if (it.RunnerId != 0) Assert.AreEqual(a.State.FindRunner(it.RunnerId).FamilyName + a.State.FindRunner(it.RunnerId).GivenName, it.RunnerName);
                 }
-                int injuries = 0, awaken = 0, notices = 0;
+                int injuries = 0, awaken = 0, notices = 0, giftReveals = 0;
                 foreach (WeekOutcome w in s.Report.Weeks)
                 {
+                    giftReveals += w.Reports.Count(x => x.GiftRevealed);
                     injuries += w.Reports.Count(x => x.NewInjury == InjurySeverity.Severe || x.NewInjury == InjurySeverity.Moderate);
                     awaken += w.Events.Count(f => f.Def.Category == EventCategory.Awakening);
                     notices += w.Events.Count(f => f.Def.Category != EventCategory.Awakening && !f.Def.Interactive);
                 }
                 int returns = start.Injured.Count(id => a.State.FindRunner(id) != null && !a.State.FindRunner(id).IsInjured);
-                int expectedTotal = injuries + awaken + notices + returns + expectedRank.Count + expectedGrowth.Count + expectedForm.Count;
+                int expectedTotal = injuries + awaken + notices + giftReveals + returns + expectedRank.Count + expectedGrowth.Count + expectedForm.Count;
                 Assert.AreEqual(expectedTotal, v.Items.Count + v.More, "材料の総数 = 出る件数 + ほか n 件(仕様 R-10 の種別ごとの数え方)");
                 Assert.LessOrEqual(v.Items.Count, FlowRules.K_UI_REPORT_MAX);
                 for (int i = 1; i < v.Items.Count; i++)

@@ -43,6 +43,7 @@ namespace Ekiden.Domain.Views
         public List<string> Traits = new List<string>();          // R-16 の性格タグ('serious' など)
         public bool Ticket;                         // 特別招聘の印(07 §11)
         public TicketKind TicketKind;
+        public bool MountainAdvice;                 // 登坂 / 下りの素養が判明している(『山対策のグループ(C)で伸ばせます』の案内。R-17)
         public bool SameHometownAsSelected;         // 選んでいる選手と同郷(印 ●)
         public bool SameHighSchoolAsSelected;       // 同じ高校(印 ◆)
     }

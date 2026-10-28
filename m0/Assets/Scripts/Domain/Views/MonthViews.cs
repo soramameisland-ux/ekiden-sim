@@ -15,6 +15,7 @@ namespace Ekiden.Domain.Views
         public string SkillId;                      // awaken: 覚醒した特殊能力('skill.…')
         public SkillRank? SkillRank;                // awaken: 金・青・赤の枠(I-53)
         public Stat? Stat;                          // rank_up: 上がった能力
+        public List<Gift> Gifts = new List<Gift>();     // gift_reveal: 判明した素養(『登坂の素養があることが分かった』)
         public char Letter;                         // rank_up: 新しいランク文字
         public int Value;                           // big_growth: 能力の増加の合計 / form_up: 調子の差
     }

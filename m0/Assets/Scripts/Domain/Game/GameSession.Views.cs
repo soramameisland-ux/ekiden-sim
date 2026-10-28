@@ -111,6 +111,7 @@ namespace Ekiden.Domain.Game
                 if (rank == SkillRank.Gold) v.GoldSkills++; else if (rank == SkillRank.Red) v.RedSkills++; else v.BlueSkills++;
             }
             if (r.Style.HasValue) v.StyleChips = Presentation.StyleChips(r.Style.Value);
+            v.MountainAdvice = r.GiftRevealed && r.Gifts.Any(g => g == Gift.Climber || g == Gift.Descender);
             v.Traits = r.Traits.Select(t => t.ToLowerInvariant()).ToList();
             if (sel != null && sel.Id != r.Id)
             {

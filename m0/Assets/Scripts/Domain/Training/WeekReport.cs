@@ -15,6 +15,7 @@ namespace Ekiden.Domain.Training
         public double? InjuryP;                            // 故障中の週は null
         public InjurySeverity? NewInjury;                  // その週に起きた故障(なければ null)
         public int NewInjuryWeeks;
+        public bool GiftRevealed;                          // その週に素養が判明した(素養を持つ選手だけ。月末レポートの gift_reveal。10 §8)
         public int Peaking;
         public double Noise;
         public double FormScore;

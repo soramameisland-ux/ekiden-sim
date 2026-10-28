@@ -109,6 +109,11 @@ namespace Ekiden.Domain.Team
                 Menu menu = MenuFor(s, r, out camp, out individual);
                 WeekReport rep = _res.Resolve(r, menu, s.Fac, month, rngs, r.Id, s.AbsWeek, camp: camp, safety: safety, individual: individual, bondAvg: r.BondAvg, mods: s.ModsFor(r), safetyF: safetyF);
                 reports.Add(rep);
+                if (!r.GiftRevealed && s.AbsWeek - r.EnrollWeek >= Individuality.K_GIFT_REVEAL_WEEKS)      // 素養は入部から K_GIFT_REVEAL_WEEKS 週で判明(表示だけが変わる。10 §8)
+                {
+                    r.GiftRevealed = true;
+                    rep.GiftRevealed = r.Gifts.Length > 0;
+                }
                 // 追跡の値(06 §10・03 §7.2)
                 if (rep.NewInjury.HasValue)
                 {

@@ -570,7 +570,11 @@ namespace Ekiden.Domain.Game
             foreach (WorldRunner c in allocated)
             {
                 Runner r = RunnerFactory.FromCandidate(c, s.NextRunnerId++, enrollWeek, Rngs, s.SchoolPref, _targets.Contains(c.Index));
-                if (_targets.Contains(c.Index)) _lastIntakeTargeted.Add(r.Id);
+                if (_targets.Contains(c.Index))
+                {
+                    _lastIntakeTargeted.Add(r.Id);
+                    if (Scouting.GiftKindVisible(ScoutStage.Invited, School.ScoutLv)) r.GiftRevealed = true;      // スカウトで素養の種類を見た選手は入部と同時に判明(10 §8)
+                }
                 _lastIntakeStars[r.Id] = DisplayRules.Stars(c.V);
                 NameGenerator.Assign(r, Rngs, TakenIn(s));
                 s.Runners.Add(r);

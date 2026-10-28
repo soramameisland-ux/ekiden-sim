@@ -40,6 +40,7 @@ namespace Ekiden.Domain.Game
                     iv.SkillRank = SkillRankOf(iv.SkillId);
                 }
                 if (it.Kind == "rank_up") { iv.Stat = (Stat)it.Value; iv.Letter = it.Letter; }
+                if (it.Kind == "gift_reveal" && r != null && r.GiftRevealed) iv.Gifts.AddRange(r.Gifts);
                 v.Items.Add(iv);
             }
             v.Notices.AddRange(rep.Deferred);
