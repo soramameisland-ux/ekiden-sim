@@ -42,6 +42,8 @@
 | `EventDialog(f, own)` | `EventDialogView` | SC-36 | 題のキー・当事者・選択肢(キー・選べるか・おまかせの既定・効果の構造 3 つまで + ほか n 件)・覚醒(特殊能力と等級)| `DialogViewTests` |
 | `ConditionWarning()` | `ConditionWarnView` | SC-41 | 警告の値(70。合宿の月は 80)以上で安全網(85)未満の選手・次の週の疲労と故障の確率・個別指導の有無 | 同上 |
 | `InjuryDialog(id)` | `InjuryDialogView` | SC-42 | 程度・残り週数・次の大会・間に合うか・登録 / 先発(提出したオーダー)か・代役の候補 | 同上 |
+| `RaceDayView(rd)` | `RaceDayView` | SC-24 | 確定した環境・区間ごとの先発(調子・適性 ◎〇△・余裕の目安・目安どおりの指示・いまの指示・期待時間・当日変更の印)・控え(調子・疲労・STA / PAC / CON の印・区間ごとの期待時間の差)・当日変更と檄の残り・いまの決定での自校の予想順位 | `RaceDayViewTests` |
+| `RaceLive(rd)` | `RaceLiveView` | SC-25 | 通過した区間数・これから走る区間・異変(ブレーキ / 失速・損失・通知の位置)・檄の残り・最後に通過した中継所の順位表(先頭 3 校 + 自校の前後 1 校・区切り)| 同上 |
 | `AnnualPlanView()` | `AnnualPlanView` | SC-10 | 重点・目標大会・ピーキング・期待目標と予算ボーナス・重点 3 種の 12 か月のテーマ / 標準プランとの適性値 P の差 / 故障の回数 | `PlanOverviewViewTests` |
 | `Preview(kind)` | `PreviewView` | SC-23 | 出場校(前評判の順位・値・印・戦力順位)と区間適性 Long の上位 3 人(名前・学年・持ちタイム。他校は 04 §11 の復元)・予報(第三戦は往路と復路)| 同上 |
 | `ScoutCandidates()` / `ScoutCandidate(i)` | `ScoutCandidateView` | SC-28・29 | 名前・★・V・出身(県・高校・距離帯)・持ちタイム・性格タグ・競合度・段階ごとの見え方(視察: 見込み ± σ・個性チップ / 練習会: 成長タイプ・素養の有無 / 担当 Lv3: 素養の種類)・いま行動できるか | `ScoutViewTests` |
@@ -109,8 +111,8 @@
 | SC-21 エントリー | summary / roster / entered / 検証 | `Entry(kind)` | ○ |
 | SC-22 区間オーダー | sections / candidates / detail / 下段 | `Order(kind)` / `OrderCandidates()` | ○。前年度の優勝タイム・環境の予報(`Forecast`)・コースの高低差は別の API(△)|
 | SC-23 他校情報・予報 | 出場校の前評判の印・戦力順位・**上位 3 選手(名前・学年・持ちタイム)** / 予報 | `Preview(kind)`(`RacePreview` + `Forecast` を画面向けにまとめたもの)| ○ |
-| SC-24 当日 | env / lineup(調子・余裕の目安・適性・期待タイム)/ bench / 残り回数 | `RaceDay.View()` / `Lineup` / `Bench` / `Environment` / `SwapsLeft` | △ `RaceDay` が持つ値がそろう。Views の型は無い(画面向けにまとめるだけ)|
-| SC-25 レース進行 | course / standings(7 行)/ lineup / 見どころ / 檄 | `RaceDay.Standings()` / `NextIncident()` / `GekiLeft` | △ **見どころ(首位交代・好走・区間賞・記録)**は判定が未実装(G-02)|
+| SC-24 当日 | env / lineup(調子・余裕の目安・適性・期待タイム)/ bench / 残り回数 | `RaceDayView(rd)` | ○(控えの暑さ / 向かい風 / 雨への強さの印と、区間ごとの期待時間の差を含む)|
+| SC-25 レース進行 | course / standings(7 行)/ lineup / 見どころ / 檄 | `RaceLive(rd)` | △ 順位表(先頭 3 校 + 自校の前後 1 校)・次の区間・異変と檄の残りは ○。**見どころ(首位交代・好走・区間賞・記録)**は判定が未実装(G-02)。『繰上』の印は中継所の表に未対応 |
 | SC-26 大会の結果 | 総合 / 区間賞 / 自校 / 記録 / 予選会 | `RaceResult()` | ○。『大会の見どころ』と『記録の更新』は G-02・G-03。自動で行われた当日変更と檄の使用は `RaceDayRecord`(△)。予選会の結果の View は無い(△ 小さい)|
 
 ### 3.5 スカウト
