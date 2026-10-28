@@ -65,7 +65,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 ## Unity での確認(M1 のゲート。09 §17.8・`m0/README.md`)
 
 - ゲート A(済): Unity で Domain / Persistence がエラー 0。**asmdef の `references` と `.csproj` の `ProjectReference` は両方で確かめる**(`dotnet test` だけでは asmdef の参照漏れが出ない)。
-- ゲート B: IL2CPP のビルド(メニュー Ekiden → Verify)で T1 が全行一致・T3 ①②③ が一致。手順は README。結果の `vectors.txt` は `python -I tools/compare_vectors.py <ファイル>` で照合する。
+- ゲート B(**合格**。IL2CPP の Windows ビルドで T1 全行一致・T3 一致。2026-10-28): 再実行の手順は README(メニュー Ekiden → Verify)。結果の `vectors.txt` は `python -I tools/compare_vectors.py <ファイル>` で照合する。
 
 ## 受け入れ基準(09 §16.3)
 
@@ -76,7 +76,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 ## 状況(2026-10 時点)
 
 - 仕様 00〜10 は一巡済み。**M0(段階 0〜10)完了**。M1 準備として、実体の自校 + 世界(`GameSession`)・手動操作の入口・スカウト・進行制御・区間オーダー・当日(L-56)まで Domain に入っている。
-- **次**: M1 = Unity 上での 1 年度の縦切り(01 §13。UI Toolkit の技術検証を含む)。Unity Editor・IL2CPP・実機での T3〜T5 の確認は、この環境ではできない(ローカルが要る)。
+- **次**: M1 の段階 1 以降(Unity 上での 1 年度の縦切り。01 §13。UI Toolkit の技術検証を含む)。Unity のゲート A・B は合格。Unity Editor・IL2CPP・実機での T3〜T5 の確認は、この環境ではできない(ローカルが要る)。
 - **残っている課題**: L-59(軽傷の出走。仕様は出られる / C# は外している)・L-60(檄の先行使用と走者ごとの効き)・L-61(予選会の当日の操作)・L-52〜L-55(名前の表・予選会の疲労と調子の反映・区間記録・`rival_same_hs` の近似・資金の使い道 L-05・型に合わせた育成の自動化 L-24)・観戦モードの演出・月末レポートの項目・新規ゲームの画面(Unity の層)。
 
 ## 落とし穴(過去に踏んだもの)
@@ -86,6 +86,8 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 - 仕様書の定数表はテスト(`DocSyncTests` など)が読む。表の値を変えたらコードと合わせる。表を足したら `lint_tables.py`。
 - `GameFlow` のテストで保存を繰り返すと、復元した流れが同じ停止を再び出す。保存は『週 × 停止の鍵』ごとに 1 回にし、操作は冪等にする(暴走した過去あり)。
 - 世界の保存の `School.Funds` は週の終わりに `SyncSchool()` で同期する(古い値が残る)。
+- IL2CPP のビルドでは `BitConverter.IsLittleEndian` が `False` と出た(x64 なのに)。エンディアンに依存するコードを書かない(いまのゲームのコードは使っていない)。
+- IL2CPP のビルドには **Visual Studio の C++ ツール(MSVC v143)と Windows SDK の両方**が要る。Unity のモジュールを足したあとは Unity を再起動する。
 - `WeekReport.NewInjury` のような `?` 型は `!= None` で比べない(null が毎週『新しい故障』になる)。
 
 ## git

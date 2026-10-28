@@ -1081,6 +1081,8 @@ verify/              参照モデル(Python)。仕様の正本の検算
 - **Unity プロジェクト**: 根は `m0/`(`Assets/` の Domain・Persistence・Platform の asmdef をそのまま使う)。版は **Unity 6.3 LTS(6000.3.x)**。UI Toolkit の採否(U-17)は §15.5 の基準で M1 の試作のあとに決める。
 - **ゲート A(済)**: Unity で Domain・Persistence・Platform.Abstractions がエラー 0。見つけたこと: `Ekiden.Persistence.asmdef` の `references` に `Ekiden.Platform.Abstractions` がなく(`.csproj` は Platform を参照していた)、`dotnet test` では出ずに Unity だけでコンパイルエラーになった。asmdef と `.csproj` の参照は**両方**で確かめる。
 - **ゲート B**: IL2CPP のビルドで ①T1 のベクタが参照モデルと全行一致(`compare_vectors.py <出力ファイル>`)②そのビルドの中で T3 の ①②③ が一致(`determinism.txt` に `×` なし)。**SimCli(.NET)と IL2CPP の SHA-256 の一致は求めない**(§8.4)。違うときは記録に残し、統計で比べる(§16.3)。実行は `Assets/Scripts/DevTools`(`VerifyBootstrap`・`Editor/VerifyMenu`)と `README` の手順。コードは SimCli と共有(`Assets/Scripts/Verification`)。
+- **ゲート B(合格。2026-10-28)**: Unity 6000.3.24f1・Windows 11・i5-12400F・IL2CPP の Windows ビルド(`EkidenVerify.exe -batchmode -nographics -ekidenVerify`)で、終了コード 0・`compare_vectors.py` が `139 行: 不一致 0`・`result.txt` が `OK`。Editor(Mono)の T1・T3 も合格。つまずいたこと: ①IL2CPP のモジュールを足したあとは Unity の再起動が要る ②Visual Studio の C++ ツール(MSVC v143)だけでは足りず、**Windows SDK** も要る(『Could not set up a toolchain for Architecture x64』)。
+- **観測**: IL2CPP のビルドで `BitConverter.IsLittleEndian` が `False` と出た(x64 は実際にはリトルエンディアン。`env.txt` の記録にだけ使っている)。ゲームのコード(Domain・Persistence)は `BitConverter` もエンディアンも使わない(`grep` で 0 件)ので影響はないが、**エンディアンに依存するコードを書かない**こと。
 - **未了**: T5(性能・GC)の IL2CPP での実測(`bench`)と、§15.5 の UI 技術の検証は、ゲート B のあと。
 
 ---
