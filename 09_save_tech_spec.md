@@ -771,13 +771,13 @@ EntitlementGuarded(provider, cache, now, hw, run_total):
 | 差し込み | `{名前}` の**名前つき**。本文の `{school}` は呼び出し側が文字列で渡す(数値・時間は §13 の関数で整形してから渡す)|
 | 学校・選手の名前 | **表ではなくデータ**(セーブに入る。`SchoolState` / `Runner`)。**大会名・施設名・メニュー名**などの固定の語は表 |
 | 欠落 | 開発ビルド: 赤字で `⟦キー⟧` を表示して警告。製品: `？` を表示して診断ログに1回だけ残す。**CI で、マスタ・コード・画面から参照されるキーがすべて表にあること**と、本文の `{名前}` が呼び出しの引数と一致することを検査する(`StringsLint`)|
-| ID から決まるキー(M1 準備で実装)| ID が `ev.team.captain` なら `ev.team.captain.title` / `ev.team.captain.choice.{選択肢}`(**イベント ID の接頭辞 `ev.` を含める**)。特殊能力は `skill.{ID}.name`・練習 / テーマ / 走行量は `{ks.* / th.* / mil.*}.name`・シナリオは `{sc.*}.name` `.desc`・施設 `fac.{dorm 等}.name`・能力 `stat.{SPD 等}.name` `.abbr`・大会 `race.{fall / national / newyear / qualifier}.name`・指示 `instr.{attack / keep / hold}.name`・故障 `injury.{minor / moderate / severe}.name`・調子 `form.{2〜−2}.name`・成長 `growth.*.name`・個性 `style.{form / run / flow}.*.name`・素養 `gift.*.name`・性格 `trait.*.name` |
+| ID から決まるキー(M1 準備で実装)| ID が `ev.team.captain` なら `ev.team.captain.title` / `ev.team.captain.choice.{選択肢}`(**イベント ID の接頭辞 `ev.` を含める**)。特殊能力は `skill.{ID}.name`・練習 / テーマ / 走行量は `{ks.* / th.* / mil.*}.name`・シナリオは `{sc.*}.name` `.desc`・施設 `fac.{dorm 等}.name`・能力 `stat.{SPD 等}.name` `.abbr`・大会 `race.{fall / national / newyear / qualifier}.name`・指示 `instr.{attack / keep / hold}.name`・故障 `injury.{minor / moderate / severe}.name`・調子 `form.{2〜−2}.name`・成長 `growth.*.name`・個性 `style.{form / run / flow}.*.name`・素養 `gift.*.name`・性格 `trait.*.name`・校 `school.{0〜35}.name`・高校 `hs.{1〜216}.name`(OB の `high_school_name` に入るキー)・検証の理由 `problem.{コード}`・特別招聘券の節目 `tm.{win.fall 等}.name`(継続の記念は `tm.anniv.name` の `{years}`)|
 | かな | 選手の姓名・校名のかなは**データ**(`family_kana` ほか)で、設定『かな表示』で上に出す(08 §7.1)。ほかの本文に振り仮名は付けない |
 | 文字の範囲 | 製品のフォント資産に、**表・マスタ・名前の生成で使うすべての文字**が入っていること(`StringsLint` が文字の集合を出し、フォントの対応と突き合わせる。M1 の検証。L-31)|
 
 **実装(M1 準備)**
 - 部品: `Platform/Abstractions/ILocalization.cs`(`Get(key, 名前, 値, …)`・`Has`)・`TableLocalization.cs`(差し込み `{名前}`・`{{ }}`・欠落は開発 `⟦キー⟧` / `⟦名前⟧`、製品 `？`・キーの欠落は診断ログに 1 回)・`Persistence/Strings/StringTable.cs`(厳格な読み書き。キーの重複・空のキー・文字列でない値・末尾の余計な文字は不正。書くときはキーの昇順)・`Verification/StringsLint.cs`(キーの書式・本文が空でない・差し込みの書式・呼び出しの引数との一致 `CheckCalls`・文字の集合 `Charset`・フォントにない文字 `MissingFrom`)。
-- 表: `Assets/Strings/ja.json`(245 件。イベントの題名 52 件・選択肢 80 件ほか)。`SimCli strings seed` が、ID から決まるキー(`Verification/StringsSeed.cs`。イベント・特殊能力・シナリオは Domain の名称から、練習・施設・能力・大会などは仮の名称)のうち**表にないものだけ**を足す(既にある本文は変えない)。以後は **ja.json が正**で、本文の編集は ja.json に直接行う。
+- 表: `Assets/Strings/ja.json`(516 件。イベントの題名 52 件・選択肢 80 件・校名 36 件・高校名 216 件ほか)。`SimCli strings seed` が、ID から決まるキー(`Verification/StringsSeed.cs`。イベント・特殊能力・シナリオは Domain の名称から、練習・施設・能力・大会などは仮の名称)のうち**表にないものだけ**を足す(既にある本文は変えない)。以後は **ja.json が正**で、本文の編集は ja.json に直接行う。
 - 検査: `SimCli strings lint` = 書式 / `strings chars [ja.json] [フォントの文字のファイル]` = 使われている文字(表の本文 + 名前の表 + 整形が出す文字)とフォントにない文字(L-31)。`StringsCoverageTests` が、**ID から決まるキーがすべて表にあること**・書式の指摘が 0 であることを CI で確かめる(新しいイベント・特殊能力・練習・施設などの ID を足すと、表に足すまで落ちる)。
 - 表に入れないもの: `EventDef.Hint`(設計メモ。覚醒イベントでは特殊能力の等級)。呼び出し側(画面)の `CheckCalls` の登録は、画面ができてから(M1)。
 
@@ -1087,7 +1087,7 @@ verify/              参照モデル(Python)。仕様の正本の検算
 - **週の順**(06 §7.1): 週の最初(年度の最初なら前年度の記録を送る・月の最初ならスカウトと指導のポイント・期限切れの補正・派生値 `Refresh`・エントリー締切なら登録)→ 全選手の週の解決(03 §6)と絆 → 予選会(10 月第 3 週)・大会(第 25・28・36 週)と大会後の処理(04 §10)→ イベント → 2 月の最初の週に招聘の宣言(おまかせ)→ 月末(絆の減衰・士気・やる気の規則 M1・M4〜M6)→ 年度末(05 §12: 名声・資金と強化・成長 → 卒業と退部 → 招聘の入学 → 割り当て)。
 - **世界との関係**: 他校・名声・割り当ては抽象の自校と**同じ道**(`WorldSim.BeginYear` `PlayQualifier` `PlayRace` `EndYear`)。自校だけ `IPlayerSide` の差し込みで実体の選手が受け持つ。抽象の自校の結果は**ビット同一**(T3 の SHA-256 は変わらない)。
 - **乱数**: 週の解決・イベント・大会は既存の鍵(label 1・2・4・5)。新しい鍵は label 9 の 1 本だけ(年度末の卒業・退部の抽選。新規ゲームの部員の間引きは年度 0)。
-- **結果**: T3(実体の自校)バイト一致(上の §5.6)。T4c(実体の自校の統計)は 05 §14.11。性能: 45 年度の通しが約 3 秒(1 年度 0.05 秒)。試験は 458 件(Domain 339 + Persistence 119)。
+- **結果**: T3(実体の自校)バイト一致(上の §5.6)。T4c(実体の自校の統計)は 05 §14.11。性能: 45 年度の通しが約 3 秒(1 年度 0.05 秒)。試験は 500 件(Domain 380 + Persistence 120)。読み取り API(`Views`。08b)を加えた。
 - **当日(04 §14.5)**: `GameSession.Race.cs`(オーダー・予報・前評判・当日を開く・予選会の登録)・`RaceDay.cs`(当日変更・指示・檄・レース進行)。当日の状態(当日変更・指示・檄)は**通常のセーブには入れない**(`GameFlow.CanSave` は練習が解決される前だけ。提出したオーダーは保存する)。アプリの中断では、当日の決定を `RaceDayRecord` にして**中断セーブ**に入れる(§4.6。K1)。
 - **操作と進行制御(08 §13.6)**: `GameSession.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`GameSession.Scout.cs`(スカウト)・`GameFlow.cs`(停止)。週は段階(`ResolveTraining` → `PlayWeekRaces` → `SelectWeekEvents` → `ResolveWeekEvents` → `FinishWeek` → 年度末は `SettleYear` → `TurnoverYear` → `AdvanceWeek`)に分け、おまかせの `StepWeek` と `GameFlow` が同じ段階を呼ぶ(何も操作しない流れ = おまかせ、バイト一致)。`WorldSim.EndYear` は精算(`EndYearSettle`)と後半(`EndYearTurnover`)に分けた(抽象の自校の結果はビット同一)。
 - **試験の見つけたこと**: ①保存の境目を『週の最初の処理のあと』にしたので、復元で `Refresh` が要る(なければ、絆の平均が復元後の最初の週の解決に入らず、バイト一致が崩れた)②グループを毎週決め直すと、手動のグループが戻る(08 R-04 に合わせて、保存される編成にした。参照モデルの `refresh` は決め直すので、差分テストは `Refresh(assignGroups: true)`)③停止から保存 → 読み込みをすると、同じ週の停止がもう一度出る(週の初めの停止は、その週の最初から再開する)。

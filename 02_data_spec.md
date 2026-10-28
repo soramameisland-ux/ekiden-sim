@@ -556,7 +556,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | `runner_id` | int | |
 | `name` / `kana` | string | |
 | `origin` | 出身県または出身国 | |
-| `high_school_name` | string | 名称のみ保存 |
+| `high_school_name` | string | 出身高校の**文字列テーブルのキー**(`hs.{id}.name`。高校がない・留学生は空)。表示のときに引く(09 §12.3)|
 | `school_id` | int | 在籍した大学 |
 | `enroll_year` / `grad_year` | int | |
 | `final_stats` | int[10] | 卒業時の能力 |
