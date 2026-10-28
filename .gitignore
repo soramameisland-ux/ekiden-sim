@@ -23,6 +23,7 @@ Recordings/
 # Unity が m0/ の直下に作る csproj / sln(Ekiden.sln だけ残す)
 /m0/*.csproj
 /m0/*.sln
+/m0/*.slnx
 !/m0/Ekiden.sln
 *.apk
 *.aab
