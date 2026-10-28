@@ -878,6 +878,8 @@ Assets/
       Fake/          テスト・SimCli 用の実装
     Presentation/    asmdef: Ekiden.Presentation      UI Toolkit・演出・入力
     App/             asmdef: Ekiden.App               起動・依存の組み立て・FlowController(08 §6)
+    Verification/    asmdef: Ekiden.Verification      T1 のベクタ・T3 の決定性の実行(SimCli と Unity の確認で共有。UnityEngine なし。M1 のゲート B)
+    DevTools/        asmdef: Ekiden.DevTools          Unity 専用の確認の入口(実機・IL2CPP の自己検査 `VerifyBootstrap`。Editor/ にメニューとビルド)
   Master/            マスタ JSON(TextAsset。§12.1)
   Strings/           文字列テーブル(§12.3)
 tools/
@@ -1073,6 +1075,13 @@ verify/              参照モデル(Python)。仕様の正本の検算
 - **操作と進行制御(08 §13.6)**: `GameSession.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`GameSession.Scout.cs`(スカウト)・`GameFlow.cs`(停止)。週は段階(`ResolveTraining` → `PlayWeekRaces` → `SelectWeekEvents` → `ResolveWeekEvents` → `FinishWeek` → 年度末は `SettleYear` → `TurnoverYear` → `AdvanceWeek`)に分け、おまかせの `StepWeek` と `GameFlow` が同じ段階を呼ぶ(何も操作しない流れ = おまかせ、バイト一致)。`WorldSim.EndYear` は精算(`EndYearSettle`)と後半(`EndYearTurnover`)に分けた(抽象の自校の結果はビット同一)。
 - **試験の見つけたこと**: ①保存の境目を『週の最初の処理のあと』にしたので、復元で `Refresh` が要る(なければ、絆の平均が復元後の最初の週の解決に入らず、バイト一致が崩れた)②グループを毎週決め直すと、手動のグループが戻る(08 R-04 に合わせて、保存される編成にした。参照モデルの `refresh` は決め直すので、差分テストは `Refresh(assignGroups: true)`)③停止から保存 → 読み込みをすると、同じ週の停止がもう一度出る(週の初めの停止は、その週の最初から再開する)。
 - **未了(L-52〜L-55)**: 名前の表(M1 のマスタ)/ 予選会の疲労と調子の反映 / 区間記録 / 他校の同じ高校の選手(`rival_same_hs`)は近似のまま / 資金の使い道(L-05)/ 型に合わせた育成の自動化(L-24)/ 軽傷の出走(L-59)・檄の先行使用と走者ごとの効き(L-60)・予選会の当日(L-61)/ 観戦モードの演出・月末レポートの項目・新規ゲームの画面(Unity の層、M1)。手動の操作(月間計画・登録・個別指導・スカウト・オーダー・当日)の入り口と進行制御は M1 準備で作った(下の 2 項)。
+
+### 17.8 M1 準備: Unity での確認(ゲート A・B)
+
+- **Unity プロジェクト**: 根は `m0/`(`Assets/` の Domain・Persistence・Platform の asmdef をそのまま使う)。版は **Unity 6.3 LTS(6000.3.x)**。UI Toolkit の採否(U-17)は §15.5 の基準で M1 の試作のあとに決める。
+- **ゲート A(済)**: Unity で Domain・Persistence・Platform.Abstractions がエラー 0。見つけたこと: `Ekiden.Persistence.asmdef` の `references` に `Ekiden.Platform.Abstractions` がなく(`.csproj` は Platform を参照していた)、`dotnet test` では出ずに Unity だけでコンパイルエラーになった。asmdef と `.csproj` の参照は**両方**で確かめる。
+- **ゲート B**: IL2CPP のビルドで ①T1 のベクタが参照モデルと全行一致(`compare_vectors.py <出力ファイル>`)②そのビルドの中で T3 の ①②③ が一致(`determinism.txt` に `×` なし)。**SimCli(.NET)と IL2CPP の SHA-256 の一致は求めない**(§8.4)。違うときは記録に残し、統計で比べる(§16.3)。実行は `Assets/Scripts/DevTools`(`VerifyBootstrap`・`Editor/VerifyMenu`)と `README` の手順。コードは SimCli と共有(`Assets/Scripts/Verification`)。
+- **未了**: T5(性能・GC)の IL2CPP での実測(`bench`)と、§15.5 の UI 技術の検証は、ゲート B のあと。
 
 ---
 

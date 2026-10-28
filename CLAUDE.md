@@ -18,6 +18,7 @@
 | `00`〜`10` の `*.md` | 仕様書。00 = 索引・課題表、01 = 基本設計とマイルストーン、02 = データ、03 = 育成、04 = レース、05 = 世界・スカウト、06 = イベント、07 = 特別招聘、08 / 08a = 画面、09 = 保存・技術・決定性、10 = 個性・素養 |
 | `verify/` | Python の参照モデル(`ref_model_03〜10.py`)・ゴールデン生成(`gen_golden_*.py`)・`lint_tables.py`。ゲーム本体ではない |
 | `m0/` | C# の Domain / Persistence / テスト / SimCli(.NET SDK だけで動く。詳しくは `m0/README.md`) |
+| `m0/` は **Unity プロジェクトの根でもある**(`Assets/` `Packages/` `ProjectSettings/`。Unity 6.3 LTS = 6000.3.x)。`.meta` は commit する。Unity が作る `m0/*.csproj` `*.sln` `*.slnx` と `Library/` は commit しない | `Assets/Scripts/Verification` = T1/T3 の実行(SimCli と共有)、`Assets/Scripts/DevTools` = Unity 専用の確認の入口 |
 | `m0/Assets/Scripts/Domain/` | 全規則(`netstandard2.1`・C# 9。Unity・時刻・ファイルを参照しない)。`Game/` が自校 + 世界の 1 回のプレイ |
 
 ## 必要な環境
@@ -44,9 +45,10 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 
 ## 壊してはいけない約束
 
-1. **再現性の目印**: `$S determinism 2 45` の先頭 8 件の SHA-256(抽象の自校)は `m0/tools/determinism_anchors.txt` と**完全一致**させる。
+1. **再現性の目印**: 同じ環境(Linux x64 の .NET 8 で作った)で、リファクタの前後に `$S determinism 2 45` の先頭 8 件の SHA-256(抽象の自校)が `m0/tools/determinism_anchors.txt` と**完全一致**すること。
    `$S determinism 2 45 | grep SHA-256 | head -8 | diff - tools/determinism_anchors.txt`(`m0/` で)。
    保存の形式や規則を**意図して**変えたときだけ更新し、理由を commit に書く。9 件目以降(実体の自校)は、保存 JSON の形が変わると変わる(正常)。
+   **別の環境(Windows の .NET・Unity の IL2CPP)で SHA が違っても、それだけでは不具合ではない**(端末・ビルドをまたいだビット一致は求めない。09 §8.4)。見るのは『その環境の中で T3 の ①②③ が一致するか』と、T1 のベクタが全行一致するか。
 2. **決定性(09 §15.3 D-1〜D-12)**: 乱数は `IRngFactory.Stream(label, a, b)` の鍵つきだけ(鍵の登録表は 09 §8.2。重なり 0 を試験で確認)・時刻を読まない・走査は ID 昇順・安定な整列・丸めは `floor(x+0.5)`・`double` のみ・保存する `double` は `Q6` を通す・浮動小数の和は仕様の順に素朴に足す(Python の `sum()` は補正つきなので使わない)。
 3. **何も操作しない進行制御 = 『おまかせ』の自動進行**(`GameFlow` ≡ `GameSession.StepWeek`)がバイト一致。
 4. **何も変えない当日(`RaceDay`)= 従来の『おまかせ』の当日**。見込み(`Preview`)= 実際の結果。
@@ -59,6 +61,11 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 - **保存の境目**: 週の最初の処理(`BeginWeek`)は**前の週の終わり**に走る。復元後は `state.Refresh(assignGroups:false)` が要る(なければバイト一致が崩れる)。グループは保存される割り当て(08 R-04)。
 - **当日**(`Game/RaceDay.cs`。04 §14.5): 乱数の引き方は指示・檄・当日変更に依存しないので、いまの決定で全チームを**再計算**する(`Preview`)。決められるのは `Resolved` 以降の区間だけ。当日の状態は保存しない(`GameFlow.CanSave` は練習の解決の前だけ)。
 - **進行制御**(`Game/GameFlow.cs`): `Advance()` だけが前に進む。停止は `StopKind`。観戦モードが Full のときだけ `RaceDayPrep` で止まる。
+
+## Unity での確認(M1 のゲート。09 §17.8・`m0/README.md`)
+
+- ゲート A(済): Unity で Domain / Persistence がエラー 0。**asmdef の `references` と `.csproj` の `ProjectReference` は両方で確かめる**(`dotnet test` だけでは asmdef の参照漏れが出ない)。
+- ゲート B: IL2CPP のビルド(メニュー Ekiden → Verify)で T1 が全行一致・T3 ①②③ が一致。手順は README。結果の `vectors.txt` は `python -I tools/compare_vectors.py <ファイル>` で照合する。
 
 ## 受け入れ基準(09 §16.3)
 

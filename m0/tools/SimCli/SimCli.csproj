@@ -8,5 +8,6 @@
     <ProjectReference Include="../../projects/Ekiden.Domain/Ekiden.Domain.csproj" />
     <ProjectReference Include="../../projects/Ekiden.Persistence/Ekiden.Persistence.csproj" />
     <ProjectReference Include="../../projects/Ekiden.Platform/Ekiden.Platform.csproj" />
+    <ProjectReference Include="../../projects/Ekiden.Verification/Ekiden.Verification.csproj" />
   </ItemGroup>
 </Project>

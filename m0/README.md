@@ -8,6 +8,8 @@
 |------|------|
 | `Assets/Scripts/Domain/` | ゲームの全規則(`netstandard2.1`・C# 9。UnityEngine・時刻・ファイルを参照しない。D-1〜D-12)。Unity の asmdef 付き |
 | `Assets/Scripts/Persistence/` | コンテナ・CRC32・セーブ定数(のちに世代・移行・検証と修復・同期) |
+| `Assets/Scripts/Verification/` | T1 のベクタ(`VectorsRunner`)と T3 の決定性(`DeterminismRunner`)の実行。SimCli と Unity の確認が同じコードを使う(`projects/Ekiden.Verification`) |
+| `Assets/Scripts/DevTools/` | Unity 専用の確認の入口(`VerifyBootstrap` = 実機・IL2CPP のビルドの自己検査、`Editor/VerifyMenu` = メニューとビルド)。`netstandard` の `.csproj` はなく、Unity だけで使う |
 | `Assets/Scripts/Platform/` | `Abstractions`(インターフェース)・`Fake`(テスト・SimCli 用)。ストア別の実装は M5 |
 | `projects/*.csproj` | 上のソースを `dotnet` でビルドする(Unity と同じソースを共有。`Assets/` の中に csproj は置かない) |
 | `tests/` | NUnit。`Domain.Tests`・`Persistence.Tests`。`Golden/` は参照モデルが出した差分テスト用のデータ |
@@ -54,6 +56,22 @@ $S flow 1 Mid 2             # 進行制御の停止の並び(何も操作しな�
 ## M1 準備: 自校の保存(09 §5.6・§17.6)
 
 `Persistence/Snapshot/TeamSnapshot.cs`(自校の取り出しと復元)。参照モデルが書いた保存 150 件の往復・検証器を修復なしで通す・試験用の週ループ(`tests/Persistence.Tests/TeamSimDriver.cs`。6 年度)で『保存 → 読み込み → 続行』が『続行のみ』とバイト一致。`dotnet test` は 307 件。世界の側との合成は上の `GameSnapshot`(L-49 は一部解決)。
+
+## M1 準備: Unity での確認(09 §17.8)
+
+Unity のプロジェクトの根は `m0/` 自身(`Assets/` `Packages/` `ProjectSettings/` を置いてある)。Unity 6 LTS(6000.3.x)。`.meta` は git に入れる。Unity が `m0/` に作る `.csproj` / `.sln` / `.slnx` は git に入れない(`Ekiden.sln` だけ残す)。
+
+- **ゲート A(済)**: Unity で Domain・Persistence・Platform.Abstractions がコンパイルエラー 0(asmdef の参照が `dotnet` の `.csproj` と食い違っていた問題は直した)。
+- **ゲート B**: IL2CPP でも T1 のベクタが参照モデルと全行一致し、そのビルドの中で T3 の ①②③ が一致する。端末・ビルドをまたいだビット一致は**求めない**(09 §8.4)ので、SHA-256 が SimCli(.NET)と違っても不合格にはしない(記録に残す)。
+  1. Editor(Mono): メニュー **Ekiden → Verify → Run T1 + T3 in Editor (Mono)**(出力は `Logs/verify/editor/`)。
+  2. IL2CPP: メニュー **Ekiden → Verify → Build Windows IL2CPP player**(`Builds/verify-win-il2cpp/EkidenVerify.exe`。初回は数分。Visual Studio の「C++ によるデスクトップ開発」と Unity の Windows Build Support (IL2CPP) が要る)。
+  3. 実行(PowerShell。`m0` で):
+     ```
+     New-Item -ItemType Directory -Force Logs\verify\il2cpp | Out-Null
+     $p = Start-Process -Wait -PassThru .\Builds\verify-win-il2cpp\EkidenVerify.exe -ArgumentList "-batchmode","-nographics","-logFile","$PWD\Logs\verify\il2cpp\player.log","-ekidenVerify","$PWD\Logs\verify\il2cpp"
+     $p.ExitCode      # 0 = T3 がすべて一致
+     ```
+  4. 照合: `python -I tools/compare_vectors.py Logs\verify\il2cpp\vectors.txt`(`不一致 0` が合格)。`determinism.txt` に `×` がないこと、`result.txt` が `OK` であることも見る。`env.txt` にバックエンド(IL2CPP / Mono)・OS・CPU が残る。
 
 ## 段階の進み具合(09 §17.3)
 

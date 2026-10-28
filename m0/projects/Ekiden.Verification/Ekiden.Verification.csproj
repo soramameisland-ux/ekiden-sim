@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Verification: SimCli と Unity の確認(DevTools の VerifyBootstrap。実機・IL2CPP)で共通の T1 ベクタ・T3 決定性の実行。09 §16 -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>Ekiden.Verification</AssemblyName>
+    <RootNamespace>Ekiden.Verification</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/Verification/**/*.cs" />
+    <ProjectReference Include="../Ekiden.Domain/Ekiden.Domain.csproj" />
+    <ProjectReference Include="../Ekiden.Persistence/Ekiden.Persistence.csproj" />
+    <ProjectReference Include="../Ekiden.Platform/Ekiden.Platform.csproj" />
+  </ItemGroup>
+</Project>

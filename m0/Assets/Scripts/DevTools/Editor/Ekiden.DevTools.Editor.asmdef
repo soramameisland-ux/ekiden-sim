@@ -1,0 +1,13 @@
+{
+  "name": "Ekiden.DevTools.Editor",
+  "rootNamespace": "Ekiden.DevTools.Editor",
+  "references": [ "Ekiden.DevTools", "Ekiden.Verification" ],
+  "includePlatforms": [ "Editor" ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
