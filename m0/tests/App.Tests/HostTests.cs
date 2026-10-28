@@ -257,6 +257,58 @@ namespace Ekiden.App.Tests
         }
 
         [Test]
+        public void SaveFailures_AlsoGoToTheGamesNotificationLog()
+        {
+            var fs = new MemoryFileStore();
+            var clock = new FakeClock();
+            GameHost h = GameHost.NewGame(Env(fs, clock), 1, Seed, Difficulty.Mid);
+            Assert.IsEmpty(h.Session.State.Notifications.Where(n => n.Kind == Ekiden.Domain.Team.NotifyKind.AutosaveFailed));
+            fs.Free = 0;
+            ToStop(h, s => s.Kind == StopKind.MonthReport);
+            clock.Advance(2);
+            h.Tick();                                                                          // 再試行も失敗: 通知
+            var logged = h.Session.State.Notifications.Where(n => n.Kind == Ekiden.Domain.Team.NotifyKind.AutosaveFailed).ToList();
+            Assert.AreEqual(1, logged.Count);
+            Assert.AreEqual("disk_full", logged[0].Code, "空き容量が足りないとき");
+            Assert.AreEqual("nt.autosave.disk_full", h.Session.Notifications().Items.First(n => n.Kind == Ekiden.Domain.Team.NotifyKind.AutosaveFailed).TextKey);
+        }
+
+        /// <summary>空き容量の不足ではない書き込みの失敗(権限・I/O エラーなど)を起こすための包み。</summary>
+        private sealed class FlakyStore : IFileStore
+        {
+            private readonly IFileStore _inner;
+            public bool Fail;
+            public FlakyStore(IFileStore inner) { _inner = inner; }
+            public bool Exists(string path) { return _inner.Exists(path); }
+            public byte[] ReadAllBytes(string path) { return _inner.ReadAllBytes(path); }
+            public void WriteAtomic(string path, byte[] bytes, Func<byte[], bool> verify) { if (Fail) throw new System.IO.IOException("書き込めない"); _inner.WriteAtomic(path, bytes, verify); }
+            public void Delete(string path) { _inner.Delete(path); }
+            public IReadOnlyList<string> List(string prefix) { return _inner.List(prefix); }
+            public long FreeSpace() { return _inner.FreeSpace(); }
+        }
+
+        [Test]
+        public void ASaveFailure_ThatIsNotDiskFull_GoesToTheLog_ForManualAndAutosave()
+        {
+            var flaky = new FlakyStore(new MemoryFileStore());
+            var clock = new FakeClock();
+            var env = new HostEnvironment { Files = flaky, Clock = clock, AppVersion = "1.0.0", MasterHash = "a1b2c3d4", NewLineageId = () => Lineage };
+            GameHost h = GameHost.NewGame(env, 1, Seed, Difficulty.Mid);
+            flaky.Fail = true;
+            Assert.IsFalse(h.SaveManual());
+            Assert.IsTrue(h.Saves.Notices.Any(n => n.Kind == NoticeKind.ManualSaveFailed), "空き容量の不足ではない手動セーブの失敗");
+            var logged = h.Session.State.Notifications.Where(n => n.Kind == Ekiden.Domain.Team.NotifyKind.AutosaveFailed).ToList();
+            Assert.AreEqual(1, logged.Count); Assert.AreEqual("failed", logged[0].Code);
+            ToStop(h, s => s.Kind == StopKind.MonthReport);
+            clock.Advance(2);
+            h.Tick();                                                                          // 自動セーブの再試行も失敗
+            logged = h.Session.State.Notifications.Where(n => n.Kind == Ekiden.Domain.Team.NotifyKind.AutosaveFailed).ToList();
+            Assert.AreEqual(2, logged.Count, "自動セーブの失敗も足される");
+            Assert.IsTrue(logged.All(n => n.Code == "failed"));
+            Assert.AreEqual("nt.autosave.failed", h.Session.Notifications().Items.First(n => n.Kind == Ekiden.Domain.Team.NotifyKind.AutosaveFailed).TextKey);
+        }
+
+        [Test]
         public void ASecondFailure_Notifies_AndTheNextMomentTriesAgain()
         {
             var fs = new MemoryFileStore();

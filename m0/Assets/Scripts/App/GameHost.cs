@@ -69,6 +69,7 @@ namespace Ekiden.App
             Flow = flow;
             Saves = new SaveService(store, env.Files, env.Clock, slot, lineage, env.AppVersion, env.MasterHash);
             Achievements = new AchievementTracker(env.Profile);
+            Saves.Notice += OnSaveNotice;
             _playBase = playSeconds;
             _activeSince = env.Clock.MonotonicSeconds();
             flow.ResolvingWeek += OnResolvingWeek;
@@ -179,6 +180,13 @@ namespace Ekiden.App
             if (s.Kind == StopKind.YearEndSettle) AutosaveNow(SaveReason.YearEndSettle);
             else if (s.Kind == StopKind.YearEndTurnover) AutosaveNow(SaveReason.YearEndTurnover);
             return s;
+        }
+
+        /// <summary>保存の失敗は、ゲームの通知の履歴(SC-38)にも残す(トーストのほかに。09 §4.5)。</summary>
+        private void OnSaveNotice(HostNotice n)
+        {
+            if (n.Kind == NoticeKind.AutosaveFailed || n.Kind == NoticeKind.ManualSaveFailed) Session.Notify(Domain.Team.NotifyKind.AutosaveFailed, "failed");
+            else if (n.Kind == NoticeKind.DiskFull) Session.Notify(Domain.Team.NotifyKind.AutosaveFailed, "disk_full");
         }
 
         private void OnResolvingWeek(GameFlow f)

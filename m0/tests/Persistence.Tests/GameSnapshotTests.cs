@@ -26,6 +26,27 @@ namespace Ekiden.Persistence.Tests
         }
 
         [Test]
+        public void Notifications_SurviveASaveAndLoad_InOrder_WithReadFlags_AndAnOldSaveReadsAsEmpty()
+        {
+            GameSession gs = Play(Difficulty.Mid, 60);
+            Assert.Greater(gs.State.Notifications.Count, 3, "試験の前提: 60 週で通知が溜まっている");
+            gs.MarkNotificationRead(1);
+            JsonObject snap = GameSnapshot.Capture(gs);
+            GameSession back = GameSnapshot.Restore((JsonObject)JsonValue.Parse(snap.ToJson()));
+            Assert.AreEqual(gs.State.Notifications.Count, back.State.Notifications.Count);
+            for (int i = 0; i < gs.State.Notifications.Count; i++)
+            {
+                Notification a = gs.State.Notifications[i], b = back.State.Notifications[i];
+                Assert.AreEqual(a.Kind, b.Kind); Assert.AreEqual(a.AbsWeek, b.AbsWeek); Assert.AreEqual(a.Code, b.Code);
+                Assert.AreEqual(a.RunnerId, b.RunnerId); Assert.AreEqual(a.N, b.N); Assert.AreEqual(a.Unread, b.Unread);
+            }
+            Assert.IsFalse(back.State.Notifications[1].Unread);
+            ((JsonObject)((JsonObject)snap["team"])["player_team"]).Remove("notifications");
+            GameSession old = GameSnapshot.Restore((JsonObject)JsonValue.Parse(snap.ToJson()));
+            Assert.IsEmpty(old.State.Notifications);
+        }
+
+        [Test]
         public void ObCountry_SurvivesASaveAndLoad_AndAnOldSaveWithoutItReadsAsNone()
         {
             GameSession gs = Play(Difficulty.Mid, 5);

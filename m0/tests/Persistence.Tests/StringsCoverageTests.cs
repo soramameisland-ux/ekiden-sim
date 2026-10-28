@@ -75,6 +75,35 @@ namespace Ekiden.Persistence.Tests
         }
 
         [Test]
+        public void EveryNotificationText_AndItsArgument_IsInTheTable()
+        {
+            Dictionary<string, string> table = Real();
+            Ekiden.Domain.Game.GameSession gs = Ekiden.Domain.Game.GameSession.New(1UL, Ekiden.Domain.World.Difficulty.Mid);
+            var made = new List<(Ekiden.Domain.Team.NotifyKind kind, string code, int n)>();
+            foreach (string code in new[] { "injury.minor", "injury.moderate", "injury.severe" }) made.Add((Ekiden.Domain.Team.NotifyKind.Injury, code, 0));
+            made.Add((Ekiden.Domain.Team.NotifyKind.Warning, "fatigue", 2));
+            foreach (Ekiden.Domain.Events.EventDef def in gs.Catalog.Events) made.Add((Ekiden.Domain.Team.NotifyKind.Event, def.Id, 0));
+            made.Add((Ekiden.Domain.Team.NotifyKind.Ticket, "earned", 1));
+            foreach (string race in new[] { "fall", "national", "newyear" }) { made.Add((Ekiden.Domain.Team.NotifyKind.Schedule, "entry_open." + race, 4)); made.Add((Ekiden.Domain.Team.NotifyKind.Schedule, "race_week." + race, 0)); }
+            made.Add((Ekiden.Domain.Team.NotifyKind.Schedule, "qualifier_week", 0));
+            made.Add((Ekiden.Domain.Team.NotifyKind.Entitlement, "unknown", 0));
+            foreach (string code in new[] { "failed", "disk_full" }) made.Add((Ekiden.Domain.Team.NotifyKind.AutosaveFailed, code, 0));
+            var kinds = new HashSet<Ekiden.Domain.Team.NotifyKind>();
+            foreach (var m in made)
+            {
+                gs.State.Notifications.Clear();
+                gs.Notify(m.kind, m.code, 0, m.n);
+                Ekiden.Domain.Views.NotificationView nv = gs.Notifications().Items[0];
+                Assert.IsTrue(table.ContainsKey(nv.TextKey), m.code + " → " + nv.TextKey);
+                if (nv.ArgKey != null) Assert.IsTrue(table.ContainsKey(nv.ArgKey), m.code + " → " + nv.ArgKey);
+                kinds.Add(m.kind);
+            }
+            Assert.AreEqual(Enum.GetValues(typeof(Ekiden.Domain.Team.NotifyKind)).Length, kinds.Count, "通知の種類をすべて確かめた");
+            StringAssert.Contains("{runner}", table["nt.injury.moderate"]); StringAssert.Contains("{n}", table["nt.warning"]); StringAssert.Contains("{arg}", table["nt.event"]);
+            StringAssert.Contains("{n}", table["nt.ticket"]); StringAssert.Contains("{arg}", table["nt.entry_open"]); StringAssert.Contains("{n}", table["nt.entry_open"]);
+        }
+
+        [Test]
         public void TheRealTable_HasNoLintIssues_AndAsksNothingOfTheFontBeyondWhatItUses()
         {
             Dictionary<string, string> table = Real();

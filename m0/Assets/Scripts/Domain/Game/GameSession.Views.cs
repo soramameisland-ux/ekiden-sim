@@ -27,7 +27,7 @@ namespace Ekiden.Domain.Game
                 Year = Year, YearWeek = yw, CalendarMonth = (3 + month) % 12 + 1, WeekOfMonth = yw % 4 + 1,
                 CoachRank = School.Rank(), CumPoints = School.CumPoints, Prestige = s.Prestige, Funds = s.Funds, Morale = s.Morale,
                 PowerRank = CurrentPowerRank(), Cleared = s.Cleared != null, ClearYear = s.Cleared != null ? (int?)s.Cleared.Year : null,
-                GuidanceLeft = s.GuidanceLeft, YearSettled = IsYearSettled,
+                GuidanceLeft = s.GuidanceLeft, YearSettled = IsYearSettled, UnreadNotifications = s.Notifications.Count(n => n.Unread),
             };
             int rank = h.CoachRank;
             h.NextRankPoints = rank < WorldK.RankCum.Length ? (int?)WorldK.RankCum[rank] : null;

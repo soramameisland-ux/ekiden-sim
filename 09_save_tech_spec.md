@@ -332,7 +332,7 @@
 
 **`player_team`**
 
-`funds` `facilities` `staff` `morale` `captain_id` `manager_name` `annual_plan` `monthly_plan` `custom_weeks` `guidance_points` `individual_menu` `talked` `scout_points` `coach_rank` `ob_network` `tickets` `prestige` `year_rank` `last_year_rank` `year_points` `school_prefecture_id` `entries`(この順)。
+`funds` `facilities` `staff` `morale` `captain_id` `manager_name` `annual_plan` `monthly_plan` `custom_weeks` `guidance_points` `individual_menu` `talked` `scout_points` `coach_rank` `ob_network` `tickets` `prestige` `year_rank` `last_year_rank` `year_points` `school_prefecture_id` `entries` `notifications`(この順)。
 
 | 項目 | 形・規則 |
 |------|----------|
@@ -344,6 +344,7 @@
 | `individual_menu` | `{ 選手 ID: { until_abs_week, menu: [ks1, ks2, 走行量] } }`(ID の昇順)|
 | `talked` | 選手 ID の昇順 |
 | `entries` | `{ Fall, National, NewYear }` = 次の大会の登録メンバー(選手 ID の配列。登録の並びを保つ。04 §4。締切は大会の 4 週前、大会が終わったら空にする)。ピーキング(03 §5.3)は登録メンバーに掛かるので、締切から大会までの間の保存で要る(追加項目。M1 準備)|
+| `notifications` | 通知の履歴(新しい順・最大 `K_NOTIFY_MAX` = 30 件。08 §7.5・08a SC-38): `{ kind, abs_week, code, runner_id, n, unread }` の配列。`kind` = `Injury` `Warning` `Event` `Ticket` `Schedule` `Entitlement` `AutosaveFailed`。文は `code` から画面が文字列表(`nt.*`)で組む。**追加の項目**: ないセーブは空 |
 | `ob_network` | 長さ 48(添字 0 = 海外、1〜47 = 県)。**OB の記録から数えた派生値**(`career_path` が確定したものだけ。I-16)|
 | `tickets` | 07 §3.1。`{ stock, bank, last_used_year, plan_anchor_year, plan_granted_years, milestones(序数順), pending(null / { kind, enroll_year, prefecture_id? }), log(最新 `K_TICKET_LOG_MAX` 件) }`。`invites_declared` は `run` に置く |
 | `morale` `scout_points` `prestige` | 数。`Q6`(整数のときは整数で書く)。02 の int は実際には小数にもなる値 |
@@ -1095,6 +1096,7 @@ verify/              参照モデル(Python)。仕様の正本の検算
   - **書き込み**: 要求は待っている 1 件に畳む(新しい要求は古い再試行も取り消す)。失敗は `K_SAVE_RETRY_S` 秒後に 1 回だけ再試行(`Tick`)、それも失敗なら通知(`AutosaveFailed` / 空き不足は `DiskFull`)してゲームは続け、次のきっかけでもう一度。保存番号は失敗で飛ばさない。`Synchronous = false` にすれば `Pump` を別のスレッドで呼べる。中断セーブは待っている自動セーブを先に書き、`base_counter` = スロットの先頭の保存番号。
   - **開く**: `SlotStore.RecoveryCandidates`(§4.5 の順の候補)を先頭から試し、**コンテナとして有効でも中身が復元できなければ次の候補**へ。最新が使えなければ `RecoveredFromOlder`。中断セーブは、先頭の世代を使え・同じ歴史・`base_counter` が先頭と等しいときだけ再開(`ResumedFromSuspend`。最初の自動セーブが成功してから消す)。合わなければ捨てて `SuspendDiscarded`(別のスロットの中断セーブには触らない)。すべて失敗なら Host は null でファイルは消さない。
   - **検算**: 1 年度の自動セーブのすべて(17 か所)から開き直して年度末まで続けても、続けたまま = 同じ状態 / 週の初め・月末レポート・大会の当日・イベントの選択での中断 → 再開が同じ年度末 / 書き込みの失敗(再試行・通知・次のきっかけ・古い状態を書き足さない)/ 回復の順 / プレイ時間(中断中は数えない)。呼び出し位置・再試行・使い切りなどを 1 つずつ壊すとテストが落ちる。
+- **通知のログ(08 §7.5・08a SC-38。08b G-07)**: `Team/Notification.cs`・`TeamState.Notifications`(新しい順・最大 `K_NOTIFY_MAX` = 30・`Unread`)。足すのは `GameSession` の週の処理(故障 = `ResolveTraining`・疲労の警告 = 月の第 3 週に 1 回・イベント・特別招聘券・大会の予定 = 出場権のある大会のエントリー開始 / 大会の週 / 予選会の週)と、外から `GameSession.Notify`(`GameHost.OnSaveNotice` が自動セーブ・手動セーブの失敗と空き不足を `AutosaveFailed` で足す。購入状態の不明 `Entitlement` は呼ぶ側)。文は `code` から `nt.*` の文字列キーで組む(`NotificationsView.Items[i].TextKey / ArgKey / Target`)。保存 = `player_team.notifications`(§5.6。**追加の項目**: ないセーブは空)。読み取りは `Notifications()`、既読は `MarkNotificationRead` / `MarkAllNotificationsRead`、ホームの未読数は `HomeView.UnreadNotifications`。乱数を使わないので決定性の目印(抽象の自校)は変わらない。
 - **実績(02 §3.10・01 §3.3。08b G-08)**: `Domain/Achievements/`(`AchievementMaster` 23 件・`AchievementFacts`・`AchievementRules`。事実から『いま満たしている ID』を返す純関数)と、`App/AchievementTracker.cs`(`ProfileData` に解除の日時を記録 = 一度解除したら消えない・ストアへの通知待ち `Pending` に積む・クリアの記録を 1 件)。`GameHost.Advance` が停止のたびに呼ぶ(山の神は走った大会の結果から)。`HostEnvironment.Profile` に Unity 側が読み込んだ `ProfileData` を渡す。**プロフィールのコンテナ(`profile.a/b.eksv`)の読み書き・マージ・ストアへの通知は Unity 側**(`ProfileData.Merge` と `LocalState.PendingUnlocks` は実装ずみ)。
 - **調子の見込み(08 R-05 ⑥。08b G-15)**: `Game/GameSession.Views.Outlook.cs`。読み取りだけ(保存は増えない)。この作業で見つけた既存のずれ 2 つを直した: ①`Forecaster` が安全網の閾値を定数 85 に固定していた(設定 75 / 0 を無視。`safetyF` を引数に)②個別指導のメニューの期限(`UntilAbsWeek` = 翌月の第 1 週)を含めて数えていた(月をまたぐ見込みでずれた。`>` に)。
 - **世界の履歴(`history`。02 §4.8・§4.9。08b G-03・G-04)**: `WorldSim.History`(`World/RaceHistory.cs`)。**予熱の年度から**、大会(第一〜第三戦。予選会は含めない)ごとの順位表(全校の『学校 ID・合計タイム・繰り上げ』を順位順。優勝校 = 先頭)と、区間記録(`Course[大会][区間]` = 学校・走者 ID(他校は 0)・タイム・年度)・大会記録(`Team[大会]`)を持つ。`WorldSim.PlayRace` が更新し(`RaceOutcome.Records` に更新分)、`WorldSnapshot` が `history { race_records, course_records, team_records }` として保存する(**追加の項目**: ないセーブは空の履歴で読み、版は上げない)。記録の規則: 最初の 1 回は基準として黙って入れる(更新でない)/ 以後は厳密に速いときだけ更新 / 保持者は最速チームのうち順位の先頭 / 大会記録は繰り上げのない優勝タイム。**再現性の目印(`m0/tools/determinism_anchors.txt`)は、この項目が保存 JSON に増えたので更新した**(`history` の出力だけを外すと従来の SHA と一致 = 世界の進行は不変。セーブの JSON は 45 年度で約 +61 KB、圧縮前)。自校の走者の区間記録の更新は `Runner.Records`(`career.records`。追加の項目)に数え、`RaceFlags.Record`(`race.record` のイベント)・殿堂入り・`OBRecord.career.records` に効く(自校の結果だけが変わる = 実体の自校の 9 件目以降の SHA は変わる。抽象の自校は不変)。

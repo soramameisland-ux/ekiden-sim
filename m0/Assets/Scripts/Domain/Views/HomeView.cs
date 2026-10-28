@@ -43,6 +43,7 @@ namespace Ekiden.Domain.Views
         public int TicketStock;
         public bool TicketPending;                  // 宣言済み(年度末に入学)
         public int GuidanceLeft;                    // 今月に残る指導ポイント
+        public int UnreadNotifications;             // 未読の通知の数(ホームのベル。SC-38)
         public bool YearSettled;                    // 年度末の精算まで済み(強化の画面)
     }
 }

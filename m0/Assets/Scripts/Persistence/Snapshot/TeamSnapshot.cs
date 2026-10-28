@@ -36,6 +36,7 @@ namespace Ekiden.Persistence.Snapshot
         private static readonly string[] CareerNames = { "Corporate", "Teacher", "Employment", "GradSchool" };
         private static readonly string[] RecruitNames = { "Normal", "Ticket" };
         private static readonly string[] RoleNames = { "None", "Coach", "ScoutHelper", "Sponsor" };
+        private static readonly string[] NotifyNames = { "Injury", "Warning", "Event", "Ticket", "Schedule", "Entitlement", "AutosaveFailed" };
         private static readonly string[] GiftNames = { "Climber", "Descender", "Ace" };
         private static readonly string[] TicketKindNames = { "Intl", "Rookie" };
 
@@ -176,7 +177,8 @@ namespace Ekiden.Persistence.Snapshot
                 ("guidance_points", N(s.GuidanceLeft)), ("individual_menu", menus), ("talked", Ints(s.Talked)), ("scout_points", D(s.ScoutPts)), ("coach_rank", N(s.CoachRank)),
                 ("ob_network", Ints(net)), ("tickets", CaptureTickets(s.Tickets)),
                 ("prestige", D(s.Prestige)), ("year_rank", Ints(s.Rank)), ("last_year_rank", Ints(s.LastRank)), ("year_points", N(s.YearPoints)), ("school_prefecture_id", N(s.SchoolPref)),
-                ("entries", O(("Fall", Ints(s.Entries[0])), ("National", Ints(s.Entries[1])), ("NewYear", Ints(s.Entries[2])))));
+                ("entries", O(("Fall", Ints(s.Entries[0])), ("National", Ints(s.Entries[1])), ("NewYear", Ints(s.Entries[2])))),
+                ("notifications", new JsonArray(s.Notifications.Select(n => (JsonValue)O(("kind", S(NotifyNames[(int)n.Kind])), ("abs_week", N(n.AbsWeek)), ("code", S(n.Code)), ("runner_id", N(n.RunnerId)), ("n", N(n.N)), ("unread", B(n.Unread)))))));
         }
 
         private static JsonObject CaptureTickets(TicketState t)
@@ -386,6 +388,12 @@ namespace Ekiden.Persistence.Snapshot
             s.SchoolPref = Int(pt, "school_prefecture_id");
             JsonObject en = Obj(pt, "entries");
             for (int k = 0; k < 3; k++) foreach (JsonValue x in Arr(en, RaceNames[k])) s.Entries[k].Add((int)((JsonNumber)x).Int);
+            if (pt.ContainsKey("notifications"))                                                                                // 追加の項目(ないセーブは空。09 §6)
+                foreach (JsonValue nv in Arr(pt, "notifications"))
+                {
+                    var no = (JsonObject)nv;
+                    s.Notifications.Add(new Notification { Kind = (NotifyKind)Index(NotifyNames, Str(no, "kind")), AbsWeek = Int(no, "abs_week"), Code = Str(no, "code"), RunnerId = Int(no, "runner_id"), N = Int(no, "n"), Unread = Bool(no, "unread") });
+                }
         }
 
         private static void RestoreTickets(TicketState t, JsonObject j)

@@ -100,7 +100,7 @@
 
 | SC | 表示項目 | 取得元 | 状態 |
 |----|----------|--------|------|
-| SC-08 ホーム | status / next / バッジ / menu | `Home()` | ○。バッジのうち『購入状態不明』は App 層、『未読の通知』は通知ログ(G-07)|
+| SC-08 ホーム | status / next / バッジ / menu | `Home()` | ○。バッジのうち『購入状態不明』は App 層(`GameSession.Notify(Entitlement, "unknown")`)、『未読の通知』は `HomeView.UnreadNotifications`|
 | SC-09 年間予定 | 月ごとの大会・締切・合宿・記録会・スカウトの時期・招聘期間・年度末 | `Calendar.RaceWeeks` / `TeamWeek.EntryDeadlineWeeks` / `TicketK` ほかの定数 | △ 年間予定の View は無い(定数の並べ替えだけ。小さい)|
 | SC-10 年間方針 | 重点・標準プランとの P の差(R-04)・目標大会・期待目標・ピーキング | `AnnualPlanView()` | ○ |
 | SC-11 月末レポート | summary / highlights / 大会のまとめ / 次の月への注意 | `MonthReportView(report)` | ○(`gift_reveal` を含む。判明した素養は `ReportItemView.Gifts`)|
@@ -155,7 +155,7 @@
 |----|----------|--------|------|
 | SC-36 イベント | 題・本文・当事者・選択肢とその効果の要約(R-15)・選べない理由 | `EventDialog(FiredEvent, own)` | ○ 効果は構造(`EffectView`)で 3 つまで + 『ほか n件』。文は UI が `ev.*` と効果の語から組み立てる。選べない理由の文は未(`req` の式から理由を作る規則がない。小さい)|
 | SC-37 確認 | 本文・既定の位置 | `OpResult.NeedsConfirm` / `Reason`(`problem.*`)| — |
-| SC-38 通知 | 最大 30 件(日付・種別・本文・未読)| — | ✗ 通知のログが無い(G-07)|
+| SC-38 通知 | 最大 30 件(日付・種別・本文・未読)| `Notifications()` → `NotificationsView`(新しい順。`Unread`)/ `MarkNotificationRead(index)` / `MarkAllNotificationsRead()` | ○ 文は `TextKey`(`nt.*`)に `{runner}` `{n}` `{arg}`(`ArgKey` の文字列)を当てはめる。`Target` = 選んだとき開く画面 |
 | SC-39 ヘルプ・用語 | 用語・規則 | 文字列テーブル | — App 層 |
 | SC-40 ポーズ | 再開・セーブ・ロード・設定… | `GameFlow.CanSave` / `SuspendCheckpoint` | — App 層(最後の自動セーブの日時は `SlotStore`)|
 | SC-41 コンディション警告 | 対象の選手・次の週の予測・安全網 | `ConditionWarning()` | ○(次の週の疲労・故障の確率は `Forecaster` の正確な予測)|
@@ -175,7 +175,7 @@
 | ~~G-04~~ | SC-34 | ~~歴代の優勝校~~(**済**: `History().Champions`。予熱の年度 = ゲーム開始前の歴史を含む。`PreGame`)| 世界の履歴 | — | — |
 | ~~G-05~~ | SC-14 | ~~惜しかった候補~~(**済**: `Enrollment().Missed`。`Allocator` が自校の狙った候補の入れなかった理由 = 定員 / 奨学金枠 / 競り負け(差)を返す。招聘枠に押し出された候補は定員。保存しない)| 割り当ての記録(乱数・結果は不変)| — | — |
 | G-06 | SC-36 | ~~イベントの効果の構造~~ **解決**(`EventDialog` の `EffectView`)。残り: 選択肢の本文に効果の数値が書き込まれている問題(L-63 ①)と、選べない理由の文 | 効果から本文の数値を作る | 低 | L-63 |
-| G-07 | SC-08・38 | 通知のログ(最大 30 件・未読)| 通知の生成元(故障・警告・お知らせ・券・大会の予定)を集める。保存するか(09 `K_NOTIFY_MAX` はあるが形が未定)| 中 | — |
+| ~~G-07~~ | SC-08・38 | ~~通知のログ~~(**済**: `TeamState.Notifications`(最大 `K_NOTIFY_MAX` = 30・新しい順・既読フラグ)。足す箇所 = 故障(`ResolveTraining` の `NewInjury`)・疲労の警告(月の第 3 週に 1 回)・イベント(`ResolveWeekEvents`)・特別招聘券(週の大会の後・年度末)・大会の予定(エントリー開始・大会の週・予選会の週。出場権があるときだけ)、外から `GameSession.Notify`(App 層: 自動セーブの失敗 = `GameHost.OnSaveNotice`・購入状態の不明)。保存 = `player_team.notifications`(追加の項目。ないセーブは空))| 通知の生成元の集約・保存 | — | L-65 |
 | ~~G-08~~ | SC-06・15 | ~~実績~~(**済**: `AchievementMaster`(01 §3.3 の 23 件。`{id}.title` / `.desc`)・`AchievementFacts.From(gs, race)` → `AchievementRules.Satisfied`。App の `AchievementTracker` が `ProfileData`(解除の日時・クリア)とストアへの通知待ち(`Pending`)に記録し、`GameHost.Advance` が呼ぶ。**プロフィールのファイル(`profile.a/b.eksv`)の読み書きとストアへの通知は Unity 側**)| 実績の定義・判定・解除の記録 | — | — |
 | G-09 | SC-23・35 | ~~他校の上位選手~~ **解決**(`Preview` の `Top`。名前は `look_seed` から。SC-35 の一覧には入れていない)| `NameGenerator` と 04 §11 の復元 | 済 | — |
 | G-10 | SC-27・30 | ~~スカウトの地図の集計と枠のメーター~~ **解決**(`ScoutMap` / `ScoutTargets`)| 残り: 『故障しやすさ』(候補に状態がない) | 済 | — |
@@ -206,4 +206,4 @@
 2. **App 層の入口**(自動セーブ・中断セーブの呼び出し位置 = `SuspendCheckpoint` の接続。L-62 ③)。
 3. M1 の縦切りに要る View の残り: `Scout*`(G-10)・`Ops`(G-12)・`World` / `OB` / `History`(G-13)・`RaceDay` の画面向けの型。
 4. ~~G-02(見どころ)・G-03(記録)・G-04(歴代)~~(済)。
-5. ~~G-14(前月の増減)~~(済。追加の項目で済んだ)。残りは G-06 の残り・G-07。
+5. ~~G-14(前月の増減)~~(済。追加の項目で済んだ)・~~G-07(通知のログ)~~(済)。残りは G-06 の残りだけ。

@@ -207,6 +207,16 @@ namespace Ekiden.Domain.Team
         public TeamSettings Settings = new TeamSettings();
         public readonly List<int>[] Entries = { new List<int>(), new List<int>(), new List<int>() };   // 次の第一〜第三戦の登録メンバー(04 §4。締切は大会の 4 週前。大会が終わったら空にする)
 
+        public const int NotifyMax = 30;                                            // 通知の履歴の件数(08 §7.5。09 の K_NOTIFY_MAX)
+        public readonly List<Notification> Notifications = new List<Notification>();   // 新しい順。最大 NotifyMax 件
+
+        /// <summary>通知を足す(新しい順の先頭へ。上限を超えたぶんは古い方から捨てる)。</summary>
+        public void Notify(NotifyKind kind, string code, int runnerId = 0, int n = 0)
+        {
+            Notifications.Insert(0, new Notification { Kind = kind, AbsWeek = AbsWeek, Code = code, RunnerId = runnerId, N = n });
+            if (Notifications.Count > NotifyMax) Notifications.RemoveRange(NotifyMax, Notifications.Count - NotifyMax);
+        }
+
         /// <summary>イベントの履歴に足す。最新 <see cref="EventConstants.K_EVENT_LOG_MAX"/> 件を超えたぶんは古い方から捨てる。</summary>
         public void LogEvent(string id, int week, string choice)
         {

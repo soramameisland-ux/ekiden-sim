@@ -30,6 +30,7 @@ namespace Ekiden.Verification
             AddClub(d);
             AddHighlights(d);
             AddAchievements(d);
+            AddNotifications(d);
             d["miss.quota"] = "定員がいっぱいだった"; d["miss.scholarship"] = "奨学金枠がいっぱいだった"; d["miss.outbid"] = "他校に競り負けた";
             return d;
         }
@@ -131,6 +132,20 @@ namespace Ekiden.Verification
                 d[def.Id + ".title"] = t[0];
                 d[def.Id + ".desc"] = t[1];
             }
+        }
+
+        /// <summary>通知の文(08 §7.5・SC-38)。<c>{runner}</c> 選手の名前 / <c>{n}</c> 数 / <c>{arg}</c> イベントの題・大会の名前。</summary>
+        private static void AddNotifications(Dictionary<string, string> d)
+        {
+            d["nt.injury.minor"] = "{runner}が軽傷を負った"; d["nt.injury.moderate"] = "{runner}が中傷を負った"; d["nt.injury.severe"] = "{runner}が重傷を負った";
+            d["nt.warning"] = "疲労がたまっている選手が {n} 人いる";
+            d["nt.event"] = "イベント: {arg}";
+            d["nt.ticket"] = "特別招聘券を {n} 枚獲得した";
+            d["nt.entry_open"] = "{arg} のエントリーが始まった(大会まであと {n} 週)";
+            d["nt.race_week"] = "今週は {arg}";
+            d["nt.qualifier_week"] = "今週は {arg}";
+            d["nt.entitlement.unknown"] = "購入状態を確認できません";
+            d["nt.autosave.failed"] = "自動セーブに失敗しました"; d["nt.autosave.disk_full"] = "空き容量が足りません";
         }
 
         private static void AddEvents(Dictionary<string, string> d)

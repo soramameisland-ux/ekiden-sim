@@ -258,7 +258,17 @@ namespace Ekiden.Domain.Game
             EnsureYear();
             runnerIds = State.Runners.Select(r => r.Id).ToList();
             _weekResolved = true;
-            return _week.TrainAll(State, Rngs);
+            List<WeekReport> reports = _week.TrainAll(State, Rngs);
+            for (int i = 0; i < reports.Count; i++)
+                if (reports[i].NewInjury.HasValue) State.Notify(NotifyKind.Injury, "injury." + reports[i].NewInjury.Value.ToString().ToLowerInvariant(), runnerIds[i]);
+            int yw = TeamWeek.YearWeek(State), month = yw / 4;
+            if (yw % 4 == 2)                                                                  // 月に 1 回(月の第 3 週): 疲労がたまっている選手の知らせ(GameFlow の警告の停止と同じ条件)
+            {
+                int thr = month == 4 ? GameFlow.WarnFatigueCamp : GameFlow.WarnFatigue;
+                int warned = State.Runners.Count(r => !r.IsInjured && r.Fatigue >= thr && r.Fatigue < GameFlow.WarnFatigueMax);
+                if (warned > 0) State.Notify(NotifyKind.Warning, "fatigue", 0, warned);
+            }
+            return reports;
         }
 
         /// <summary>今年度の世界の準備(出場権・他校の選手)を作る(なければ)。画面が出場権を調べるときに先に呼ぶ。</summary>
@@ -288,7 +298,8 @@ namespace Ekiden.Domain.Game
             int idx = _ys.Result.Order[kind].IndexOf(School.Id);
             int rank = idx >= 0 ? idx + 1 : 100;
             if (rank == 1) _yearWins |= 1 << k;
-            TicketMilestones.EarnAfterRace(s.Tickets, year, k + 1, rank, _yearWins);
+            int earned = TicketMilestones.EarnAfterRace(s.Tickets, year, k + 1, rank, _yearWins);
+            if (earned > 0) s.Notify(NotifyKind.Ticket, "earned", 0, earned);
             return race;
         }
 
@@ -301,7 +312,11 @@ namespace Ekiden.Domain.Game
         /// <summary>④イベントの選択と効果(06 §7.2 の後半)。k 番目から順に解決する。大会の結果(<c>race.*</c>)はこの週だけ。</summary>
         public List<FiredEvent> ResolveWeekEvents(EventSelection sel, RaceInfo? own, IChoicePolicy policy)
         {
-            for (int k = 0; k < sel.Fired.Count; k++) _phase.Resolve(State, sel.Fired[k], k, own, policy);
+            for (int k = 0; k < sel.Fired.Count; k++)
+            {
+                _phase.Resolve(State, sel.Fired[k], k, own, policy);
+                State.Notify(NotifyKind.Event, sel.Fired[k].Def.Id, sel.Fired[k].R != null ? sel.Fired[k].R.Id : 0);
+            }
             foreach (Runner r in State.Runners) r.RaceFlags = default(RaceFlags);
             return sel.Fired;
         }
@@ -340,6 +355,27 @@ namespace Ekiden.Domain.Game
             _weekResolved = false;
             State.AbsWeek++;
             _week.BeginWeek(State);                                          // 次の週の最初の処理。保存の境目はこれが済んだ状態(登録・月間計画などの画面はここから開く)
+            NotifySchedule();
+        }
+
+        private static readonly string[] RaceCodes = { "fall", "national", "newyear" };
+
+        /// <summary>大会の予定の知らせ(エントリーが始まる週・大会の週・予選会の週。出場権があるときだけ)。</summary>
+        private void NotifySchedule()
+        {
+            int yw = TeamWeek.YearWeek(State);
+            bool qualifierWeek = yw == QualifierWeek;
+            bool any = qualifierWeek;
+            for (int k = 0; k < 3 && !any; k++) any = yw == TeamWeek.EntryDeadlineWeeks[k] || yw == Calendar.RaceWeeks[k];
+            if (!any) return;
+            YearState ys = PrepareYear();
+            if (qualifierWeek && !ys.Seeds.Contains(School.Id)) State.Notify(NotifyKind.Schedule, "qualifier_week");
+            for (int k = 0; k < 3; k++)
+            {
+                if (!ys.Entrants((RaceKind)k).Contains(School.Id)) continue;
+                if (yw == TeamWeek.EntryDeadlineWeeks[k]) State.Notify(NotifyKind.Schedule, "entry_open." + RaceCodes[k], 0, Calendar.RaceWeeks[k] - yw);
+                if (yw == Calendar.RaceWeeks[k]) State.Notify(NotifyKind.Schedule, "race_week." + RaceCodes[k]);
+            }
         }
 
         /// <summary>招聘の宣言をおまかせで行うか(<see cref="StepWeek"/> は 2 月の最初の週に行う。<see cref="GameFlow"/> は false で、宣言は画面の操作)。</summary>
@@ -519,7 +555,8 @@ namespace Ekiden.Domain.Game
                 marker = new WorldRunner { Ticket = true, Q = _ticketRecruit.Q, V = _ticketRecruit.V, Index = -1 };      // 割り当てには出ない。Intake で実体にする
                 t.ConfirmEnrollment();
             }
-            TicketMilestones.EarnAtYearEnd(t, year, School.Rank(), year);
+            int earnedAtEnd = TicketMilestones.EarnAtYearEnd(t, year, School.Rank(), year);
+            if (earnedAtEnd > 0) State.Notify(NotifyKind.Ticket, "earned", 0, earnedAtEnd);
             return marker;
         }
 

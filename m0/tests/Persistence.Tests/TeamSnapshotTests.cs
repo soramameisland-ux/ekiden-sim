@@ -206,7 +206,7 @@ namespace Ekiden.Persistence.Tests
             JsonObject o = TeamSnapshot.Capture(s);
             CollectionAssert.AreEqual(new[] { "schema_version", "scenario", "run", "clock", "rng", "counters", "player_team", "runners", "ob_records", "event_state", "settings" }, o.Keys);
             CollectionAssert.AreEqual(new[] { "funds", "facilities", "staff", "morale", "captain_id", "manager_name", "annual_plan", "monthly_plan", "custom_weeks", "guidance_points", "individual_menu", "talked",
-                "scout_points", "coach_rank", "ob_network", "tickets", "prestige", "year_rank", "last_year_rank", "year_points", "school_prefecture_id", "entries" }, ((JsonObject)o["player_team"]).Keys);
+                "scout_points", "coach_rank", "ob_network", "tickets", "prestige", "year_rank", "last_year_rank", "year_points", "school_prefecture_id", "entries", "notifications" }, ((JsonObject)o["player_team"]).Keys);
             var r1 = (JsonObject)((JsonObject)o["runners"])["1"];
             CollectionAssert.AreEqual(new[] { "id", "family_name", "given_name", "family_kana", "given_kana", "origin", "school_id", "enroll_year", "grade", "growth_type", "stats", "potential", "xp", "skills", "fatigue", "form",
                 "taper_weeks", "sharpen_bits", "motivation", "injury", "group", "bonds", "traits", "is_captain", "recruit_source", "ticket_kind", "career", "ctr", "monthly", "appearance", "appearance_override", "look_seed", "style", "gifts",
