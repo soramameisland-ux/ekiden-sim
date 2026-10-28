@@ -30,7 +30,7 @@
 
 ```
 cd m0
-dotnet test Ekiden.sln -c Release          # 435 件(Domain 329 + Persistence 106)。約 1.5 分。全部緑が前提
+dotnet test Ekiden.sln -c Release          # 445 件(Domain 339 + Persistence 106)。約 1.5 分。全部緑が前提
 dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)
@@ -82,7 +82,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 ## 落とし穴(過去に踏んだもの)
 
 - `pkill -f` でプロセスを掃除しない(自分のシェルも落ちる)。SimCli を長時間実行している間は、同じ出力先を**再ビルドしない**。
-- ゴールデン(`tests/*/Golden/*.json.gz`)・`Events/EventCatalog.g.cs`・`pace50` の表は**生成物**(`verify/gen_*.py`)。手で編集しない。
+- ゴールデン(`tests/*/Golden/*.json.gz`)・`Events/EventCatalog.g.cs`・`Text/NameTable.g.cs`・`pace50` の表は**生成物**(`verify/gen_*.py`)。手で編集しない(名前の表の元は `m0/Assets/Master/names_ja.json`。並びを変えると生成される名前が変わる)。
 - 仕様書の定数表はテスト(`DocSyncTests` など)が読む。表の値を変えたらコードと合わせる。表を足したら `lint_tables.py`。
 - `GameFlow` のテストで保存を繰り返すと、復元した流れが同じ停止を再び出す。保存は『週 × 停止の鍵』ごとに 1 回にし、操作は冪等にする(暴走した過去あり)。
 - 世界の保存の `School.Funds` は週の終わりに `SyncSchool()` で同期する(古い値が残る)。

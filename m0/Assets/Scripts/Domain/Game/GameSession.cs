@@ -9,6 +9,7 @@ using Ekiden.Domain.Recruit;
 using Ekiden.Domain.Rng;
 using Ekiden.Domain.Screens;
 using Ekiden.Domain.Team;
+using Ekiden.Domain.Text;
 using Ekiden.Domain.Tickets;
 using Ekiden.Domain.Training;
 using Ekiden.Domain.World;
@@ -176,6 +177,7 @@ namespace Ekiden.Domain.Game
             foreach (WorldRunner w in roster)
             {
                 Runner r = RunnerFactory.FromInFlight(w, s.NextRunnerId++, 1, Rngs, pref);
+                NameGenerator.Assign(r, Rngs, TakenIn(s));
                 s.Runners.Add(r);
                 s.InitBonds(r);
             }
@@ -184,6 +186,12 @@ namespace Ekiden.Domain.Game
             s.AssignRecommendedGroups();                                 // 新規ゲームの開始時は推奨の編成(08 R-04)
             SyncSchool();
             _week.BeginWeek(s);                                          // 最初の週の最初の処理(以後は各週の終わりで次の週のぶんを行う)
+        }
+
+        /// <summary>名前の重複の判定(名前の生成。いまの部員と同じ姓名は避ける)。</summary>
+        private static Func<string, bool> TakenIn(TeamState s)
+        {
+            return full => s.Runners.Any(x => x.FamilyName + x.GivenName == full);
         }
 
         /// <summary>部員数の指定(同好会など)のとき、名簿から無作為に残す(label 9・(0, 0)。Fisher–Yates の先頭 n 人。残った人は元の並びのまま)。</summary>
@@ -542,6 +550,7 @@ namespace Ekiden.Domain.Game
             foreach (WorldRunner c in allocated)
             {
                 Runner r = RunnerFactory.FromCandidate(c, s.NextRunnerId++, enrollWeek, Rngs, s.SchoolPref, _targets.Contains(c.Index));
+                NameGenerator.Assign(r, Rngs, TakenIn(s));
                 s.Runners.Add(r);
                 s.InitBonds(r);
                 _lastIntake.Add(r.Id);
@@ -555,6 +564,7 @@ namespace Ekiden.Domain.Game
                 if (sr.Kind == TicketKind.Intl) t.Country = sr.CountryIndex + 1;
                 else t.HighSchool = Geo.HighSchoolId(sr.Pref, sr.HighSchoolU);
                 foreach (Trait tr in Presentation.Traits(Rngs, sr.LookSeed)) t.Traits.Add(tr.ToString());
+                NameGenerator.Assign(t, Rngs, TakenIn(s));
                 t.DeriveDistance(s.SchoolPref);
                 s.Runners.Add(t);
                 s.InitBonds(t);
