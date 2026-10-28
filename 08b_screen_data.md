@@ -54,6 +54,21 @@
 | `Obs()` | `ObView` | SC-33 | OB(卒業年度の新しい順)・役割のある OB と残り週数・県別ネットワーク(人数・Lv・次のレベルまであと何人)| 同上 |
 | `History()` | `HistoryView` | SC-34 | 年度ごとの戦績・各大会の初優勝の年度・優勝の通算・三冠・クリアと無招聘・殿堂入り・出身県ごとの人数と『47 県の達成 n』| 同上 |
 
+**上の表の型に後から足した項目**(G-02〜G-17。同じ API の返す型の中。試験は `RaceHighlightTests` `RecordTests` `OutlookTests` `MissedCandidateTests` `StatDeltaTests` ほか)
+
+| API / 型 | 足した項目 | 画面 |
+|----------|------------|------|
+| `RaceResult` → `RaceResultView` | `Highlights`(大会の見どころ。最大 5 件・同じ種類は 2 件まで)・`Records`(記録の更新。区間の順、最後に大会記録)・`OwnLegs[].Record` | SC-26 |
+| `RaceLive` → `RaceLiveView` | `Highlights`(通過した区間のダイジェスト。区間ごとに最大 2 件。見込みの記録も含む) | SC-25 |
+| `Plan()` → `PlanView` | `OutlookRace` / `OutlookWeeks`(8 週以内で出場できる次の大会)・`ThemeOptionView.GoodChance`(そのテーマで『好調以上』の見込み) | SC-16 |
+| `Entry(kind)` / `Order(kind)` / `OrderCandidates(kind, section)` | 各行の `Outlook`(`FormOutlookView`。登録した場合の調子の分布・故障の確率・『好調以上』・大会の週の疲労)。1 人分は `FormOutlook(runnerId, kind)` | SC-21・22 |
+| `RunnerDetail(id)` → `StatView` | `DeltaThisMonth` / `DeltaLastMonth`(能力の増減) | SC-19 |
+| `Enrollment()` → `EnrollmentView` | `Missed`(惜しかった候補。名前・★・出身 + 理由 `miss.*` + 入った学校 + 競り負けの差) | SC-14 |
+| `Graduation()` / `Obs()` → `GraduateRowView` | `CountryName`(留学生の出身国) | SC-13・33 |
+| `History()` → `HistoryView` | `Champions`(歴代の優勝校。予熱の年度 = ゲーム開始前の歴史を含む `PreGame`)・`CourseRecords`・`TeamRecords` | SC-34 |
+
+見どころ・記録・調子の見込みの文は `hl.*` / `miss.*` のキーに `{school}` `{sec}` などを当てはめる(文字列表)。
+
 **既に画面向きの読み取りがある(Views の型は無い)もの**
 
 | API | 画面 | 備考 |
