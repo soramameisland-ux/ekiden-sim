@@ -28,6 +28,7 @@ namespace Ekiden.SimCli
                 case "fuzz-save": return FuzzSaveCmd.Run(args.Skip(1).ToArray());
                 case "sync-sim": return SyncSimCmd.Run(args.Skip(1).ToArray());
                 case "vectors": return VectorsCmd.Run(args.Skip(1).ToArray());
+                case "strings": return StringsCmd.Run(args.Skip(1).ToArray());
                 case "help":
                 default:
                     Console.WriteLine("SimCli コマンド:");
@@ -41,6 +42,7 @@ namespace Ekiden.SimCli
                     Console.WriteLine("  save [年度数 100]   セーブの大きさ・保存と読み込みの時間(09 §5.4)");
                     Console.WriteLine("  fuzz-save [回数 20000]   コンテナのファズ・電源断・検証と修復(09 §4・§7)");
                     Console.WriteLine("  sync-sim [回数 400] [手数 300]   クラウド同期の乱数シミュレーション(09 §9.7)");
+                    Console.WriteLine("  strings lint|chars|seed [Assets/Strings/ja.json] [フォントの文字のファイル]   文字列テーブル(09 §12.3)の書式の検査・使われている文字の集合とフォントにない文字・足りないキーを足す");
                     Console.WriteLine("  vectors   T1 の主なベクタの値を『名前 値』の行で出す(tools/compare_vectors.py が参照モデルと突き合わせる)");
                     return 0;
             }

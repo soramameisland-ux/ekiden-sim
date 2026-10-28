@@ -23,6 +23,8 @@ dotnet build Ekiden.sln -c Release
 dotnet test  Ekiden.sln -c Release
 ```
 
+文字列テーブルは `Assets/Strings/ja.json`(平らな辞書。09 §12.3)。`SimCli strings lint` で書式を検査・`strings chars [ja.json] [フォントの文字のファイル]` で使われている文字とフォントにない文字・`strings seed` で ID から決まるキーのうち表にないものを足す(本文は変えない)。ID を足したら `seed` を実行する(`StringsCoverageTests` が落ちる)。
+
 名前の表は `Assets/Master/names_ja.json`(姓・名とかな。留学生の仮の名前の部品)。編集したら `python3 -I ../verify/gen_names_cs.py` で `Domain/Text/NameTable.g.cs` を作り直す(`NameTests` が JSON と C# の一致を確かめる)。並びを変えると生成される名前が変わるので、足すときは末尾に。
 
 ゴールデンデータを作り直すとき: `python3 -I ../verify/gen_golden_03.py`(週の解決)・`gen_golden_04.py`(レース)・`gen_golden_05.py`(世界の式)・`gen_golden_06.py`(イベント。約 4 分)・`gen_golden_07.py`(招聘・券・購入状態)・`gen_golden_08.py`(画面の規則)・`gen_golden_09.py`(永続化。`tests/Persistence.Tests/Golden/`)・`gen_master_pace50.py`(`pace50` の表の C# ソース)。`tests/Domain.Tests/Golden/*.json.gz` が更新される。イベントのカタログ(C# ソース)は `python3 -I ../verify/gen_events_cs.py` で `events_06.py` から作る(`Events/EventCatalog.g.cs`。手で編集しない)。
@@ -53,7 +55,7 @@ $S flow 1 Mid 2             # 進行制御の停止の並び(何も操作しな�
 自校の側の規則: `Team/TeamWeek.cs`(週の最初・練習・絆・月末)・`Team/TeamRacing.cs`(登録・当日の準備・大会後の処理 04 §10)・`Team/TeamYear.cs`(卒業・進路・殿堂・退部・収支と強化)・`Recruit/RunnerFactory.cs`(候補 → 選手)。
 保存: `Persistence/Snapshot/GameSnapshot.cs`(世界 + 自校 + 進行。年度の途中も)。T3 は `SimCli determinism`、統計は `accept --real`(T4c)。
 操作の入口(画面なし。無効な操作は理由つきで拒否 = 08 F4): `Game/GameSession.Commands.cs`(年間方針・グループ・月間計画・個別指導・登録・招聘の宣言・施設の強化)・`Game/GameSession.Scout.cs`(スカウトの視察・声かけ・練習会とおまかせ)・`Game/GameFlow.cs`(進行制御 = 『続ける』と止まる場所・イベントの選択・月末レポート・年度末の精算と入学者発表。`SimCli flow` で停止の並びを見られる)。区間オーダー・予報・前評判・当日(当日変更・指示・檄・レース進行)は `Game/GameSession.Race.cs` と `Game/RaceDay.cs`(04 §14.5)。08 §13.6。未実装は観戦モードの演出・檄の先行使用と走者ごとの効き(L-60)など。
-`dotnet test` は 445 件(Domain 339 + Persistence 106)。中断セーブ(週の途中・レース進行中。09 §4.6)は `Game/RaceDayRecord.cs`・`Game/GameFlow.cs`(`ResolvingWeek` `MidWeek` `ResumeWeek` `ResumeRace`)・`Persistence/Snapshot/SuspendSnapshot.cs`(`SuspendCheckpoint`)。
+`dotnet test` は 458 件(Domain 339 + Persistence 119)。中断セーブ(週の途中・レース進行中。09 §4.6)は `Game/RaceDayRecord.cs`・`Game/GameFlow.cs`(`ResolvingWeek` `MidWeek` `ResumeWeek` `ResumeRace`)・`Persistence/Snapshot/SuspendSnapshot.cs`(`SuspendCheckpoint`)。
 
 ## M1 準備: 自校の保存(09 §5.6・§17.6)
 
