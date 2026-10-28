@@ -40,6 +40,7 @@ namespace Ekiden.Domain.Entities
         public int EnrollWeek;                                     // 入学した通算週
         public int Races, SectionWins, Brakes;                     // 通算の出走数・区間賞・ブレーキ(Runner.career)
         public int RelayWins;                                      // 通算の大会優勝(Runner.career.relay_wins。規則には作用しない)
+        public int Records;                                        // 通算の区間記録の更新(Runner.career.records。殿堂入りの条件・OB の career.records。05 §10.2)
         // 月の途中経過(03 §7.2 のやる気の規則 M1・M6 と、夏合宿の記録 06 §10)。月末に使って消す
         public int MonthGain;                                      // その月の能力アップの合計(M6)
         public int HighFatigueWeeks;                               // 疲労 85 以上の連続週数(M1)
@@ -105,7 +106,7 @@ namespace Ekiden.Domain.Entities
                 Id = Id, Fatigue = Fatigue, Motivation = Motivation, Grade = Grade, GrowthType = GrowthType, TaperWeeks = TaperWeeks, InjurySeverity = InjurySeverity,
                 InjuryWeeksLeft = InjuryWeeksLeft, BondAvg = BondAvg, Form = Form, WeekLevelups = WeekLevelups, GiftRevealed = GiftRevealed,
                 RecruitSource = RecruitSource, TicketKind = TicketKind, Pref = Pref, HighSchool = HighSchool, Overseas = Overseas, Far = Far, Near = Near,
-                EnrollWeek = EnrollWeek, Races = Races, SectionWins = SectionWins, Brakes = Brakes, InjuryAge = InjuryAge, Group = Group, Captain = Captain,
+                EnrollWeek = EnrollWeek, Races = Races, SectionWins = SectionWins, Brakes = Brakes, Records = Records, InjuryAge = InjuryAge, Group = Group, Captain = Captain,
                 PRank = PRank, Regular = Regular, GapAvg = GapAvg, RaceFlags = RaceFlags, LastEventMonth = LastEventMonth,
                 RelayWins = RelayWins, MonthGain = MonthGain, HighFatigueWeeks = HighFatigueWeeks, OverloadPending = OverloadPending, CampMaxFatigue = CampMaxFatigue, Country = Country, FamilyName = FamilyName, GivenName = GivenName, FamilyKana = FamilyKana, GivenKana = GivenKana,
                 Look = Look, LookOverride = LookOverride == null ? null : new AppearanceOverride { HairStyle = LookOverride.HairStyle, HairColor = LookOverride.HairColor }, LookSeed = LookSeed,

@@ -445,7 +445,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | `recruit_source` | RecruitSource | 通常のスカウトか、特別招聘か |
 | `ticket_kind` | TicketKind? | `recruit_source = Ticket` のとき設定 |
 | `pb` | { t5000, t10000, t_half } | **派生(保存しない)**。能力から調子0・環境なしで導出した記録(ds)。式は 08 §8 R-03。記録会は記録の更新に関与しない |
-| `career` | { races, section_wins, relay_wins, brakes } | 通算成績 |
+| `career` | { races, section_wins, relay_wins, brakes, records } | 通算成績。`records` = 区間記録を更新した回数(殿堂入りの条件。OBRecord.career.records に持ち越す)。**追加の項目**(ないセーブは 0)|
 | `ctr` | map<string, int> | イベント・覚醒用のカウンター(06 §10)。自校の選手のみ |
 | `appearance` | Appearance | 4.2 |
 | `look_seed` | uint | 外見・名前の再現用シード |
@@ -582,7 +582,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 
 **TeamResult**: `{ school_id, rank, total_ds, kuriage, sections: [{ runner_id, time_ds, section_rank, cumulative_rank, instruction, events }] }`。`events`: 区間内の出来事(`Brake` `Stall` `Geki` `Kuriage` `Boost`)。**保存するのは、自校は全項目、他校は `{ school_id, rank, total_ds }` だけ**(区間・個人の記録は、区間記録・大会記録 `Records` の更新分を除いて残さない。09 §5.2)。
 
-**Records(記録)**: `course_records[race_kind][section_index] = { runner_id, time_ds, year }`(区間記録)。`team_records[race_kind] = { school_id, total_ds, year }`(大会記録)。
+**Records(記録)**: `course_records[race_kind][section_index] = { school_id, runner_id, time_ds, year }`(区間記録。他校の走者の `runner_id` は 0)。`team_records[race_kind] = { school_id, total_ds, year }`(大会記録)。実装(`WorldSim.History`。09 §17.7): 予熱の年度から全校の結果で更新する。**最初の 1 回は基準として黙って入れ(更新でない)、以後は厳密に速いときだけ更新**(同タイムは更新でない)。保持者は、その区間の最速チームのうち順位の先頭。大会記録は繰り上げのない優勝チームの総合タイム。予選会は含めない。`race_records` は全校の『学校 ID・合計タイム・繰り上げ』を順位順に(優勝校 = 先頭)。
 
 ### 4.9 SaveData
 

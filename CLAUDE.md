@@ -31,7 +31,7 @@
 
 ```
 cd m0
-dotnet test Ekiden.sln -c Release          # 583 件(Domain 437 + Persistence 123 + App 23)。約 1.5 分。全部緑が前提
+dotnet test Ekiden.sln -c Release          # 592 件(Domain 446 + Persistence 123 + App 23)。約 1.5 分。全部緑が前提
 dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)
@@ -60,6 +60,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 - **世界の年度処理**(`World/WorldSim.cs`)は段階: `BeginYear → PlayQualifier → PlayRace → EndYear`(`EndYear = EndYearSettle + EndYearTurnover`)。自校だけ `IPlayerSide` で差し込む。抽象の自校(`PlayerAgent`)の結果はビット同一のまま、実体の自校は `Game/GameSession.cs`。
 - **`GameSession`**: `New → StepWeek / PlayYears`。週は段階(`ResolveTraining → PlayWeekRaces → … → FinishWeek`)に分かれ、年度末も `SettleYear → TurnoverYear`。操作は `*.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`*.Scout.cs`・`*.Race.cs`(オーダー・予報・当日)。無効な操作は理由つきで拒否(`OpResult`。08 F4)。
 - **保存の境目**: 週の最初の処理(`BeginWeek`)は**前の週の終わり**に走る。復元後は `state.Refresh(assignGroups:false)` が要る(なければバイト一致が崩れる)。グループは保存される割り当て(08 R-04)。
+- **世界の履歴**(`World/RaceHistory.cs`。`WorldSim.History`): 予熱の年度から、大会ごとの全校の順位表と区間記録・大会記録を持つ(保存は `history`)。`PlayRace` が更新し `RaceOutcome.Records` に返す。自校の走者の記録は `Runner.Records`・`race.record`・殿堂入りに効く。見どころの判定は `Race/RaceHighlights.cs`(注目校・重要度は 04 §9.3)。
 - **当日**(`Game/RaceDay.cs`。04 §14.5): 乱数の引き方は指示・檄・当日変更に依存しないので、いまの決定で全チームを**再計算**する(`Preview`)。決められるのは `Resolved` 以降の区間だけ。当日の状態は保存しない(`GameFlow.CanSave` は練習の解決の前だけ)。
 - **進行制御**(`Game/GameFlow.cs`): `Advance()` だけが前に進む。停止は `StopKind`。観戦モードが Full のときだけ `RaceDayPrep` で止まる。
 

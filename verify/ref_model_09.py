@@ -923,7 +923,7 @@ def team_save(rng, n=24, year=4, with_world_stub=False):
                  injury=dict(severity=rng.choice(["Minor", "Moderate", "Severe"]), weeks_left=rng.randint(1, 8), age=rng.randint(0, 5)) if inj else dict(severity="None", weeks_left=0, age=rng.choice([99, 99, 12])),
                  group=rng.choice(GROUPS), bonds=[], traits=rng.sample(TRAITS_ALL, rng.choice([1, 2, 3])), is_captain=False,
                  recruit_source="Normal", ticket_kind=None,
-                 career=dict(races=rng.randint(0, 12), section_wins=rng.randint(0, 4), relay_wins=rng.randint(0, 3), brakes=rng.randint(0, 2)),
+                 career=dict(races=rng.randint(0, 12), section_wins=rng.randint(0, 4), relay_wins=rng.randint(0, 3), brakes=rng.randint(0, 2), records=(rid + grade) % 5 // 4),
                  ctr=sort({k: rng.randint(0, 9) for k in rng.sample(CTR_NAMES, rng.randint(0, 5))}),
                  monthly=dict(gain=rng.randint(0, 4), high_fatigue_weeks=rng.randint(0, 3), overload_pending=rng.random() < 0.2, camp_max_fatigue=rng.choice([0, 0, 78])),
                  appearance=dict(hair_style=rng.randint(0, 9), hair_color=rng.randint(0, 11), face=rng.randint(0, 4), body=rng.randint(0, 2), skin_tone=rng.randint(0, 5)),

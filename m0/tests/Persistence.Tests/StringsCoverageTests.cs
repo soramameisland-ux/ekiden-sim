@@ -61,6 +61,7 @@ namespace Ekiden.Persistence.Tests
             {
                 { "hl.lead_change", new[] { "{school}", "{other}" } }, { "hl.gap_lose", new[] { "{school}", "{sec}" } }, { "hl.gap_gain", new[] { "{school}", "{sec}" } },
                 { "hl.brake", new[] { "{school}", "{pct}" } }, { "hl.stall", new[] { "{school}", "{pct}" } }, { "hl.boost", new[] { "{school}", "{pct}" } },
+                { "hl.course_record", new[] { "{school}", "{section}", "{sec}" } }, { "hl.team_record", new[] { "{school}", "{sec}" } },
                 { "hl.section_prize", new[] { "{school}", "{section}" } }, { "hl.rank_up", new[] { "{school}", "{n}" } }, { "hl.rank_down", new[] { "{school}", "{n}" } },
             };
             CollectionAssert.AreEquivalent(need.Keys, HighlightView.AllKeys, "試験の表と View の鍵が同じ");

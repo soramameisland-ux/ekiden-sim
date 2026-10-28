@@ -134,8 +134,44 @@ namespace Ekiden.Domain.Views
         public int Count;                           // 在籍 + OB
     }
 
+    /// <summary>歴代の優勝校の 1 年度ぶん(SC-34。予熱の年度 = ゲーム開始前の歴史は <see cref="PreGame"/>)。</summary>
+    public sealed class ChampionRowView
+    {
+        public int Year;
+        public bool PreGame;                        // ゲームの開始前(年度が 0 以下)
+        public readonly int[] WinnerId = { -1, -1, -1 };                         // 大会(第一〜第三戦)ごと。その年度に開かれなかった大会は −1
+        public readonly string[] WinnerNameKey = { "", "", "" };
+        public readonly bool[] IsOwn = new bool[3];
+    }
+
+    /// <summary>区間記録(SC-34)。まだなければこの型の項目は作らない。</summary>
+    public sealed class CourseRecordView
+    {
+        public RaceKind Kind;
+        public int Section;
+        public int SchoolId;
+        public string SchoolNameKey = "";
+        public bool IsOwn;
+        public int RunnerId;                        // 自校の選手が出したときだけ(他校は 0)
+        public string RunnerName = "";              // 自校の在籍・OB のとき(わからなければ空)
+        public int TimeDs, Year;
+    }
+
+    /// <summary>大会記録(総合タイム。SC-34)。</summary>
+    public sealed class TeamRecordView
+    {
+        public RaceKind Kind;
+        public int SchoolId;
+        public string SchoolNameKey = "";
+        public bool IsOwn;
+        public int TotalDs, Year;
+    }
+
     public sealed class HistoryView
     {
+        public readonly List<ChampionRowView> Champions = new List<ChampionRowView>();    // 年度の古い順(予熱の年度から)
+        public readonly List<CourseRecordView> CourseRecords = new List<CourseRecordView>();     // 大会の順・区間の順
+        public readonly List<TeamRecordView> TeamRecords = new List<TeamRecordView>();
         public readonly List<YearRecordView> Years = new List<YearRecordView>();          // 年度の古い順
         public readonly int[] FirstWinYear = new int[3];       // 各大会の初優勝の年度(0 = まだ)
         public int Titles;                          // 優勝の通算

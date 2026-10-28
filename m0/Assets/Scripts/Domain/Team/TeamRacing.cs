@@ -222,12 +222,14 @@ namespace Ekiden.Domain.Team
                 int secRank = 1 + Count(o.Results, t => t.Sections[si] < tr.Sections[si]);
                 bool win = secRank == 1;
                 bool brake = tr.Events.Any(e => e.Kind == "brake" && e.Section == si);
+                bool record = o.Records.Any(u => u.Section == si && u.SchoolId == teamId && u.RunnerId == r.Id);       // 自校の走者の区間記録の更新(04 §8.3)
                 int cumNow = 1 + Count(o.Results, t => t.Cum[si] < tr.Cum[si]);
                 int cumPrev = si > 0 ? 1 + Count(o.Results, t => t.Cum[si - 1] < tr.Cum[si - 1]) : cumNow;
-                r.RaceFlags = new RaceFlags { InLineup = 1, Brake = brake ? 1 : 0, SectionRank = secRank, SectionWin = win ? 1 : 0, Record = 0 };
+                r.RaceFlags = new RaceFlags { InLineup = 1, Brake = brake ? 1 : 0, SectionRank = secRank, SectionWin = win ? 1 : 0, Record = record ? 1 : 0 };
                 r.Races++;
                 if (win) r.SectionWins++;
                 if (brake) r.Brakes++;
+                if (record) r.Records++;
                 if (teamRank == 1) r.RelayWins++;
                 // カウンター(06 §10)
                 if (r.TaperWeeks >= 2 && r.Form >= 1) r.AddCtr(Counters.PeakedRaces, 1);

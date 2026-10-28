@@ -82,6 +82,7 @@ namespace Ekiden.Verification
         {
             { "hl.lead_change", "{school}が{other}を抜いて首位に立った" }, { "hl.gap_lose", "{school}は先頭との差が{sec}秒開いた" }, { "hl.gap_gain", "{school}は先頭との差を{sec}秒縮めた" },
             { "hl.brake", "{school}の走者がブレーキ(約{pct}%の遅れ)" }, { "hl.stall", "{school}の走者が失速(約{pct}%の遅れ)" }, { "hl.boost", "{school}の走者が好走(約{pct}%の短縮)" },
+            { "hl.course_record", "{school}の走者が{section}区で区間新記録(前の記録より{sec}秒短縮)" }, { "hl.team_record", "{school}が大会新記録(前の記録より{sec}秒短縮)" },
             { "hl.section_prize", "{school}の走者が{section}区の区間賞" }, { "hl.rank_up", "{school}が順位を{n}つ上げた" }, { "hl.rank_down", "{school}が順位を{n}つ落とした" },
         };
 

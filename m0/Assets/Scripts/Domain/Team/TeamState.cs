@@ -140,7 +140,7 @@ namespace Ekiden.Domain.Team
             var o = new OBRecord
             {
                 Pref = r.Overseas ? 0 : r.Pref, CareerPath = path, RunnerId = r.Id, Name = r.FamilyName + r.GivenName, Kana = r.FamilyKana + r.GivenKana, HighSchoolName = highSchoolName,
-                EnrollYear = enrollYear, GradYear = gradYear, RaceWins = r.RelayWins, SectionWins = r.SectionWins, Records = 0, HallOfFame = hallOfFame,
+                EnrollYear = enrollYear, GradYear = gradYear, RaceWins = r.RelayWins, SectionWins = r.SectionWins, Records = r.Records, HallOfFame = hallOfFame,
                 RecruitSource = r.RecruitSource, Look = r.Look, Style = r.Style, Gifts = (Gift[])r.Gifts.Clone(),
             };
             System.Array.Copy(r.Stats, o.FinalStats, StatInfo.Count);

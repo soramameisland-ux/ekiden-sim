@@ -114,16 +114,16 @@ namespace Ekiden.Domain.Views
         public string SchoolNameKey = "";
         public bool IsOwn;
         public int RunnerId;                         // 自校の走者(他校は 0。他校の選手は出さない)
-        public int OtherSchoolId = -1;               // 首位交代: それまでの首位
+        public int OtherSchoolId = -1;               // 首位交代: それまでの首位 / 記録: それまでの記録の保持校
         public string OtherSchoolNameKey = "";
-        public int Ds;                               // 首位交代・差の変化・区間賞: 関わるタイム(ds)。差の変化は正 = 離れた
+        public int Ds;                               // 首位交代・差の変化・区間賞・記録: 関わるタイム(ds)。差の変化は正 = 離れた。記録は前の記録より縮めた量
         public double Percent;                       // ブレーキ・失速・好走: 時間の割合(%)
         public int RankDelta;                        // 順位の変動: 正 = 上がった
 
         /// <summary>文字列表に必要な鍵(<c>hl.</c> + 下の語)。</summary>
         public static readonly string[] AllKeys =
         {
-            "hl.lead_change", "hl.gap_lose", "hl.gap_gain", "hl.brake", "hl.stall", "hl.boost", "hl.section_prize", "hl.rank_up", "hl.rank_down",
+            "hl.lead_change", "hl.gap_lose", "hl.gap_gain", "hl.brake", "hl.stall", "hl.boost", "hl.course_record", "hl.team_record", "hl.section_prize", "hl.rank_up", "hl.rank_down",
         };
 
         public static string KeyOf(HighlightKind kind, int delta)
@@ -135,10 +135,26 @@ namespace Ekiden.Domain.Views
                 case HighlightKind.Brake: return "hl.brake";
                 case HighlightKind.Stall: return "hl.stall";
                 case HighlightKind.Boost: return "hl.boost";
+                case HighlightKind.CourseRecord: return "hl.course_record";
+                case HighlightKind.TeamRecord: return "hl.team_record";
                 case HighlightKind.SectionPrize: return "hl.section_prize";
                 default: return delta > 0 ? "hl.rank_up" : "hl.rank_down";
             }
         }
+    }
+
+    /// <summary>記録の更新 1 件(SC-26。<see cref="Section"/> = −1 は大会記録)。</summary>
+    public sealed class RecordUpdateView
+    {
+        public int Section;
+        public int SchoolId;
+        public string SchoolNameKey = "";
+        public bool IsOwn;
+        public int RunnerId;                         // 自校の走者が出したときだけ(他校は 0)
+        public int TimeDs, Year;
+        public int PrevTimeDs, PrevYear;             // それまでの記録
+        public int PrevSchoolId;
+        public string PrevSchoolNameKey = "";
     }
 
     /// <summary>自校の区間ごとの結果。</summary>
@@ -154,9 +170,10 @@ namespace Ekiden.Domain.Views
         public Instruction Instruction;
         public bool Prize;                           // 区間賞
         public bool Brake, Stall, Geki, Kuriage;     // 出来事(ブレーキ・失速・檄を使った・繰り上げスタート)
+        public bool Record;                          // 区間記録を更新した(この区間の走者)
     }
 
-    /// <summary>大会の結果(SC-26)。総合・区間賞・自校の区間ごと・評価ポイント。大会の見どころは `Highlights`。記録の更新は未実装(08b G-03)。</summary>
+    /// <summary>大会の結果(SC-26)。総合・区間賞・自校の区間ごと・評価ポイント。大会の見どころは `Highlights`、記録の更新は `Records`。</summary>
     public sealed class RaceResultView
     {
         public RaceKind Kind;
@@ -171,5 +188,6 @@ namespace Ekiden.Domain.Views
         public List<SectionPrizeView> Prizes = new List<SectionPrizeView>();
         public List<OwnLegView> OwnLegs = new List<OwnLegView>();
         public List<HighlightView> Highlights = new List<HighlightView>();      // 大会の見どころ(最大 5 件。区間の順)
+        public List<RecordUpdateView> Records = new List<RecordUpdateView>();   // 更新された記録(区間の順、最後に大会記録)
     }
 }

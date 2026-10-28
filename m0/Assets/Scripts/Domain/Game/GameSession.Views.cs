@@ -419,10 +419,17 @@ namespace Ekiden.Domain.Game
                         Instruction = team.Instr != null ? team.Instr[si] : Instruction.Keep, Prize = secRank == 1,
                         Brake = mine.Events.Any(e => e.Section == si && e.Kind == "brake"), Stall = mine.Events.Any(e => e.Section == si && e.Kind == "stall"),
                         Geki = mine.Events.Any(e => e.Section == si && e.Kind == "geki_brake"), Kuriage = mine.Events.Any(e => e.Section == si && e.Kind == "kuriage"),
+                        Record = race.Records.Any(u => u.Section == si && u.SchoolId == School.Id),
                     });
                 }
             }
-            foreach (Highlight h in RaceHighlights.Top(RaceHighlights.Detect(res, School.Id)))
+            foreach (RecordUpdate u in race.Records)
+                v.Records.Add(new RecordUpdateView
+                {
+                    Section = u.Section, SchoolId = u.SchoolId, SchoolNameKey = "school." + u.SchoolId + ".name", IsOwn = u.SchoolId == School.Id, RunnerId = u.SchoolId == School.Id ? u.RunnerId : 0,
+                    TimeDs = u.TimeDs, PrevTimeDs = u.PrevTimeDs, PrevSchoolId = u.PrevSchoolId, PrevSchoolNameKey = "school." + u.PrevSchoolId + ".name", PrevYear = u.PrevYear, Year = u.Year,
+                });
+            foreach (Highlight h in RaceHighlights.Top(RaceHighlights.Detect(res, School.Id, -1, race.Records)))
                 v.Highlights.Add(HighlightOf(h, s => team != null ? team.Lineup[s].RunnerId : 0));
             return v;
         }

@@ -41,6 +41,7 @@ namespace Ekiden.Domain.Team
         public const double QuitRate = 0.40;             // やる気 1 の選手が年度末に退部する確率(05 §10.4)
         public const double HallOfFamePower = 85.0;      // 殿堂入りの卒業時の力(05 §10.2)
         public const int HallOfFameSectionWins = 3;      // 同じく、区間賞の通算回数
+        public const int HallOfFameRecords = 1;          // 同じく、区間記録の更新の通算回数
 
         /// <summary>実業団に進む確率 = clamp((卒業時の力 − 62) / 14, 0, 0.9)(05 §10.2)。</summary>
         public static double CorpProbability(double power)
@@ -57,10 +58,10 @@ namespace Ekiden.Domain.Team
             return CareerPath.GradSchool;
         }
 
-        /// <summary>殿堂入り(05 §10.2): 大会での区間賞が通算 3 回以上、または卒業時の力が 85 以上(区間記録の更新は未実装。L-53)。</summary>
+        /// <summary>殿堂入り(05 §10.2): 区間記録を更新した、または大会での区間賞が通算 3 回以上、または卒業時の力が 85 以上。</summary>
         public static bool IsHallOfFame(Runner r, double power)
         {
-            return r.SectionWins >= HallOfFameSectionWins || power >= HallOfFamePower;
+            return r.Records >= HallOfFameRecords || r.SectionWins >= HallOfFameSectionWins || power >= HallOfFamePower;
         }
 
         /// <summary>入学した年度(<see cref="Runner.EnrollWeek"/> から。年度は 1 始まり)。</summary>

@@ -154,9 +154,46 @@ namespace Ekiden.Domain.Game
         }
 
         // ------------------------------------------------------------ 歴史・殿堂(SC-34 の自校の部分)
+        /// <summary>自校の在籍の選手・OB の名前(わからなければ空)。</summary>
+        private string RunnerNameOf(int runnerId)
+        {
+            if (runnerId == 0) return "";
+            Runner r = State.FindRunner(runnerId);
+            if (r != null) return r.FamilyName + r.GivenName;
+            foreach (OBRecord ob in State.Obs) if (ob.RunnerId == runnerId) return ob.Name;
+            return "";
+        }
+
         public HistoryView History()
         {
             var v = new HistoryView();
+            ChampionRowView row = null;
+            foreach (RaceEntry e in World.History.Races)
+            {
+                if (row == null || row.Year != e.Year) { row = new ChampionRowView { Year = e.Year, PreGame = e.Year <= 0 }; v.Champions.Add(row); }
+                int k = (int)e.Kind;
+                row.WinnerId[k] = e.WinnerId;
+                row.WinnerNameKey[k] = "school." + e.WinnerId + ".name";
+                row.IsOwn[k] = e.WinnerId == School.Id;
+            }
+            for (int k = 0; k < 3; k++)
+            {
+                CourseRecord[] cr = World.History.Course[k];
+                if (cr != null)
+                    for (int si = 0; si < cr.Length; si++)
+                    {
+                        CourseRecord c = cr[si];
+                        if (c == null) continue;
+                        bool own = c.SchoolId == School.Id;
+                        v.CourseRecords.Add(new CourseRecordView
+                        {
+                            Kind = (RaceKind)k, Section = si, SchoolId = c.SchoolId, SchoolNameKey = "school." + c.SchoolId + ".name", IsOwn = own,
+                            RunnerId = own ? c.RunnerId : 0, RunnerName = own ? RunnerNameOf(c.RunnerId) : "", TimeDs = c.TimeDs, Year = c.Year,
+                        });
+                    }
+                TeamRecord t = World.History.Team[k];
+                if (t != null) v.TeamRecords.Add(new TeamRecordView { Kind = (RaceKind)k, SchoolId = t.SchoolId, SchoolNameKey = "school." + t.SchoolId + ".name", IsOwn = t.SchoolId == School.Id, TotalDs = t.TotalDs, Year = t.Year });
+            }
             foreach (PlayerYearStats st in Stats)
             {
                 var y = new YearRecordView

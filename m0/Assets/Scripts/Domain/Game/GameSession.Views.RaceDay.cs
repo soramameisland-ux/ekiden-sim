@@ -89,6 +89,8 @@ namespace Ekiden.Domain.Game
             switch (h.Kind)
             {
                 case HighlightKind.LeadChange:
+                case HighlightKind.CourseRecord:
+                case HighlightKind.TeamRecord:
                     v.OtherSchoolId = h.OtherTeamId; v.OtherSchoolNameKey = "school." + h.OtherTeamId + ".name"; v.Ds = (int)h.Magnitude; break;
                 case HighlightKind.GapMove:
                 case HighlightKind.SectionPrize:
@@ -109,8 +111,9 @@ namespace Ekiden.Domain.Game
             if (inc != null) { v.IncidentKind = inc.Kind; v.IncidentLoss = inc.Loss; v.IncidentPos = inc.Pos; }
             if (rd.Resolved > 0)
             {
+                List<TeamResult> results = rd.Preview();
                 v.Standings.AddRange(CondenseStandings(rd.Standings(rd.Resolved - 1), id => "school." + id + ".name"));
-                foreach (Highlight h in RaceHighlights.Digest(RaceHighlights.Detect(rd.Preview(), School.Id, rd.Resolved)))
+                foreach (Highlight h in RaceHighlights.Digest(RaceHighlights.Detect(results, School.Id, rd.Resolved, World.History.Peek(Year, rd.Kind, results, null))))
                     v.Highlights.Add(HighlightOf(h, s => rd.View(s).Runner.RunnerId));
             }
             return v;

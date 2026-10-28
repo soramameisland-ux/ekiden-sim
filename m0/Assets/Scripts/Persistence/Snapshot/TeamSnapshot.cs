@@ -122,7 +122,7 @@ namespace Ekiden.Persistence.Snapshot
                 ("bonds", new JsonArray((bonds ?? new List<int[]>()).Select(b => (JsonValue)new JsonArray(new JsonValue[] { N(b[1]), N(b[2]) })))),
                 ("traits", Strs(r.Traits)), ("is_captain", B(r.Captain)), ("recruit_source", S(RecruitNames[(int)r.RecruitSource])),
                 ("ticket_kind", r.RecruitSource == RecruitSource.Ticket ? (JsonValue)S(TicketKindNames[(int)r.TicketKind]) : Null),
-                ("career", O(("races", N(r.Races)), ("section_wins", N(r.SectionWins)), ("relay_wins", N(r.RelayWins)), ("brakes", N(r.Brakes)))),
+                ("career", O(("races", N(r.Races)), ("section_wins", N(r.SectionWins)), ("relay_wins", N(r.RelayWins)), ("brakes", N(r.Brakes)), ("records", N(r.Records)))),
                 ("ctr", ObjSorted(r.Counters)),
                 ("monthly", O(("gain", N(r.MonthGain)), ("high_fatigue_weeks", N(r.HighFatigueWeeks)), ("overload_pending", B(r.OverloadPending)), ("camp_max_fatigue", N(r.CampMaxFatigue)))),
                 ("appearance", Appearance(r.Look)), ("appearance_override", lo), ("look_seed", N(r.LookSeed)),
@@ -285,6 +285,7 @@ namespace Ekiden.Persistence.Snapshot
                 Fatigue = Int(j, "fatigue"), Form = Int(j, "form"), TaperWeeks = Int(j, "taper_weeks"), Motivation = Int(j, "motivation"),
                 Group = Index(GroupNames, Str(j, "group")), Captain = Bool(j, "is_captain"), RecruitSource = (RecruitSource)Index(RecruitNames, Str(j, "recruit_source")),
                 Races = Int(Obj(j, "career"), "races"), SectionWins = Int(Obj(j, "career"), "section_wins"), RelayWins = Int(Obj(j, "career"), "relay_wins"), Brakes = Int(Obj(j, "career"), "brakes"),
+                Records = Obj(j, "career").ContainsKey("records") ? Int(Obj(j, "career"), "records") : 0,        // 追加の項目(ないセーブは 0。09 §6)
                 Look = RestoreAppearance(Obj(j, "appearance")), LookSeed = (uint)Long(j, "look_seed"), GiftRevealed = Bool(j, "gift_revealed"),
             };
             JsonObject og = Obj(j, "origin");

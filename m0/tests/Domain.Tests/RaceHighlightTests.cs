@@ -4,6 +4,7 @@ using System.Linq;
 using Ekiden.Domain.Events;
 using Ekiden.Domain.Game;
 using Ekiden.Domain.Race;
+using Ekiden.Domain.Rng;
 using Ekiden.Domain.Views;
 using Ekiden.Domain.World;
 using NUnit.Framework;
@@ -97,6 +98,41 @@ namespace Ekiden.Domain.Tests
         }
 
         [Test]
+        public void OnlyFocusTeams_AreReportedForGapsIncidentsAndRanks_ButEveryoneGetsAPrize()
+        {
+            // 6 校。1 区の累積は T1..T6 の順(1100〜1600)。2 区で 5 位の T5 だけ 800(他は 1000)で 20 秒詰める(順位は 5 → 4。上位 3 校の外のまま)。6 位の T6 はブレーキ
+            var teams = new List<TeamResult>();
+            for (int i = 1; i <= 6; i++)
+                teams.Add(Team(i, new[] { 1000 + 100 * i, i == 5 ? 800 : 1000 }, i == 6 ? new[] { new RaceEvent { Kind = "brake", Section = 1, Value = 0.06 } } : new RaceEvent[0]));
+            var all = RaceHighlights.Detect(teams, -1);
+            Assert.IsEmpty(Of(all, HighlightKind.Brake), "上位 3 校でも自校でもない 6 位のブレーキは出さない");
+            Assert.IsEmpty(Of(all, HighlightKind.GapMove).Where(h => h.Section == 1).ToList(), "T5 の差の変化(注目校でない)は出さない");
+            // 自校にすれば、同じ出来事が出る
+            Assert.AreEqual(6, Of(RaceHighlights.Detect(teams, 6), HighlightKind.Brake).Single().TeamId);
+            Assert.IsTrue(Of(RaceHighlights.Detect(teams, 5), HighlightKind.GapMove).Any(h => h.Section == 1 && h.TeamId == 5 && h.Delta == -200));
+            // 区間賞は注目校でなくても出る(2 区の最速は T5)
+            Assert.AreEqual(5, Of(all, HighlightKind.SectionPrize).Single(h => h.Section == 1).TeamId);
+            // 前の中継所で上位 3 校だった校は、その区間で順位を落としても注目校のまま(T3 が 2 区で大きく遅れた)
+            var drop = new List<TeamResult> { Team(1, new[] { 1000, 1000 }), Team(2, new[] { 1010, 1010 }), Team(3, new[] { 1020, 1400 }), Team(4, new[] { 1030, 1030 }), Team(5, new[] { 1040, 1040 }) };
+            Highlight lost = Of(RaceHighlights.Detect(drop, -1), HighlightKind.GapMove).Single(h => h.Section == 1);
+            Assert.AreEqual(3, lost.TeamId);
+        }
+
+        [Test]
+        public void GapMove_OfTheOthers_IsOnlyTheBiggestOne_AndTheOwnTeamAlwaysCounts()
+        {
+            // 4 校が全員上位 3 校の内外にかかわらず注目(前後どちらかで上位 3)。2 区で T2 は +250、T3 は +400、自校 T4 は +200
+            var teams = new List<TeamResult> { Team(1, new[] { 1000, 1000 }), Team(2, new[] { 1000, 1250 }), Team(3, new[] { 1000, 1400 }), Team(4, new[] { 1000, 1200 }) };
+            var gaps = Of(RaceHighlights.Detect(teams, 4), HighlightKind.GapMove).Where(h => h.Section == 1).ToList();
+            CollectionAssert.AreEquivalent(new[] { 3, 4 }, gaps.Select(h => h.TeamId).ToArray(), "自校のほかは動きの最も大きい T3 だけ");
+            var noOwn = Of(RaceHighlights.Detect(teams, -1), HighlightKind.GapMove).Where(h => h.Section == 1).ToList();
+            CollectionAssert.AreEqual(new[] { 3 }, noOwn.Select(h => h.TeamId).ToArray());
+            // 同じ大きさなら ID の小さい方
+            var tie = new List<TeamResult> { Team(1, new[] { 1000, 1000 }), Team(2, new[] { 1000, 1300 }), Team(3, new[] { 1000, 1300 }) };
+            CollectionAssert.AreEqual(new[] { 2 }, Of(RaceHighlights.Detect(tie, -1), HighlightKind.GapMove).Where(h => h.Section == 1).Select(h => h.TeamId).ToArray());
+        }
+
+        [Test]
         public void Incidents_BrakeStallAndBoost_AreReportedPerSection_GekiAndKuriageAreNot()
         {
             var t1 = Team(1, new[] { 1000, 1000 },
@@ -127,6 +163,75 @@ namespace Ekiden.Domain.Tests
             var allSame = Of(RaceHighlights.Detect(new[] { Team(1, new[] { 1000 }), Team(2, new[] { 1000 }) }, -1), HighlightKind.SectionPrize);
             Assert.AreEqual(2, allSame.Count);
             Assert.IsTrue(allSame.All(h => h.Magnitude == 0));
+        }
+
+        private static RecordUpdate Rec(int section, int school, int time, int prevTime, int prevSchool)
+        {
+            return new RecordUpdate { Kind = RaceKind.Fall, Section = section, SchoolId = school, TimeDs = time, PrevTimeDs = prevTime, PrevSchoolId = prevSchool, Year = 3, PrevYear = 1 };
+        }
+
+        [Test]
+        public void Records_ReplaceTheSectionPrizeOfTheirHolder_AndTheTeamRecordComesAtTheFinish()
+        {
+            var results = new[] { Team(1, new[] { 1000, 900 }), Team(2, new[] { 1010, 900 }), Team(3, new[] { 1100, 950 }) };
+            var records = new[] { Rec(1, 1, 900, 905, 2), Rec(-1, 1, 1900, 1950, 2) };
+            var all = RaceHighlights.Detect(results, 1, -1, records);
+            Highlight cr = Of(all, HighlightKind.CourseRecord).Single();
+            Assert.AreEqual(1, cr.Section); Assert.AreEqual(1, cr.TeamId); Assert.AreEqual(5, cr.Magnitude); Assert.AreEqual(2, cr.OtherTeamId); Assert.IsTrue(cr.IsOwn);
+            Highlight tr = Of(all, HighlightKind.TeamRecord).Single();
+            Assert.AreEqual(1, tr.Section, "大会記録は最終区間(ゴール)に出す"); Assert.AreEqual(50, tr.Magnitude); Assert.AreEqual(1, tr.Tier);
+            var prizes = Of(all, HighlightKind.SectionPrize).Select(h => h.Section + ":" + h.TeamId).OrderBy(x => x).ToArray();
+            CollectionAssert.AreEqual(new[] { "0:1", "1:2" }, prizes, "区間 1 は記録の保持者(T1)の区間賞を出さない。同タイムのもう 1 校(T2)は区間賞のまま");
+            // 途中まで(1 区の終わりまで)では、2 区の記録も大会記録も出ない
+            var early = RaceHighlights.Detect(results, 1, 1, records);
+            Assert.IsEmpty(Of(early, HighlightKind.CourseRecord)); Assert.IsEmpty(Of(early, HighlightKind.TeamRecord));
+            // 記録を渡さなければ、従来どおり区間賞
+            Assert.AreEqual(3, Of(RaceHighlights.Detect(results, 1), HighlightKind.SectionPrize).Count);
+            // 同じ重要度(区間賞)の中では自校が先。記録は重要度が上
+            var mix = new List<Highlight> { H(1, HighlightKind.SectionPrize, 2, false, 99), H(1, HighlightKind.CourseRecord, 3, false, 1), H(1, HighlightKind.SectionPrize, 1, true, 1), H(1, HighlightKind.TeamRecord, 4, false, 2) };
+            // 記録は首位交代と同じ重要度。その中では 自校 → 記録が先 → 大きさ
+            var top = new List<Highlight> { H(1, HighlightKind.LeadChange, 5, false, 500), H(1, HighlightKind.CourseRecord, 6, false, 1), H(1, HighlightKind.LeadChange, 7, true, 1) };
+            RaceSimulator.StableSort(top, RaceHighlights.Compare);
+            CollectionAssert.AreEqual(new[] { 7, 6, 5 }, top.Select(h => h.TeamId).ToArray(), "自校の首位交代 → 記録 → 他校の首位交代");
+            RaceSimulator.StableSort(mix, RaceHighlights.Compare);
+            CollectionAssert.AreEqual(new[] { 4, 3, 1, 2 }, mix.Select(h => h.TeamId).ToArray(), "記録(大きさの順。最も重要)→ 自校の区間賞 → 他校の区間賞");
+        }
+
+        [Test]
+        public void Records_OnRealRaces_AreOneForOneWithTheUpdates()
+        {
+            WorldSim w = WorldSim.Create(new KeyedRngFactory(31UL), 6);
+            int courseSeen = 0, teamSeen = 0;
+            for (int year = 1; year <= 8; year++)
+            {
+                YearState st = w.BeginYear(year, null);
+                w.PlayQualifier(st);
+                foreach (RaceKind kind in WorldSim.AllRaces)
+                {
+                    RaceOutcome o = w.PlayRace(st, kind);
+                    int n = o.Results[0].Cum.Length;
+                    var plain = RaceHighlights.Detect(o.Results, -1);
+                    var withRec = RaceHighlights.Detect(o.Results, -1, -1, o.Records);
+                    CollectionAssert.AreEqual(o.Records.Where(u => u.Section >= 0).Select(u => u.Section + ":" + u.SchoolId).OrderBy(x => x).ToArray(),
+                        Of(withRec, HighlightKind.CourseRecord).Select(h => h.Section + ":" + h.TeamId).OrderBy(x => x).ToArray());
+                    Assert.AreEqual(o.Records.Count(u => u.Section < 0), Of(withRec, HighlightKind.TeamRecord).Count);
+                    foreach (Highlight h in Of(withRec, HighlightKind.TeamRecord)) Assert.AreEqual(n - 1, h.Section);
+                    // 記録のほかは変わらない: 区間賞だけが、記録の保持者の分だけ減る
+                    var expected = plain.Where(h => !(h.Kind == HighlightKind.SectionPrize && o.Records.Any(u => u.Section == h.Section && u.SchoolId == h.TeamId))).ToList();
+                    CollectionAssert.AreEqual(Flat(expected), Flat(withRec.Where(h => h.Kind != HighlightKind.CourseRecord && h.Kind != HighlightKind.TeamRecord)));
+                    foreach (RecordUpdate u in o.Records.Where(u => u.Section >= 0))
+                    {
+                        Highlight cr = Of(withRec, HighlightKind.CourseRecord).Single(h => h.Section == u.Section);
+                        Assert.AreEqual(u.PrevTimeDs - u.TimeDs, cr.Magnitude);
+                        Assert.AreEqual(u.PrevSchoolId, cr.OtherTeamId);
+                        courseSeen++;
+                    }
+                    teamSeen += o.Records.Count(u => u.Section < 0);
+                }
+                w.EndYear(st);
+            }
+            Assert.Greater(courseSeen, 0, "試験の前提: 区間記録の更新がある");
+            Assert.Greater(teamSeen, 0, "試験の前提: 大会記録の更新がある");
         }
 
         [Test]
@@ -184,7 +289,14 @@ namespace Ekiden.Domain.Tests
             // 全体の重要度の上位 5 件: 首位交代(1)・差(2)・ブレーキ(4)・好走(8)・区間賞(5: 大きさ 9)→ 区間の順
             CollectionAssert.AreEqual(new[] { 1, 2, 4, 5, 8 }, top.Select(h => h.TeamId).ToArray());
             Assert.AreEqual(3, RaceHighlights.Top(detected, 3).Count);
-            Assert.AreEqual(detected.Count, RaceHighlights.Top(detected, 100).Count);
+            // 同じ種類は 2 件まで: 首位交代が 4 件あっても、見どころは首位交代 2 件 + ほかの種類
+            var many = new List<Highlight>
+            {
+                H(0, HighlightKind.LeadChange, 1, false, 50), H(1, HighlightKind.LeadChange, 2, false, 40), H(2, HighlightKind.LeadChange, 3, false, 30), H(3, HighlightKind.LeadChange, 4, false, 20),
+                H(4, HighlightKind.SectionPrize, 5, false, 3), H(5, HighlightKind.RankMove, 6, false, 3),
+            };
+            CollectionAssert.AreEqual(new[] { 1, 2, 5, 6 }, RaceHighlights.Top(many, 5).Select(h => h.TeamId).ToArray(), "首位交代は大きい順に 2 件(1・2)、区間賞、順位の変動");
+            Assert.AreEqual(detected.GroupBy(h => h.Kind).Sum(g => Math.Min(2, g.Count())), RaceHighlights.Top(detected, 100).Count, "上限がなくても、同じ種類は 2 件まで");
             Assert.IsEmpty(RaceHighlights.Detect(new List<TeamResult>(), 1));
             Assert.IsEmpty(RaceHighlights.Detect(null, 1));
         }
@@ -215,7 +327,7 @@ namespace Ekiden.Domain.Tests
             return list;
         }
 
-        /// <summary>独立の数え直し: 順位は『自分より速い校の数 + 1』(同着は ID)、首位・差・賞は全チームを直接見る。</summary>
+        /// <summary>独立の数え直し: 順位は『自分より速い校の数 + 1』(同着は ID)、首位・差・賞は全チームを直接見る。注目校 = 自校 と 前後どちらかの中継所で上位 3 校。</summary>
         private static List<string> Brute(IReadOnlyList<TeamResult> res, int own, int through)
         {
             var o = new List<string>();
@@ -228,20 +340,32 @@ namespace Ekiden.Domain.Tests
                     o.Add(string.Join("|", s, HighlightKind.LeadChange, leaderAt(s).Id, leaderAt(s - 1).Id, leaderAt(s - 1).Cum[s] - leaderAt(s).Cum[s], 0));
                 int best = res.Min(t => t.Sections[s]);
                 var worse = res.Where(t => t.Sections[s] > best).Select(t => t.Sections[s]).ToList();
+                var otherGaps = new List<(int mag, int id, int move)>();
                 for (int i = 0; i < res.Count; i++)
                 {
                     TeamResult t = res[i];
+                    if (t.Sections[s] == best) o.Add(string.Join("|", s, HighlightKind.SectionPrize, t.Id, -1, worse.Count == 0 ? 0 : worse.Min() - best, 0));
+                    bool focus = t.Id == own || rankAt(i, s) <= 3 || (s > 0 && rankAt(i, s - 1) <= 3);
+                    if (!focus) continue;
                     int gap = t.Cum[s] - minAt(s), prev = s > 0 ? t.Cum[s - 1] - minAt(s - 1) : 0;
-                    if (Math.Abs(gap - prev) >= 200) o.Add(string.Join("|", s, HighlightKind.GapMove, t.Id, -1, Math.Abs(gap - prev), gap - prev));
+                    if (rankAt(i, s) != 1 && Math.Abs(gap - prev) >= 200)
+                    {
+                        if (t.Id == own) o.Add(string.Join("|", s, HighlightKind.GapMove, t.Id, -1, Math.Abs(gap - prev), gap - prev));
+                        else otherGaps.Add((Math.Abs(gap - prev), t.Id, gap - prev));
+                    }
                     foreach (RaceEvent e in t.Events.Where(e => e.Section == s && (e.Kind == "brake" || e.Kind == "stall")))
                         o.Add(string.Join("|", s, e.Kind == "brake" ? HighlightKind.Brake : HighlightKind.Stall, t.Id, -1, e.Value.ToString("R"), 0));
                     if (t.Boost[s]) o.Add(string.Join("|", s, HighlightKind.Boost, t.Id, -1, (-RaceConstants.BoostAdj).ToString("R"), 0));
-                    if (t.Sections[s] == best) o.Add(string.Join("|", s, HighlightKind.SectionPrize, t.Id, -1, worse.Count == 0 ? 0 : worse.Min() - best, 0));
                     if (s > 0)
                     {
                         int up = rankAt(i, s - 1) - rankAt(i, s);
                         if (Math.Abs(up) >= 3) o.Add(string.Join("|", s, HighlightKind.RankMove, t.Id, -1, Math.Abs(up), up));
                     }
+                }
+                if (otherGaps.Count > 0)
+                {
+                    var pick = otherGaps.OrderByDescending(x => x.mag).ThenBy(x => x.id).First();
+                    o.Add(string.Join("|", s, HighlightKind.GapMove, pick.id, -1, pick.mag, pick.move));
                 }
             }
             o.Sort(StringComparer.Ordinal);
@@ -282,13 +406,18 @@ namespace Ekiden.Domain.Tests
                     foreach (var g in all.GroupBy(h => h.Section))
                         CollectionAssert.AreEqual(g.Take(2).ToList(), digest.Where(h => h.Section == g.Key).ToList());
                     var top = RaceHighlights.Top(all);
-                    Assert.AreEqual(Math.Min(5, all.Count), top.Count);
-                    foreach (Highlight rest in all.Where(h => !top.Contains(h)))
-                        foreach (Highlight chosen in top) Assert.Greater(RaceHighlights.Compare(rest, chosen), 0);
+                    // 独立の選び方: 重要度の順に並べ、同じ種類は 2 件までで 5 件
+                    var sortedAll = all.OrderBy(h => h, Comparer<Highlight>.Create(RaceHighlights.Compare)).ToList();
+                    var expectedTop = new List<Highlight>();
+                    foreach (Highlight h in sortedAll) if (expectedTop.Count < 5 && expectedTop.Count(x => x.Kind == h.Kind) < 2) expectedTop.Add(h);
+                    CollectionAssert.AreEquivalent(expectedTop, top);
+                    Assert.IsTrue(top.GroupBy(h => h.Kind).All(g => g.Count() <= 2));
                     for (int i = 1; i < top.Count; i++) Assert.LessOrEqual(top[i - 1].Section, top[i].Section, "時間順");
                 }
             }
-            foreach (HighlightKind k in Enum.GetValues(typeof(HighlightKind))) Assert.IsTrue(seenKinds.Contains(k), k + " が一度も出ない(試験の前提)");
+            foreach (HighlightKind k in Enum.GetValues(typeof(HighlightKind)))
+                if (k != HighlightKind.CourseRecord && k != HighlightKind.TeamRecord)        // 記録は結果だけからは決まらない(別の試験)
+                    Assert.IsTrue(seenKinds.Contains(k), k + " が一度も出ない(試験の前提)");
         }
 
         [Test]
@@ -333,7 +462,7 @@ namespace Ekiden.Domain.Tests
                 }
                 Assert.IsNotNull(race);
                 RaceResultView v = gs.RaceResult(race, own);
-                var expected = RaceHighlights.Top(RaceHighlights.Detect(race.Results, gs.School.Id));
+                var expected = RaceHighlights.Top(RaceHighlights.Detect(race.Results, gs.School.Id, -1, race.Records));
                 Assert.AreEqual(expected.Count, v.Highlights.Count);
                 Assert.LessOrEqual(v.Highlights.Count, 5);
                 RaceTeam team = race.Teams.First(t => t.Id == gs.School.Id);
