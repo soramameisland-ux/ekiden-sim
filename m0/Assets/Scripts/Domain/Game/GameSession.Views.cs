@@ -131,7 +131,9 @@ namespace Ekiden.Domain.Game
                 Growth = r.GrowthType, Style = r.Style, GiftRevealed = r.GiftRevealed, Talked = State.Talked.Contains(r.Id), ThemeId = State.MonthlyPlan[r.Group],
             };
             for (int i = 0; i < StatInfo.Count; i++)
-                d.Stats.Add(new StatView { Stat = (Stat)i, Value = r.Stats[i], Rank = DisplayRules.RankLetter(r.Stats[i]), Hint = DisplayRules.Hint(r.Stats[i], r.Potential[i]) });
+                d.Stats.Add(new StatView { Stat = (Stat)i, Value = r.Stats[i], Rank = DisplayRules.RankLetter(r.Stats[i]), Hint = DisplayRules.Hint(r.Stats[i], r.Potential[i]),
+                    DeltaThisMonth = r.MonthStartStats != null ? r.Stats[i] - r.MonthStartStats[i] : 0,
+                    DeltaLastMonth = r.MonthStartStats != null && r.PrevMonthStats != null ? r.MonthStartStats[i] - r.PrevMonthStats[i] : 0 });
             var dv = new double[StatInfo.Count];
             for (int i = 0; i < dv.Length; i++) dv[i] = r.Stats[i];
             foreach (SectionType t in Enum.GetValues(typeof(SectionType)))

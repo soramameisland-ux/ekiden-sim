@@ -99,6 +99,7 @@ namespace Ekiden.Persistence.Tests
                 s.GuidanceLeft = 4;
                 s.Talked.Clear();
                 s.IndividualMenus.Clear();
+                foreach (Runner r in s.Runners) r.RollMonthStats();
                 string theme = PlanRules.AutoPlan(s.Plan.Focus, month);
                 for (int g = 0; g < 3; g++) s.MonthlyPlan[g] = theme;
                 s.ScoutPts += month >= 2 && month <= 10 ? 4 : 0;

@@ -26,6 +26,30 @@ namespace Ekiden.Persistence.Tests
         }
 
         [Test]
+        public void MonthStats_SurviveASaveAndLoad_AndRollTheSameAfterwards()
+        {
+            GameSession gs = Play(Difficulty.Mid, 48 + 6);
+            GameSession back = GameSnapshot.Restore((JsonObject)JsonValue.Parse(GameSnapshot.Capture(gs).ToJson()));
+            foreach (Runner r in gs.State.Runners)
+            {
+                Runner b = back.State.FindRunner(r.Id);
+                CollectionAssert.AreEqual(r.MonthStartStats, b.MonthStartStats);
+                CollectionAssert.AreEqual(r.PrevMonthStats, b.PrevMonthStats);
+                var da = gs.RunnerDetail(r.Id).Stats; var db = back.RunnerDetail(r.Id).Stats;
+                CollectionAssert.AreEqual(da.Select(x => x.DeltaThisMonth).ToArray(), db.Select(x => x.DeltaThisMonth).ToArray());
+                CollectionAssert.AreEqual(da.Select(x => x.DeltaLastMonth).ToArray(), db.Select(x => x.DeltaLastMonth).ToArray());
+            }
+            for (int i = 0; i < 9; i++) { gs.StepWeek(); back.StepWeek(); }             // 月をまたいで続けても同じ
+            foreach (Runner r in gs.State.Runners)
+            {
+                Runner b = back.State.FindRunner(r.Id);
+                CollectionAssert.AreEqual(r.MonthStartStats, b.MonthStartStats);
+                CollectionAssert.AreEqual(r.PrevMonthStats, b.PrevMonthStats);
+            }
+            Assert.IsTrue(gs.State.Runners.Any(r => r.MonthStartStats != null && r.PrevMonthStats != null && !r.MonthStartStats.SequenceEqual(r.PrevMonthStats)), "試験の前提: 能力が動いている");
+        }
+
+        [Test]
         public void CaptureRestoreCapture_IsIdempotent_AtEveryKindOfWeek()
         {
             foreach (int weeks in new[] { 0, 1, 21, 25, 26, 27, 36, 47, 48, 60, 100 })

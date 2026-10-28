@@ -40,6 +40,7 @@ namespace Ekiden.Domain.Entities
         public int EnrollWeek;                                     // 入学した通算週
         public int Races, SectionWins, Brakes;                     // 通算の出走数・区間賞・ブレーキ(Runner.career)
         public int RelayWins;                                      // 通算の大会優勝(Runner.career.relay_wins。規則には作用しない)
+        public int[] MonthStartStats, PrevMonthStats;              // 今月の初めの能力と、前の月の初めの能力(null = まだ月を送っていない)。画面の『増減』(08b G-14)。保存する
         public int Records;                                        // 通算の区間記録の更新(Runner.career.records。殿堂入りの条件・OB の career.records。05 §10.2)
         // 月の途中経過(03 §7.2 のやる気の規則 M1・M6 と、夏合宿の記録 06 §10)。月末に使って消す
         public int MonthGain;                                      // その月の能力アップの合計(M6)
@@ -98,6 +99,13 @@ namespace Ekiden.Domain.Entities
             Near = band == 0;
         }
 
+        /// <summary>月を送る(月の最初。<see cref="Team.TeamWeek.BeginWeek"/>): 今月の初めの能力を前の月の初めの能力にして、いまの能力を今月の初めの能力にする。まだ送っていない選手の前の月は、いまの能力(増減 0)。</summary>
+        public void RollMonthStats()
+        {
+            PrevMonthStats = MonthStartStats != null ? (int[])MonthStartStats.Clone() : (int[])Stats.Clone();
+            MonthStartStats = (int[])Stats.Clone();
+        }
+
         /// <summary>すべての項目の複製(予測・検算用。派生値は作り直す)。</summary>
         public Runner Clone()
         {
@@ -112,6 +120,8 @@ namespace Ekiden.Domain.Entities
                 Look = Look, LookOverride = LookOverride == null ? null : new AppearanceOverride { HairStyle = LookOverride.HairStyle, HairColor = LookOverride.HairColor }, LookSeed = LookSeed,
             };
             c.Traits.AddRange(Traits);
+            c.MonthStartStats = MonthStartStats == null ? null : (int[])MonthStartStats.Clone();
+            c.PrevMonthStats = PrevMonthStats == null ? null : (int[])PrevMonthStats.Clone();
             System.Array.Copy(Stats, c.Stats, Stats.Length);
             System.Array.Copy(Potential, c.Potential, Potential.Length);
             System.Array.Copy(Xp, c.Xp, Xp.Length);

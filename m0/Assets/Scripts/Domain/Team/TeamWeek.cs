@@ -37,6 +37,7 @@ namespace Ekiden.Domain.Team
                 s.GuidanceLeft = 4;                                                         // 月初に 4 へ戻る(繰り越さない。02 §4.4)
                 s.Talked.Clear();
                 s.IndividualMenus.Clear();                                                  // 個別指導のメニューは月末まで(03 §5.7)
+                foreach (Runner r in s.Runners) r.RollMonthStats();                         // 能力の増減の基準(今月の初め・前の月の初め。08b G-14)
                 if (month >= 2 && month <= 10) s.ScoutPts += 4;                              // 6〜2 月に月 4 ポイント(05 §7.1)
                 if (month == 2) s.ScoutPts += 4 * (s.CoachRank / 3);                         // ランクによる追加分は 6 月に一括
                 if (s.Settings.PlanAuto) ApplyAutoPlan(s, month);                           // plan_auto: 月間計画を推奨プランで自動に確定(08 R-04)

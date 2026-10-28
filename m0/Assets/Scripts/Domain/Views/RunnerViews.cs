@@ -54,6 +54,8 @@ namespace Ekiden.Domain.Views
         public int Value;
         public char Rank;                           // R-01
         public PotentialHint Hint;                  // R-02(素質の数値は出さない)
+        public int DeltaThisMonth;                  // 今月のここまでの増減(いまの能力 − 今月の初めの能力)
+        public int DeltaLastMonth;                  // 前の月の増減(今月の初めの能力 − 前の月の初めの能力)
     }
 
     /// <summary>区間適性(04 §5.1)の 1 つ。◎ ≥ 70 / 〇 ≥ 60 / △。</summary>

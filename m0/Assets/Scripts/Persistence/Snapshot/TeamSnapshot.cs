@@ -46,6 +46,8 @@ namespace Ekiden.Persistence.Snapshot
         private static JsonBool B(bool v) { return JsonBool.Of(v); }
         private static JsonValue Null { get { return JsonNull.Instance; } }
         private static JsonArray Ints(IEnumerable<int> v) { return new JsonArray(v.Select(x => (JsonValue)N(x))); }
+
+        private static int[] IntArr(JsonArray a) { var r = new int[a.Count]; for (int i = 0; i < r.Length; i++) r[i] = checked((int)((JsonNumber)a[i]).Int); return r; }
         private static JsonArray Strs(IEnumerable<string> v) { return new JsonArray(v.Select(x => (JsonValue)S(x))); }
 
         private static JsonObject O(params (string, JsonValue)[] kv)
@@ -124,7 +126,8 @@ namespace Ekiden.Persistence.Snapshot
                 ("ticket_kind", r.RecruitSource == RecruitSource.Ticket ? (JsonValue)S(TicketKindNames[(int)r.TicketKind]) : Null),
                 ("career", O(("races", N(r.Races)), ("section_wins", N(r.SectionWins)), ("relay_wins", N(r.RelayWins)), ("brakes", N(r.Brakes)), ("records", N(r.Records)))),
                 ("ctr", ObjSorted(r.Counters)),
-                ("monthly", O(("gain", N(r.MonthGain)), ("high_fatigue_weeks", N(r.HighFatigueWeeks)), ("overload_pending", B(r.OverloadPending)), ("camp_max_fatigue", N(r.CampMaxFatigue)))),
+                ("monthly", O(("gain", N(r.MonthGain)), ("high_fatigue_weeks", N(r.HighFatigueWeeks)), ("overload_pending", B(r.OverloadPending)), ("camp_max_fatigue", N(r.CampMaxFatigue)),
+                                       ("stats_start", r.MonthStartStats == null ? Null : (JsonValue)Ints(r.MonthStartStats)), ("stats_prev", r.PrevMonthStats == null ? Null : (JsonValue)Ints(r.PrevMonthStats)))),
                 ("appearance", Appearance(r.Look)), ("appearance_override", lo), ("look_seed", N(r.LookSeed)),
                 ("style", S((r.Style ?? Style.Neutral).Code)), ("gifts", Strs(r.Gifts.Select(g => GiftNames[(int)g]))), ("gift_revealed", B(r.GiftRevealed)));
         }
@@ -312,6 +315,8 @@ namespace Ekiden.Persistence.Snapshot
             foreach (string k in ctr.Keys) r.Counters[k] = (int)((JsonNumber)ctr[k]).Int;
             JsonObject mo = Obj(j, "monthly");
             r.MonthGain = Int(mo, "gain"); r.HighFatigueWeeks = Int(mo, "high_fatigue_weeks"); r.OverloadPending = Bool(mo, "overload_pending"); r.CampMaxFatigue = Int(mo, "camp_max_fatigue");
+            if (mo.ContainsKey("stats_start") && !mo.Get("stats_start").IsNull) r.MonthStartStats = IntArr(Arr(mo, "stats_start"));      // 追加の項目(ないセーブ・null は『まだ月を送っていない』。09 §6)
+            if (mo.ContainsKey("stats_prev") && !mo.Get("stats_prev").IsNull) r.PrevMonthStats = IntArr(Arr(mo, "stats_prev"));
             JsonValue lo = j.Get("appearance_override");
             if (!lo.IsNull)
             {

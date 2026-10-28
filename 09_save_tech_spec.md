@@ -325,7 +325,7 @@
 | `ticket_kind` | `recruit_source = Ticket` のとき `Intl` / `Rookie`、それ以外は null |
 | `career` | `{ races, section_wins, relay_wins, brakes, records }`(`records` は追加の項目。ないセーブは 0。09 §6)|
 | `ctr` | `{ 名前: 値 }`、**名前の序数順**。名前は 06 §10 の一覧のみ |
-| `monthly` | `{ gain, high_fatigue_weeks, overload_pending, camp_max_fatigue }` = 月の途中経過と夏合宿の記録(03 §7.2 のやる気の規則 M1・M6、06 §10 の `camp_overload`)。月末に使って 0 に戻す。月の途中の週の境目で保存すると要る(追加項目。M1 準備)|
+| `monthly` | `{ gain, high_fatigue_weeks, overload_pending, camp_max_fatigue, stats_start, stats_prev }` = 月の途中経過と夏合宿の記録(03 §7.2 のやる気の規則 M1・M6、06 §10 の `camp_overload`)。月末に使って 0 に戻す。月の途中の週の境目で保存すると要る(追加項目。M1 準備)。`stats_start` / `stats_prev` = 今月の初めの能力と前の月の初めの能力(10 要素。null = まだ月を送っていない。画面の『増減』= 08b G-14。**追加の項目**: ないセーブは null)|
 | `appearance` / `appearance_override` | `{ hair_style, hair_color, face, body, skin_tone }` / null または変えた項目だけの `{ hair_style?, hair_color? }` |
 | `look_seed` | uint32 を 10 進の数で |
 | `style` / `gifts` | 3 文字 / 素養の配列(並びは保つ)。`style` が読めなければ中立 `BFE`(I-21)|
@@ -1087,7 +1087,7 @@ verify/              参照モデル(Python)。仕様の正本の検算
 - **週の順**(06 §7.1): 週の最初(年度の最初なら前年度の記録を送る・月の最初ならスカウトと指導のポイント・期限切れの補正・派生値 `Refresh`・エントリー締切なら登録)→ 全選手の週の解決(03 §6)と絆 → 予選会(10 月第 3 週)・大会(第 25・28・36 週)と大会後の処理(04 §10)→ イベント → 2 月の最初の週に招聘の宣言(おまかせ)→ 月末(絆の減衰・士気・やる気の規則 M1・M4〜M6)→ 年度末(05 §12: 名声・資金と強化・成長 → 卒業と退部 → 招聘の入学 → 割り当て)。
 - **世界との関係**: 他校・名声・割り当ては抽象の自校と**同じ道**(`WorldSim.BeginYear` `PlayQualifier` `PlayRace` `EndYear`)。自校だけ `IPlayerSide` の差し込みで実体の選手が受け持つ。抽象の自校の結果は**ビット同一**(T3 の SHA-256 は変わらない)。
 - **乱数**: 週の解決・イベント・大会は既存の鍵(label 1・2・4・5)。新しい鍵は label 9 の 1 本だけ(年度末の卒業・退部の抽選。新規ゲームの部員の間引きは年度 0)。
-- **結果**: T3(実体の自校)バイト一致(上の §5.6)。T4c(実体の自校の統計)は 05 §14.11。性能: 45 年度の通しが約 3 秒(1 年度 0.05 秒)。試験は 605 件(Domain 459 + Persistence 123 + App 23)。読み取り API(`Views`。08b)と App 層(下)を加えた。
+- **結果**: T3(実体の自校)バイト一致(上の §5.6)。T4c(実体の自校の統計)は 05 §14.11。性能: 45 年度の通しが約 3 秒(1 年度 0.05 秒)。試験は 609 件(Domain 462 + Persistence 124 + App 23)。読み取り API(`Views`。08b)と App 層(下)を加えた。
 - **当日(04 §14.5)**: `GameSession.Race.cs`(オーダー・予報・前評判・当日を開く・予選会の登録)・`RaceDay.cs`(当日変更・指示・檄・レース進行)。当日の状態(当日変更・指示・檄)は**通常のセーブには入れない**(`GameFlow.CanSave` は練習が解決される前だけ。提出したオーダーは保存する)。アプリの中断では、当日の決定を `RaceDayRecord` にして**中断セーブ**に入れる(§4.6。K1)。
 - **操作と進行制御(08 §13.6)**: `GameSession.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`GameSession.Scout.cs`(スカウト)・`GameFlow.cs`(停止)。週は段階(`ResolveTraining` → `PlayWeekRaces` → `SelectWeekEvents` → `ResolveWeekEvents` → `FinishWeek` → 年度末は `SettleYear` → `TurnoverYear` → `AdvanceWeek`)に分け、おまかせの `StepWeek` と `GameFlow` が同じ段階を呼ぶ(何も操作しない流れ = おまかせ、バイト一致)。`WorldSim.EndYear` は精算(`EndYearSettle`)と後半(`EndYearTurnover`)に分けた(抽象の自校の結果はビット同一)。
 - **App 層の入口(§4.4〜§4.6・08 §6.5。`Assets/Scripts/App/`・asmdef `Ekiden.App`・Unity なし)**: `GameHost`(`NewGame` / `Open` / `Advance` / `SaveManual` / `OnAppPause` / `OnAppResume` / `Tick`)が `GameSession` + `GameFlow` + `SlotStore` をつなぐ。`SaveService` が書き込みの段取り、`SlotCatalog` が SC-01・03・40 のスロットの見出し。
