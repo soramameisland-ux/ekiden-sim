@@ -17,6 +17,7 @@ namespace Ekiden.App
         public ILocalization Loc;                       // セーブの見出しの校名を引く。null なら文字列のキーのまま
         public string AppVersion = "0.0.0";
         public string MasterHash = "";
+        public Persistence.Sync.ProfileData Profile;      // 実績・累計・クリア(アカウント単位。Unity 側が読み込んで渡す)。null なら空から始める
         public Func<string> NewLineageId = () => Guid.NewGuid().ToString();       // 歴史の識別子(UUID v4。App の層なので Guid を使ってよい。Domain は使わない = D-1)
     }
 
@@ -52,6 +53,9 @@ namespace Ekiden.App
         public GameFlow Flow { get; private set; }
         public GameSession Session { get { return Flow.Session; } }
         public SaveService Saves { get; }
+
+        /// <summary>実績の解除の記録(<see cref="HostEnvironment.Profile"/>)。<see cref="Advance"/> のたびに新しく満たした実績を記録する。</summary>
+        public AchievementTracker Achievements { get; }
         public int Slot { get { return Saves.Slot; } }
 
         /// <summary>中断セーブから再開した(最初の『続ける』は中断した場所へ戻る)。</summary>
@@ -64,6 +68,7 @@ namespace Ekiden.App
             _checkpoint = cp;
             Flow = flow;
             Saves = new SaveService(store, env.Files, env.Clock, slot, lineage, env.AppVersion, env.MasterHash);
+            Achievements = new AchievementTracker(env.Profile);
             _playBase = playSeconds;
             _activeSince = env.Clock.MonotonicSeconds();
             flow.ResolvingWeek += OnResolvingWeek;
@@ -170,6 +175,7 @@ namespace Ekiden.App
         public Stop Advance()
         {
             Stop s = Flow.Advance();
+            Achievements.Update(Session, s.Week != null ? s.Week.Race : null, _env.Clock.UtcNow());
             if (s.Kind == StopKind.YearEndSettle) AutosaveNow(SaveReason.YearEndSettle);
             else if (s.Kind == StopKind.YearEndTurnover) AutosaveNow(SaveReason.YearEndTurnover);
             return s;

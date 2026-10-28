@@ -29,6 +29,7 @@ namespace Ekiden.Verification
             AddTickets(d);
             AddClub(d);
             AddHighlights(d);
+            AddAchievements(d);
             d["miss.quota"] = "定員がいっぱいだった"; d["miss.scholarship"] = "奨学金枠がいっぱいだった"; d["miss.outbid"] = "他校に競り負けた";
             return d;
         }
@@ -91,6 +92,45 @@ namespace Ekiden.Verification
         private static void AddHighlights(Dictionary<string, string> d)
         {
             foreach (string key in Ekiden.Domain.Views.HighlightView.AllKeys) d[key] = Need(Highlights, key, "見どころ");
+        }
+
+        private static readonly Dictionary<string, string[]> Achievements = new Dictionary<string, string[]>
+        {
+            { "ach.race.seed", new[] { "初シード", "第三戦で 10 位以内に入った" } },
+            { "ach.race.podium", new[] { "初表彰台", "いずれかの大会で 3 位以内に入った" } },
+            { "ach.race.win", new[] { "初優勝", "いずれかの大会で優勝した" } },
+            { "ach.race.win.fall", new[] { "秋雲駅伝を制す", "秋雲駅伝で初優勝した" } },
+            { "ach.race.win.national", new[] { "全国大学駅伝を制す", "全国大学駅伝で初優勝した" } },
+            { "ach.race.win.newyear", new[] { "新春大学駅伝を制す", "新春大学駅伝で初優勝した" } },
+            { "ach.race.streak2", new[] { "連覇", "同じ大会を 2 年連続で優勝した" } },
+            { "ach.race.streak5", new[] { "王朝", "同じ大会を 5 年連続で優勝した" } },
+            { "ach.clear", new[] { "三大駅伝制覇", "3 大会すべてで優勝を経験した" } },
+            { "ach.clear.elite", new[] { "強豪クリア", "強豪校から始めて、三大駅伝を制覇した" } },
+            { "ach.clear.mid", new[] { "中堅クリア", "中堅校から始めて、三大駅伝を制覇した" } },
+            { "ach.clear.low", new[] { "弱小クリア", "弱小校から始めて、三大駅伝を制覇した" } },
+            { "ach.clear.club", new[] { "同好会クリア", "同好会から始めて、三大駅伝を制覇した" } },
+            { "ach.clear.low.no_invite", new[] { "弱小・無招聘クリア", "弱小校から始めて、特別招聘券を一度も使わずに三大駅伝を制覇した" } },
+            { "ach.clear.club.no_invite", new[] { "同好会・無招聘クリア", "同好会から始めて、特別招聘券を一度も使わずに三大駅伝を制覇した" } },
+            { "ach.sweep", new[] { "三冠", "同じ年度に 3 大会すべてで優勝した" } },
+            { "ach.sweep.2", new[] { "連続三冠", "2 年連続で三冠を達成した" } },
+            { "ach.dev.prefectures", new[] { "47 都道府県", "卒業生の出身県が 47 県すべてにそろった" } },
+            { "ach.dev.hall", new[] { "殿堂", "殿堂入りの卒業生が 10 人になった" } },
+            { "ach.dev.mountain_god", new[] { "山の神", "「山の神」を持つ選手が第三戦の 5 区で区間賞を取った" } },
+            { "ach.dev.section_wins", new[] { "区間賞 100", "通算の区間賞が 100 回になった" } },
+            { "ach.years.25", new[] { "25 年", "25 年度まで続けた" } },
+            { "ach.years.50", new[] { "50 年", "50 年度まで続けた" } },
+        };
+
+        /// <summary>実績の名称と説明(01 §3.3。<c>{id}.title</c> / <c>{id}.desc</c>)。</summary>
+        private static void AddAchievements(Dictionary<string, string> d)
+        {
+            foreach (var def in Ekiden.Domain.Achievements.AchievementMaster.All)
+            {
+                string[] t;
+                if (!Achievements.TryGetValue(def.Id, out t)) throw new InvalidOperationException("実績の名称が決まっていない: " + def.Id + "(StringsSeed に足す)");
+                d[def.Id + ".title"] = t[0];
+                d[def.Id + ".desc"] = t[1];
+            }
         }
 
         private static void AddEvents(Dictionary<string, string> d)
