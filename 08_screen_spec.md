@@ -995,7 +995,7 @@ T = 8(目標)、S = 年間ポイント − 2×T(視察する人数。ランク1�
 
 **App 層の入口(`m0/Assets/Scripts/App/`。09 §17.7)**: 画面は `GameHost` を持ち、`Advance()` で進め、`Session` の操作と Views で見せる。自動セーブ(§6.5 の表: 月境界・オーダー確定後・年度末の各節)・手動セーブ・アプリの中断のセーブ・読み込み(回復の順・中断セーブの再開)・保存の失敗の通知は `GameHost` / `SaveService` が受け持つ。画面が呼ぶのは `OnAppPause()` / `OnAppResume()` / `Tick()` / `SaveManual()` と、スロットの見出し `SlotCatalog.List()` だけ。
 
-**読み取り API(Views。`m0/Assets/Scripts/Domain/Views/` + `GameSession.Views*.cs`)**: 画面は Domain の状態を直接読まず、規則(R-01〜R-17)で組み立てた表示用の型を受け取る。状態を変えず、語は文字列テーブルのキーで返し、隠す情報(素質・体質・成長タイプ・未判明の素養)は型に入れない。実装済み: `Home` / `RosterRows` / `RunnerRow` / `RunnerDetail` / `Plan` / `Entry` / `Order` / `OrderCandidates` / `RaceResult` / `MonthReportView` / `YearSummary` / `Graduation` / `Enrollment` / `Ops` / `WorldOverview` / `Obs` / `History`。画面ごとの対応(○ △ ✗)と足りないもの(G-01〜G-17)は **`08b_screen_data.md`**。
+**読み取り API(Views。`m0/Assets/Scripts/Domain/Views/` + `GameSession.Views*.cs`)**: 画面は Domain の状態を直接読まず、規則(R-01〜R-17)で組み立てた表示用の型を受け取る。状態を変えず、語は文字列テーブルのキーで返し、隠す情報(素質・体質・成長タイプ・未判明の素養)は型に入れない。実装済み: `Home` / `RosterRows` / `RunnerRow` / `RunnerDetail` / `Plan` / `Entry` / `Order` / `OrderCandidates` / `RaceResult` / `MonthReportView` / `YearSummary` / `Graduation` / `Enrollment` / `Ops` / `WorldOverview` / `Obs` / `History` / `ScoutCandidates` / `ScoutCandidate` / `ScoutMap` / `ScoutTargets` / `AnnualPlanView` / `Preview`。画面ごとの対応(○ △ ✗)と足りないもの(G-01〜G-17)は **`08b_screen_data.md`**。
 
 **未実装(M1 の続き)**: 観戦モードの演出(ダイジェストの見どころの判定 §9.3、中継所ごとの要約。08b G-02)/ 檄の先行使用と走者ごとの効き `f_k`(04 §9.2。L-60)/ 新規ゲームの画面(R-13: 名前・難易度の選択)/ 予選会の当日(SC-26 のみ。当日変更・指示なし)。月末レポートの `rank_up` `form_up` `big_growth` `gift_reveal` は R-10 どおりに実装した(L-57・L-64 解決)。
 

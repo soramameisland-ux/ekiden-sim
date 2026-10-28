@@ -33,9 +33,15 @@ namespace Ekiden.Domain.Recruit
         }
 
         /// <summary>入学が確定した候補を、1 年生として展開する。enrollWeek = 入学する年度の最初の通算週。</summary>
+        /// <summary>候補の入学時の能力(10 能力。入学すればこの値で始まる。画面は持ちタイムの導出に使う)。</summary>
+        public static int[] EntryStats(WorldRunner c, IRngFactory rngs)
+        {
+            return ToInts(AiRacing.ExpandStats(c.A0, c.Profile, c.N10(rngs)));
+        }
+
         public static Runner FromCandidate(WorldRunner c, int id, int enrollWeek, IRngFactory rngs, int schoolPref, bool invited = false)
         {
-            int[] stats = ToInts(AiRacing.ExpandStats(c.A0, c.Profile, c.N10(rngs)));
+            int[] stats = EntryStats(c, rngs);
             return Build(c, id, 1, enrollWeek, stats, PotentialAtEntry(c, stats, rngs), rngs, schoolPref, invited ? 4 : 3);
         }
 

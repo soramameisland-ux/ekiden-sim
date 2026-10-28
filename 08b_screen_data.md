@@ -39,6 +39,11 @@
 | `YearSummary()` | `YearSummaryView` | SC-12 | 3 大会の順位と評価ポイント・三冠と加点・名声の前後・期待目標の達成と予算ボーナス・監督ランクの上昇と強化の上限・累計・招聘券の獲得(これまで / このあと入る節目)・収支の内訳(収入の式 / 補正 / スタッフ / 維持 / 部員費 / 強化の前後の資金 / 施設のレベル)| `YearViewTests` |
 | `Graduation()` | `GraduationView` | SC-13 | 卒業生(殿堂入りを先頭に): 名前・出身・最終の力とランク・能力ランク・特殊能力・区間賞・出走数・記録・進路・招聘の印 / 退部した選手を別枠 | 同上 |
 | `Enrollment()` | `EnrollmentView` | SC-14 | 新入生(狙った / 自然に入った):行・評価★・能力とランク・距離帯(遠方 / 近郊)。素質・体質・成長タイプは入れない | 同上 |
+| `AnnualPlanView()` | `AnnualPlanView` | SC-10 | 重点・目標大会・ピーキング・期待目標と予算ボーナス・重点 3 種の 12 か月のテーマ / 標準プランとの適性値 P の差 / 故障の回数 | `PlanOverviewViewTests` |
+| `Preview(kind)` | `PreviewView` | SC-23 | 出場校(前評判の順位・値・印・戦力順位)と区間適性 Long の上位 3 人(名前・学年・持ちタイム。他校は 04 §11 の復元)・予報(第三戦は往路と復路)| 同上 |
+| `ScoutCandidates()` / `ScoutCandidate(i)` | `ScoutCandidateView` | SC-28・29 | 名前・★・V・出身(県・高校・距離帯)・持ちタイム・性格タグ・競合度・段階ごとの見え方(視察: 見込み ± σ・個性チップ / 練習会: 成長タイプ・素養の有無 / 担当 Lv3: 素養の種類)・いま行動できるか | `ScoutViewTests` |
+| `ScoutMap()` | `ScoutMapView` | SC-27 | 時期・ポイント・地方 / 県ごとの候補数・視察済み・目標・★5・OB ネットワーク Lv・距離帯 | 同上 |
+| `ScoutTargets()` | `ScoutTargetsView` | SC-30 | 目標(V の高い順 = 確定の順番・9 番目以降は『ほぼ入れません』)・枠のメーター(定員 10 − 招聘の予約・自然に入る目安 3・推奨 8・上位級と奨学金枠・黄色 / 注意)| 同上 |
 | `Ops()` | `OpsView` | SC-32 | 施設・スタッフ 9 行(レベル・上限・次の費用・上げられない理由 cap / funds・推奨の順位と『推奨をすべて実行』のあとのレベル・効果と次のレベルの効果 `fx.*`)・資金・予備費・収入 / 支出の見込み・年度末の資金の履歴 | `ClubViewTests` |
 | `WorldOverview()` | `WorldView` | SC-35 | 36 校(戦力順位・名声・校格・地方・前年度の評価ポイントと第三戦の順位)・出場権に対する自校の位置(第一戦 20 / 第二戦 30 / 第三戦のシード 10 または予選会)| 同上 |
 | `Obs()` | `ObView` | SC-33 | OB(卒業年度の新しい順)・役割のある OB と残り週数・県別ネットワーク(人数・Lv・次のレベルまであと何人)| 同上 |
@@ -77,7 +82,7 @@
 |----|----------|--------|------|
 | SC-08 ホーム | status / next / バッジ / menu | `Home()` | ○。バッジのうち『購入状態不明』は App 層、『未読の通知』は通知ログ(G-07)|
 | SC-09 年間予定 | 月ごとの大会・締切・合宿・記録会・スカウトの時期・招聘期間・年度末 | `Calendar.RaceWeeks` / `TeamWeek.EntryDeadlineWeeks` / `TicketK` ほかの定数 | △ 年間予定の View は無い(定数の並べ替えだけ。小さい)|
-| SC-10 年間方針 | 重点・標準プランとの P の差(R-04)・目標大会・期待目標・ピーキング | `AnnualPlan`(`State.Plan`)/ `PlanRules.AutoPlan` / `Home().ExpectedTargetRank` | △ 重点ごとの P の差の View が無い(G-11)|
+| SC-10 年間方針 | 重点・標準プランとの P の差(R-04)・目標大会・期待目標・ピーキング | `AnnualPlanView()` | ○ |
 | SC-11 月末レポート | summary / highlights / 大会のまとめ / 次の月への注意 | `MonthReportView(report)` | ○(`gift_reveal` を含む。判明した素養は `ReportItemView.Gifts`)|
 | SC-12 年度の結果と精算 | results / funds | `YearSummary()` | ○ |
 | SC-13 卒業・進路 | 卒業生・退部 | `Graduation()` | ○。留学生の出身国は OB に残らない(G-17)|
@@ -100,7 +105,7 @@
 |----|----------|--------|------|
 | SC-21 エントリー | summary / roster / entered / 検証 | `Entry(kind)` | ○ |
 | SC-22 区間オーダー | sections / candidates / detail / 下段 | `Order(kind)` / `OrderCandidates()` | ○。前年度の優勝タイム・環境の予報(`Forecast`)・コースの高低差は別の API(△)|
-| SC-23 他校情報・予報 | 出場校の前評判の印・戦力順位・**上位 3 選手(名前・学年・持ちタイム)** / 予報 | `RacePreview()` / `Forecast()` | △ 他校は抽象の名簿なので選手の名前が無い(G-09)|
+| SC-23 他校情報・予報 | 出場校の前評判の印・戦力順位・**上位 3 選手(名前・学年・持ちタイム)** / 予報 | `Preview(kind)`(`RacePreview` + `Forecast` を画面向けにまとめたもの)| ○ |
 | SC-24 当日 | env / lineup(調子・余裕の目安・適性・期待タイム)/ bench / 残り回数 | `RaceDay.View()` / `Lineup` / `Bench` / `Environment` / `SwapsLeft` | △ `RaceDay` が持つ値がそろう。Views の型は無い(画面向けにまとめるだけ)|
 | SC-25 レース進行 | course / standings(7 行)/ lineup / 見どころ / 檄 | `RaceDay.Standings()` / `NextIncident()` / `GekiLeft` | △ **見どころ(首位交代・好走・区間賞・記録)**は判定が未実装(G-02)|
 | SC-26 大会の結果 | 総合 / 区間賞 / 自校 / 記録 / 予選会 | `RaceResult()` | ○。『大会の見どころ』と『記録の更新』は G-02・G-03。自動で行われた当日変更と檄の使用は `RaceDayRecord`(△)。予選会の結果の View は無い(△ 小さい)|
@@ -109,10 +114,10 @@
 
 | SC | 表示項目 | 取得元 | 状態 |
 |----|----------|--------|------|
-| SC-27 地図 | 時期・ポイント / 地方・県ごとの候補数・★5・OB ネットワーク Lv・距離帯 | `ScoutPool` / `ScoutPointsAvailable` / `State.Obs` / `Geo` | △ **県・地方ごとの集計**の View が無い(G-10)|
-| SC-28 候補リスト | ★・名前・出身・V・5000m 持ちタイム・性格タグ・競合度・状態 | `ViewCandidate()` / `ScoutPool` / `DisplayRules.DerivePbFromP` | △ 一覧の行の View は無い(1 件ずつの `ScoutView` はある)。候補の名前は『見せ方の種』から作る(△)|
-| SC-29 候補の詳細 | header / info(視察後の見込み・練習会後の細部)/ 競合度 / 枠 | `ViewCandidate()` | ○ に近い(△ 見える段階ごとの出し分けは `ScoutView` の `*Visible`)|
-| SC-30 目標とポイント | points の内訳 / targets / 枠のメーター | `ScoutStages` / `ScoutPointsAvailable` / `ScoutTargetRecommended` | △ 枠のメーター(定員 10 − 招聘の予約・自然に入る目安 約 3 人・上位級の目標数)の View が無い(G-10)|
+| SC-27 地図 | 時期・ポイント / 地方・県ごとの候補数・★5・OB ネットワーク Lv・距離帯 | `ScoutMap()` | ○ |
+| SC-28 候補リスト | ★・名前・出身・V・5000m 持ちタイム・性格タグ・競合度・状態 | `ScoutCandidates()`(V の高い順)| ○(見えていないものは型に入らない)|
+| SC-29 候補の詳細 | header / info(視察後の見込み・練習会後の細部)/ 競合度 / 枠 | `ScoutCandidate(index)` | ○。『故障しやすさ』は候補に状態がない(未実装。05 §7.2)|
+| SC-30 目標とポイント | points の内訳 / targets / 枠のメーター | `ScoutTargets()` | ○ |
 | SC-31 特別招聘の宣言 | tickets / options / range | `Home()` の券 / `State.Tickets` / `TicketK` | △ 07 §7 の範囲の表は固定の文言 |
 
 ### 3.6 運営・歴史
@@ -152,9 +157,9 @@
 | G-06 | SC-36 | イベントの選択肢の効果を**構造のまま**返す View(R-15 を UI が組み立てやすいように)。選択肢の本文に効果の数値が書き込まれている問題とセット | `EffectView` の追加。本文の数値は効果から作る(L-63 ①)| 中 | L-63 |
 | G-07 | SC-08・38 | 通知のログ(最大 30 件・未読)| 通知の生成元(故障・警告・お知らせ・券・大会の予定)を集める。保存するか(09 `K_NOTIFY_MAX` はあるが形が未定)| 中 | — |
 | G-08 | SC-06・15 | 実績の定義・条件の判定・解除の記録(`LocalState` に解除の待ちがあるだけ)| 02 §3.10 の実績表を実装 | 低 | — |
-| G-09 | SC-23・35 | 他校の上位選手(名前・学年・持ちタイム)。他校は抽象の名簿(名前なし)| `WorldRunner.LookSeed` から名前を決定的に作る(`NameGenerator` と同じ道)+ 持ちタイムは `DerivePbFromP` | 中 | — |
-| G-10 | SC-27・30 | スカウトの地図の集計(県・地方ごとの候補数 / ★5 / OB ネットワーク Lv / 距離帯)と、枠のメーター(使える枠・自然に入る目安・上位級の目標数)| 集計の View(規則は 05 §7 / R-08 にある)| 中 | — |
-| G-11 | SC-10 | 年間方針: 重点ごとの標準プランとの適性値 P の差 | R-04 の表を View に | 低 | — |
+| G-09 | SC-23・35 | ~~他校の上位選手~~ **解決**(`Preview` の `Top`。名前は `look_seed` から。SC-35 の一覧には入れていない)| `NameGenerator` と 04 §11 の復元 | 済 | — |
+| G-10 | SC-27・30 | ~~スカウトの地図の集計と枠のメーター~~ **解決**(`ScoutMap` / `ScoutTargets`)| 残り: 『故障しやすさ』(候補に状態がない) | 済 | — |
+| G-11 | SC-10 | ~~年間方針の重点ごとの P の差~~ **解決**(`AnnualPlanView`。表は `PlanRules.FocusDeltaP`、仕様の表と試験で突き合わせる)| — | 済 | — |
 | G-12 | SC-32 | ~~運営~~ **解決**(`Ops()`)| 施設の効果は `FacilityEffectView`(コード + 値)、文は `fx.*` | 済 | — |
 | G-13 | SC-33・34・35 | ~~OB 名簿・歴史・全国の大学~~ **解決**(`Obs()` `History()` `WorldOverview()`)。残りは G-03・G-04・G-09 | OB の View は `GraduateRowView` と共通 | 済 | — |
 | G-14 | SC-19 | **能力の前月の増減**: 状態に無い。`GameFlow` は月の初めの能力を覚えるようにした(月末レポート用)が、保存しないので復元後は不明 | 選手に『前月の能力』を持たせる(保存が増える)か、月の初めのスナップショットを保存の対象にする | 中 | L-62 ② |

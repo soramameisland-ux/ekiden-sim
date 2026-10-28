@@ -21,6 +21,17 @@ namespace Ekiden.Domain.Screens
             new[] { "th.base_build", "th.speed", "th.base_build", "th.base_build", "th.camp", "th.speed", "th.base_build", "th.base_build", "th.base_build", "th.recovery", "th.speed", "th.base_build" },
         };
 
+        /// <summary>重点ごとの、標準プラン(バランス)との適性値 P の差(08 R-04 の表。4 年間・1500 人・施設 Lv2 の検算。並びは <c>SectionType</c> = Fast / Mid / Long / Climb / Descent)。年間方針の画面がそのまま出す(I-14)。</summary>
+        public static readonly double[][] FocusDeltaP =
+        {
+            new[] { 0.0, 0.0, 0.0, 0.0, 0.0 },
+            new[] { 1.19, 0.27, 0.02, -0.40, 0.34 },
+            new[] { 0.35, 0.54, 0.58, -1.27, -1.81 },
+        };
+
+        /// <summary>重点ごとの故障の回数 / 人年(同じ表)。</summary>
+        public static readonly double[] FocusInjuryPerYear = { 0.349, 0.344, 0.349 };
+
         /// <summary>推奨プラン: 重点ごとの 12 か月のテンプレートから、その月のテーマを返す(グループによらず同じ。動的な調整はしない)。</summary>
         public static string AutoPlan(PlanFocus focus, int monthIndex) { return Templates[(int)focus][monthIndex]; }
 
