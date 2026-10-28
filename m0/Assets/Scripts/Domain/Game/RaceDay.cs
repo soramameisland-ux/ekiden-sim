@@ -220,6 +220,62 @@ namespace Ekiden.Domain.Game
             return OpResult.Success;
         }
 
+        // ------------------------------------------------------------ 中断セーブ(09 §4.6)
+        /// <summary>いまの決定を記録する(いつでも。レースを始める前・途中・終わったあと)。</summary>
+        public RaceDayRecord Capture()
+        {
+            var r = new RaceDayRecord { Kind = Kind, RaceId = RaceId, NextSection = Resolved, Started = Started, Touched = Touched, GekiSpent = _gekiSpent };
+            r.Instructions = new int[_instr.Length];
+            r.GekiUsed = new int[_geki.Length];
+            for (int i = 0; i < _instr.Length; i++)
+            {
+                r.Instructions[i] = (int)_instr[i];
+                r.GekiUsed[i] = _geki[i].HasValue ? (_geki[i].Value ? 1 : 0) : -1;
+                if (_idx[i] != _pre[i]) r.Swaps.Add(new RaceDayRecord.Swap { Section = i, RunnerId = _plan.Day[_idx[i]].RunnerId });
+            }
+            return r;
+        }
+
+        /// <summary>記録した決定を戻す(新しく開いた当日に。<see cref="GameSession.OpenRaceDay"/> のあと)。合わない記録(別の大会・いない選手・上限超え)は拒否して、当日は変えない。</summary>
+        public OpResult Restore(RaceDayRecord r)
+        {
+            int n = Sections;
+            if (r == null || r.Kind != Kind || r.RaceId != RaceId) return OpResult.Fail("記録は別の大会のもの");
+            if (r.Instructions == null || r.GekiUsed == null || r.Instructions.Length != n || r.GekiUsed.Length != n) return OpResult.Fail("記録の区間の数が合わない");
+            if (r.NextSection < 0 || r.NextSection > n || (r.NextSection > 0 && !r.Started)) return OpResult.Fail("記録の進み具合がおかしい");
+            if (r.GekiSpent < 0 || r.GekiSpent > _rule.Geki) return OpResult.Fail("記録の檄の回数がおかしい");
+            var instr = new Instruction[n];
+            var geki = new bool?[n];
+            for (int i = 0; i < n; i++)
+            {
+                if (r.Instructions[i] < 0 || r.Instructions[i] > (int)Instruction.Hold) return OpResult.Fail("記録の指示がおかしい");
+                instr[i] = (Instruction)r.Instructions[i];
+                if (r.GekiUsed[i] < -1 || r.GekiUsed[i] > 1) return OpResult.Fail("記録の檄がおかしい");
+                geki[i] = r.GekiUsed[i] < 0 ? (bool?)null : r.GekiUsed[i] == 1;
+            }
+            var idx = (int[])_pre.Clone();
+            foreach (RaceDayRecord.Swap s in r.Swaps)
+            {
+                if (s.Section < 0 || s.Section >= n) return OpResult.Fail("記録の当日変更の区間がおかしい");
+                int j = _plan.Day.FindIndex(x => x.RunnerId == s.RunnerId && s.RunnerId != 0);
+                if (j < 0) return OpResult.Fail("記録の当日変更の選手がいない");
+                idx[s.Section] = j;
+            }
+            for (int a = 0; a < n; a++) for (int b = a + 1; b < n; b++) if (idx[a] == idx[b]) return OpResult.Fail("記録の配置に同じ選手が 2 回出る");
+            int used = 0, intl = 0;
+            for (int i = 0; i < n; i++) { if (idx[i] != _pre[i]) used++; if (_plan.Day[idx[i]].Overseas) intl++; }
+            if (used > _rule.Swap) return OpResult.Fail("記録の当日変更が上限を超える");
+            if (intl > _rule.IntlRun) return OpResult.Fail("記録の留学生の出走が上限を超える");
+            Array.Copy(idx, _idx, n);
+            Array.Copy(instr, _instr, n);
+            Array.Copy(geki, _geki, n);
+            _gekiSpent = r.GekiSpent;
+            Resolved = r.NextSection;
+            Started = r.Started;
+            Touched = r.Touched;
+            return OpResult.Success;
+        }
+
         // ------------------------------------------------------------ 結果の再計算
         /// <summary>いまの決定でのチーム(未決の檄は自動 = 異変が出れば上限まで使う)。</summary>
         public RaceTeam BuildTeam()

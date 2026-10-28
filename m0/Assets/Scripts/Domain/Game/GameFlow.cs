@@ -63,6 +63,10 @@ namespace Ekiden.Domain.Game
         public GameSession Session { get; }
         public Stop Current { get; private set; }
 
+        /// <summary>週の練習が解決される直前(オーダー確定後の自動セーブの時点。08 §6.5)。ここで状態を取っておくと、練習の解決のあとの週の途中(当日・結果・イベント・月末レポート)での
+        /// 中断セーブの『本体』になる(<see cref="MidWeek"/>・<see cref="SuspendRace"/>・<see cref="ResumeWeek"/>・<see cref="ResumeRace"/>。09 §4.6)。再開した週では出ない。</summary>
+        public event Action<GameFlow> ResolvingWeek;
+
         private readonly Queue<Stop> _queue = new Queue<Stop>();
         private Phase _phase = Phase.Start;
         private WeekOutcome _week;
@@ -73,6 +77,9 @@ namespace Ekiden.Domain.Game
         private readonly List<string> _monthDeferred = new List<string>();
         private HashSet<int> _monthStartInjured = new HashSet<int>();
         private int _warnedMonth = -1;
+        private bool _resuming;                             // 中断セーブからの再開: 週の初めの停止は出さず、練習の解決の直前の通知(ResolvingWeek)も出さない
+        private RaceDayRecord _resume;                      // 練習の解決のあと、この記録を当日に戻す(<see cref="ResumeRace"/>)
+        private RaceDayRecord _dayRecord;                   // 今週の大会が走ったあとの当日の記録(終わったあとの中断のため)
 
         /// <param name="autoUpgrade">年度末の精算で推奨の強化を自動で行う(検算用。画面のときは false = 強化は画面の操作)。</param>
         /// <param name="autoTickets">招聘の宣言をおまかせで行う(検算用)。</param>
@@ -93,6 +100,42 @@ namespace Ekiden.Domain.Game
 
         /// <summary>いま保存してよいか(週の解決の前、年度末の精算のあと、入学者発表のあと)。復元して <see cref="GameFlow"/> を作り直すと、その週の最初の停止から再開する。</summary>
         public bool CanSave { get { return _phase == Phase.Start || _phase == Phase.Before || _phase == Phase.Settle || _phase == Phase.Turnover; } }      // Race(当日)は練習が解決されたあとなので保存しない
+
+        /// <summary>練習が解決されたあとの週の途中か(当日・結果・イベント・月末レポートの停止)。このとき普通のセーブはできず(<see cref="CanSave"/> が false)、中断は <see cref="ResolvingWeek"/> で取った状態に戻る。</summary>
+        public bool MidWeek { get { return _phase == Phase.Race || _phase == Phase.After || _phase == Phase.Month; } }
+
+        /// <summary>いま中断してよい『大会の週の途中』の当日の記録(09 §4.6 の <c>suspend.race</c>)。当日の画面・レース進行中・走ったあとの結果とイベントの画面のとき。なければ null
+        /// (そのときの中断は、週の初めの状態(<see cref="CanSave"/>)か、直近の自動セーブに戻る)。本体は <see cref="ResolvingWeek"/> で取った状態。</summary>
+        public RaceDayRecord SuspendRace
+        {
+            get
+            {
+                if (_phase == Phase.Race && Session.CurrentRaceDay != null) return Session.CurrentRaceDay.Capture();
+                if ((_phase == Phase.After || _phase == Phase.Month) && _dayRecord != null) return _dayRecord;
+                return null;
+            }
+        }
+
+        /// <summary>中断セーブから再開する(大会の週の途中でなかったとき)。<see cref="ResolvingWeek"/> で取った状態から復元した <see cref="GameSession"/> で作った新しい流れに、最初の『続ける』の前に呼ぶ。
+        /// 週の初めの停止は出さず(中断の前に済んでいる)、練習を同じ結果で解決し直して、その週の結果の停止から続ける(その週に選んだイベントの選択肢は選び直す)。</summary>
+        public OpResult ResumeWeek()
+        {
+            if (_phase != Phase.Start || Current != null || _queue.Count > 0) return OpResult.Fail("再開できるのは、復元したあとの最初の『続ける』の前だけ");
+            _resuming = true;
+            return OpResult.Success;
+        }
+
+        /// <summary>中断セーブから再開する(大会の当日・レース進行中・走ったあと)。<see cref="ResumeWeek"/> に加えて、<paramref name="record"/> の決定を当日に戻して、中断した区間の手前の当日の停止から続ける。
+        /// 走り終わったあとの記録なら、当日の画面は出さず、結果とイベントの停止から続ける。</summary>
+        public OpResult ResumeRace(RaceDayRecord record)
+        {
+            if (_phase != Phase.Start || Current != null || _queue.Count > 0) return OpResult.Fail("再開できるのは、復元したあとの最初の『続ける』の前だけ");
+            RaceKind? race = Session.RaceThisWeek;
+            if (record == null || !race.HasValue || race.Value != record.Kind || S.Settings.SpectateMode != "Full") return OpResult.Fail("記録がこの週の大会と合わない");
+            _resuming = true;
+            _resume = record;
+            return OpResult.Success;
+        }
 
         /// <summary>『続ける』(C-FLOW-01)。次の停止に進んで返す。停止がない週は飛ばして、次の停止まで週を進める(月末レポートが 4 週ごとにあるので、必ず止まる)。</summary>
         public Stop Advance()
@@ -143,6 +186,7 @@ namespace Ekiden.Domain.Game
             for (int i = 0; i < 3; i++)
                 if (ys.Entrants((RaceKind)i).Contains(Session.School.Id)) qualifies.Add(RaceNames[i]);
             bool seed = ys.Seeds.Contains(Session.School.Id);
+            if (_resuming) return;                                                          // 中断セーブからの再開: 週の初めの停止は中断の前に済んでいる
             foreach (string key in FlowRules.StopsBeforeWeek(yw, qualifies, seed, S.Settings.PlanAuto)) _queue.Enqueue(MakeStop(key, null, null));
         }
 
@@ -181,13 +225,35 @@ namespace Ekiden.Domain.Game
         /// <summary>練習の解決(調子が確定する)。観戦モードがフルで自校が出る大会なら、当日(SC-24)の停止を積んで true。</summary>
         private bool TrainWeek()
         {
+            if (!_resuming)
+            {
+                _dayRecord = null;
+                if (ResolvingWeek != null) ResolvingWeek(this);
+            }
+            _resuming = false;
             var o = new WeekOutcome { AbsWeek = S.AbsWeek };
             o.Reports = Session.ResolveTraining(out o.RunnerIds);
             _week = o;
             RaceKind? race = Session.RaceThisWeek;
-            if (!race.HasValue || S.Settings.SpectateMode != "Full") return false;
+            if (!race.HasValue || S.Settings.SpectateMode != "Full")
+            {
+                if (_resume != null) throw new InvalidOperationException("中断セーブの記録がこの週の大会と合わない");
+                return false;
+            }
             RaceDay rd = Session.OpenRaceDay(race.Value);
-            if (rd == null) return false;                                                   // 出走人数に足りない(棄権)
+            if (rd == null)
+            {
+                if (_resume != null) throw new InvalidOperationException("中断セーブの記録の大会に出られない");
+                return false;                                                               // 出走人数に足りない(棄権)
+            }
+            if (_resume != null)
+            {
+                OpResult back = rd.Restore(_resume);
+                if (!back.Ok) throw new InvalidOperationException("中断セーブの当日の記録を戻せない: " + back.Reason);
+                bool finished = _resume.NextSection >= rd.Sections;
+                _resume = null;
+                if (finished) return true;                                                  // 走り終わったあとの再開: 当日の画面は出さず、結果の停止から
+            }
             _queue.Enqueue(new Stop { Kind = StopKind.RaceDayPrep, Key = "RaceDayPrep:" + RaceNames[(int)race.Value], Race = race.Value, RaceDay = rd, Week = o });
             return true;
         }
@@ -196,6 +262,7 @@ namespace Ekiden.Domain.Game
         {
             int yw = TeamWeek.YearWeek(S), month = yw / 4;
             WeekOutcome o = _week;
+            if (Session.CurrentRaceDay != null) _dayRecord = Session.CurrentRaceDay.Capture();       // 走ったあとの中断のために、当日の決定を残す
             o.Race = Session.PlayWeekRaces(out o.OwnRace);
             _sel = Session.SelectWeekEvents(o.OwnRace);
             _week = o;
@@ -266,6 +333,7 @@ namespace Ekiden.Domain.Game
         private void EndOfMonthOrWeek()
         {
             int yw = TeamWeek.YearWeek(S);
+            _dayRecord = null;
             if (yw % 4 == 3) { _monthWeeks.Clear(); _monthDeferred.Clear(); }
             if (yw == Calendar.WeeksPerYear - 1)
             {

@@ -51,7 +51,7 @@ $S flow 1 Mid 2             # 進行制御の停止の並び(何も操作しな�
 自校の側の規則: `Team/TeamWeek.cs`(週の最初・練習・絆・月末)・`Team/TeamRacing.cs`(登録・当日の準備・大会後の処理 04 §10)・`Team/TeamYear.cs`(卒業・進路・殿堂・退部・収支と強化)・`Recruit/RunnerFactory.cs`(候補 → 選手)。
 保存: `Persistence/Snapshot/GameSnapshot.cs`(世界 + 自校 + 進行。年度の途中も)。T3 は `SimCli determinism`、統計は `accept --real`(T4c)。
 操作の入口(画面なし。無効な操作は理由つきで拒否 = 08 F4): `Game/GameSession.Commands.cs`(年間方針・グループ・月間計画・個別指導・登録・招聘の宣言・施設の強化)・`Game/GameSession.Scout.cs`(スカウトの視察・声かけ・練習会とおまかせ)・`Game/GameFlow.cs`(進行制御 = 『続ける』と止まる場所・イベントの選択・月末レポート・年度末の精算と入学者発表。`SimCli flow` で停止の並びを見られる)。区間オーダー・予報・前評判・当日(当日変更・指示・檄・レース進行)は `Game/GameSession.Race.cs` と `Game/RaceDay.cs`(04 §14.5)。08 §13.6。未実装は観戦モードの演出・檄の先行使用と走者ごとの効き(L-60)など。
-`dotnet test` は 427 件(Domain 329 + Persistence 98)。
+`dotnet test` は 435 件(Domain 329 + Persistence 106)。中断セーブ(週の途中・レース進行中。09 §4.6)は `Game/RaceDayRecord.cs`・`Game/GameFlow.cs`(`ResolvingWeek` `MidWeek` `ResumeWeek` `ResumeRace`)・`Persistence/Snapshot/SuspendSnapshot.cs`(`SuspendCheckpoint`)。
 
 ## M1 準備: 自校の保存(09 §5.6・§17.6)
 

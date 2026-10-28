@@ -307,7 +307,7 @@ loop:
 | 月末レポートの確認後(月境界)| 自動セーブ(2世代を交互)|
 | オーダーの確定後(大会前)| 自動セーブ。ここまで戻ってオーダーなどを変えてやり直せる |
 | 年度末の各節の後(精算 / 卒業 / 入学者発表)| 自動セーブ |
-| アプリの中断(バックグラウンド・省電力・終了)| **中断セーブ**を1つ書く。再開時に1回だけ使い、使ったら破棄する。レース進行中は『次の区間の指示の前』に戻る |
+| アプリの中断(バックグラウンド・省電力・終了)| **中断セーブ**を1つ書く。再開時に1回だけ使い、使ったら破棄する。レース進行中は『次の区間の指示の前』に戻る。週の途中(練習の解決のあとの当日・結果・イベント・月末レポート)で中断したときは、その週の練習を解決する直前の状態に戻って、同じ結果でやり直す(選んだイベントの選択肢は選び直す。09 §4.6)|
 | 手動 | ポーズから(スロットごとに1つ)|
 
 - レースの乱数は、大会・チーム・区間をキーにして決まる(04 §12)ので、**ロードしても、オーダー・当日変更・指示を変えなければ同じ結果になる**(結果を引き直すためのセーブ・ロードはできない)。決定を変えれば結果が変わりうるが、これは通常の試行錯誤として許容する。
@@ -628,7 +628,7 @@ T = 8(目標)、S = 年間ポイント − 2×T(視察する人数。ランク1�
 | `SaveData.settings` | `plan_auto: bool`(既定 false)/ `scout_auto: bool`(既定 false)を追加 |
 | `DeviceSettings`(新。02 §3.12)| `text_scale`(100 / 125 / 150)/ `color_mode` / `reduce_motion` / `kana` / `volume_bgm` / `volume_se` / `volume_cheer`(各 0〜10)/ `haptics` / `anim_speed`(1 / 2)/ `hints_seen: list<screen_id>` / `hints_on` / `language`(`ja`)|
 | `Focus` 列挙 | `Balanced`(バランス)/ `Speed`(スピード寄り)/ `Long`(ロング寄り)|
-| 中断セーブ | `suspend: { race?: { race_kind, race_id, next_section, instructions[], geki_used[], swaps[] } }`(形式は 09 §4.6。通常のセーブには入れず `suspend.eksv` にだけ付く。再開は『オーダー確定後』の状態から区間を再計算。R-12 / §6.5)|
+| 中断セーブ | `suspend: { week?, race?: { race_kind, race_id, next_section, started, touched, instructions[], geki_used[], geki_spent, swaps[] } }`(形式は 09 §4.6。通常のセーブには入れず `suspend.eksv` にだけ付く。再開は『オーダー確定後』の状態から区間を再計算。R-12 / §6.5)|
 | `SaveMeta`(スロットの表示用。09)| `{ slot, saved_at, year, month_index, school_name, scenario_id, difficulty?, play_seconds }` |
 
 ---
