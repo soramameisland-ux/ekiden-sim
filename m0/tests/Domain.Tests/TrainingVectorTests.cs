@@ -69,6 +69,30 @@ namespace Ekiden.Domain.Tests
             Assert.AreEqual(0, rep.Peaking); Assert.AreEqual(5.672137, rep.Noise, 5e-7); Assert.AreEqual(7.672137, rep.FormScore, 5e-7); Assert.AreEqual(0, rep.Form);
         }
 
+        /// <summary>03 TV-8: 新設の施設(L-70 ②)。TV-3 と同じ入力に、高地 Lv4・メンタル Lv3・合宿所 Lv2 を足す。</summary>
+        [Test]
+        public void TV8_NewFacilities()
+        {
+            FacilityLevels extra = Fac2;
+            extra.Altitude = 4; extra.Mental = 3; extra.Camp = 2;
+            var cases = new[]
+            {
+                (fac: extra, camp: false, e: 1.166, xp: new[] { 0, 179, 137, 0, 0, 0, 57, 0, 0, 0 }, p: 0.006416),
+                (fac: Fac2, camp: true, e: 1.749, xp: new[] { 0, 240, 206, 0, 0, 0, 73, 0, 0, 0 }, p: 0.008341),
+                (fac: extra, camp: true, e: 1.749, xp: new[] { 0, 285, 218, 0, 0, 0, 91, 0, 0, 0 }, p: 0.007673),
+            };
+            foreach (var c in cases)
+            {
+                var r = NewRunner(StatsA, PotA, 2, 40);
+                var rep = new WeekResolver(M).Resolve(r, M.Themes["th.base_build"][0], c.fac, 0, new KeyedRngFactory(2026UL), 1, 0, camp: c.camp, bondAvg: 0);
+                string tag = "camp=" + c.camp + " altitude=" + c.fac.Altitude;
+                Assert.AreEqual(c.e, rep.E, 5e-4, tag + " E");
+                CollectionAssert.AreEqual(c.xp, rep.XpAdd, tag + " xp");
+                Assert.AreEqual(c.p, rep.InjuryP.Value, 5e-7, tag + " p");
+                Assert.AreEqual(0.564, rep.R, 5e-7, tag + " r"); Assert.AreEqual(29.0, rep.L, tag + " L"); Assert.AreEqual(46, rep.FEnd, tag + " F_end");
+            }
+        }
+
         [Test]
         public void TV4_FatigueOverFourWeeks()
         {

@@ -82,9 +82,10 @@ namespace Ekiden.Domain.Team
         public int PlayerSchoolId;
     }
 
-    /// <summary>スタッフの役職(02 §2 <c>StaffRole</c> のうち、レベルを持つ 4 つ。レベルは <c>FacilityLevels</c>)。</summary>
+    /// <summary>スタッフの役職(02 §2 <c>StaffRole</c> のうち、レベルを持つもの。レベルは <c>FacilityLevels</c>)。先頭の 4 つは常にいる。<b>主務(<c>Manager</c>。L-70 ②)は Lv0 = 不在</b>で、置いたときだけ保存に出る。</summary>
     public static class StaffRoles
     {
-        public static readonly string[] Names = { "Coach", "Trainer", "Nutritionist", "Scout" };
+        public static readonly string[] Names = { "Coach", "Trainer", "Nutritionist", "Scout", "Manager" };
+        public const int Always = 4;                // 常にいる役職の数(先頭から)
     }
 }

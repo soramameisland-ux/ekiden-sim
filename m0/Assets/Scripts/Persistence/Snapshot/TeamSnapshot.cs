@@ -147,12 +147,15 @@ namespace Ekiden.Persistence.Snapshot
             FacilityLevels f = s.Fac;
             int[] staffLv = { f.Coach, f.Trainer, f.Nutri, f.Scout };
             var staff = new JsonArray();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < StaffRoles.Always; i++)
             {
                 int lv = staffLv[i];
                 if (lv < 1 || lv > WorldK.ExpStaff.Length) throw new InvalidOperationException("スタッフのレベル " + lv);
                 staff.Add(O(("id", N(i + 1)), ("role", S(StaffRoles.Names[i])), ("name", S(s.StaffNames[i])), ("level", N(lv)), ("salary", N((long)WorldK.ExpStaff[lv - 1]))));
             }
+            if (f.Manager < 0 || f.Manager > WorldK.ExpStaff.Length) throw new InvalidOperationException("主務のレベル " + f.Manager);
+            if (f.Manager >= 1)                                                           // 主務(L-70 ②)は置いたときだけ
+                staff.Add(O(("id", N(StaffRoles.Always + 1)), ("role", S(StaffRoles.Names[StaffRoles.Always])), ("name", S(s.StaffNames[StaffRoles.Always])), ("level", N(f.Manager)), ("salary", N((long)WorldK.ExpStaff[f.Manager - 1]))));
             int captain = 0;
             foreach (Runner r in s.Runners) if (r.Captain) { if (captain != 0) throw new InvalidOperationException("主将が複数いる"); captain = r.Id; }
             var peaking = new JsonObject();
@@ -168,9 +171,13 @@ namespace Ekiden.Persistence.Snapshot
             foreach (var kv in s.IndividualMenus) menus[kv.Key.ToString(CultureInfo.InvariantCulture)] = O(("until_abs_week", N(kv.Value.UntilAbsWeek)), ("menu", MenuTriple(kv.Value.Menu)));
             var net = new int[48];
             foreach (OBRecord ob in s.Obs) net[ob.Pref]++;
+            JsonObject facilities = O(("Dorm", N(f.Dorm)), ("Track", N(f.Track)), ("Hill", N(f.Hill)), ("Gym", N(f.Gym)), ("Medical", N(f.Medical)));
+            if (f.Altitude > 0) facilities["Altitude"] = N(f.Altitude);                  // 新設の施設(L-70 ②)は置いたときだけ
+            if (f.Mental > 0) facilities["Mental"] = N(f.Mental);
+            if (f.Camp > 0) facilities["Camp"] = N(f.Camp);
             return O(
                 ("funds", N(s.Funds)),
-                ("facilities", O(("Dorm", N(f.Dorm)), ("Track", N(f.Track)), ("Hill", N(f.Hill)), ("Gym", N(f.Gym)), ("Medical", N(f.Medical)))),
+                ("facilities", facilities),
                 ("staff", staff), ("morale", D(s.Morale)), ("captain_id", captain == 0 ? Null : N(captain)), ("manager_name", S(s.ManagerName)),
                 ("annual_plan", O(("focus", S(FocusNames[(int)s.Plan.Focus])), ("target_race", S(RaceNames[s.Plan.TargetRace])), ("peaking_mode", peaking))),
                 ("monthly_plan", O(("A", S(s.MonthlyPlan[0])), ("B", S(s.MonthlyPlan[1])), ("C", S(s.MonthlyPlan[2])))), ("custom_weeks", custom),
@@ -346,12 +353,15 @@ namespace Ekiden.Persistence.Snapshot
             JsonObject f = Obj(pt, "facilities");
             JsonArray staff = Arr(pt, "staff");
             var fac = new FacilityLevels { Dorm = Int(f, "Dorm"), Track = Int(f, "Track"), Hill = Int(f, "Hill"), Gym = Int(f, "Gym"), Medical = Int(f, "Medical") };
+            if (f.ContainsKey("Altitude")) fac.Altitude = Int(f, "Altitude");           // 新設の施設(L-70 ②)。なければ 0 = 未設置
+            if (f.ContainsKey("Mental")) fac.Mental = Int(f, "Mental");
+            if (f.ContainsKey("Camp")) fac.Camp = Int(f, "Camp");
             foreach (JsonValue sv in staff)
             {
                 var st = (JsonObject)sv;
                 int role = Index(StaffRoles.Names, Str(st, "role"));
                 int lv = Int(st, "level");
-                if (role == 0) fac.Coach = lv; else if (role == 1) fac.Trainer = lv; else if (role == 2) fac.Nutri = lv; else fac.Scout = lv;
+                if (role == 0) fac.Coach = lv; else if (role == 1) fac.Trainer = lv; else if (role == 2) fac.Nutri = lv; else if (role == 3) fac.Scout = lv; else fac.Manager = lv;
                 s.StaffNames[role] = Str(st, "name");
             }
             s.Fac = fac;

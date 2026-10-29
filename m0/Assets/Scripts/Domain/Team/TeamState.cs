@@ -200,7 +200,7 @@ namespace Ekiden.Domain.Team
         public int NextRunnerId = 1, NextStaffId = 1;                               // 実行時 ID の採番(I-11)
         public string ManagerName = "監督";                                         // 8 文字まで(08 R-13)
         public int SchoolPref;                                                      // 自校の所在県(1〜47)。遠方・近郊の判定に使う
-        public readonly string[] StaffNames = { "", "", "", "" };                   // StaffRoles.Names の順
+        public readonly string[] StaffNames = { "", "", "", "", "" };                   // StaffRoles.Names の順
         public AnnualPlan Plan = new AnnualPlan();
         public readonly string[] MonthlyPlan = { "th.base_build", "th.base_build", "th.base_build" };   // グループ A / B / C の今月のテーマ
         public MenuSpec[][] CustomWeeks;                                            // null | [3 グループ][4 週](th.custom のとき)

@@ -66,6 +66,8 @@ namespace Ekiden.Verification
             { "xp_all", "全経験値 {value}" }, { "injury_prob", "故障の確率 {value}" }, { "injury_dur", "故障の期間 {value}" }, { "recovery_r", "疲労の回復 {value}" },
             { "xp_rec", "回復力の経験値 {value}" }, { "xp_spd_kck", "スピード・スパートの経験値 {value}" }, { "xp_clb_dwn", "登坂・下りの経験値 {value}" }, { "xp_dur", "頑丈さの経験値 {value}" },
             { "scout_sd", "候補の見積もりの誤差 ±{value}" }, { "gift_kind", "候補の素養の種類が見える" },
+            { "xp_sta", "スタミナの経験値 {value}" }, { "xp_men_con", "勝負強さ・安定感の経験値 {value}" }, { "camp_xp", "合宿の週の全経験値 {value}" },
+            { "camp_injury", "合宿の週の故障の確率 {value}" }, { "guidance", "月の指導ポイント +{value}" },
         };
 
         /// <summary>運営・全国の大学・OB の画面の語(地方・校格・進路・OB の役割・施設の効果の文)。</summary>
@@ -190,13 +192,14 @@ namespace Ekiden.Verification
         {
             { "dorm", "寮" }, { "scout", "スカウト網" }, { "coach", "コーチ陣" }, { "track", "トラック" }, { "hill", "坂路" }, { "gym", "トレーニングジム" },
             { "trainer", "トレーナー" }, { "nutri", "栄養管理" }, { "medical", "医療体制" },
+            { "altitude", "高地トレーニング施設" }, { "mental", "メンタルルーム" }, { "camp", "合宿所" }, { "manager", "主務" },
         };
 
         private static void AddWorldAndTraining(Dictionary<string, string> d)
         {
             TrainingMaster m = TrainingMaster.CreateDefault();
             foreach (string id in m.KeySessions.Keys.Concat(m.Mileages.Keys).Concat(m.Themes.Keys)) d[id + ".name"] = Need(Training, id, "練習・テーマ・走行量");
-            foreach (string id in Ekiden.Domain.World.FacilityPolicy.Order) d["fac." + id + ".name"] = Need(Facilities, id, "施設");
+            foreach (string id in Ekiden.Domain.World.FacilityPolicy.All) d["fac." + id + ".name"] = Need(Facilities, id, "施設");
             foreach (ScenarioDef s in Scenarios.BuiltIn().Concat(new[] { Scenarios.Koki() }))
             {
                 d[s.Id + ".name"] = s.Name;

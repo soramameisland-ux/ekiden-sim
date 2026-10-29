@@ -119,8 +119,8 @@ namespace Ekiden.Domain.Team
             FacilityLevels f = s.Fac;
             double formula = WorldMath.Income(prestige, yearPoints), mod = s.ModSum(ModKind.FundsYear);
             double income = formula + mod;
-            double staff = WorldMath.StaffExpense(f.Coach, f.Trainer, f.Nutri, f.Scout);
-            double upkeep = WorldMath.FacilityUpkeep(f.Dorm, f.Track, f.Hill, f.Gym, f.Medical);
+            double staff = WorldMath.StaffExpense(f);                  // 主務(L-70 ②)を含む
+            double upkeep = WorldMath.FacilityUpkeep(f);               // 新設の施設(L-70 ②)を含む
             var rec = new Settlement
             {
                 FundsBefore = s.Funds, IncomeFormula = formula, IncomeMod = mod, Staff = staff, Upkeep = upkeep,

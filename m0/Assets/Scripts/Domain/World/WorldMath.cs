@@ -81,9 +81,26 @@ namespace Ekiden.Domain.World
             return WorldK.ExpFacUpkeep * ((dorm - 1) + (track - 1) + (hill - 1) + (gym - 1) + (medical - 1));
         }
 
+        /// <summary>スタッフの給与。主務(L-70 ②。Lv0 = 不在 = 0)を足す。</summary>
+        public static double StaffExpense(FacilityLevels f)
+        {
+            return StaffExpense(f.Coach, f.Trainer, f.Nutri, f.Scout) + (f.Manager >= 1 ? WorldK.ExpStaff[f.Manager - 1] : 0.0);
+        }
+
+        /// <summary>施設の維持費。新設の施設(L-70 ②)は <c>8 × Lv</c>(通常の施設は <c>8 × (Lv − 1)</c>。未設置は 0)。</summary>
+        public static double FacilityUpkeep(FacilityLevels f)
+        {
+            return FacilityUpkeep(f.Dorm, f.Track, f.Hill, f.Gym, f.Medical) + WorldK.ExpFacUpkeep * (f.Altitude + f.Mental + f.Camp);
+        }
+
+        /// <summary>月の指導ポイント(02 §4.4。L-70 ②・L-25)。主務 Lv3 以上で +1・Lv6 以上でさらに +1。</summary>
+        public const int GuidanceMax = 6;           // 月の指導ポイントの上限(主務 Lv6 以上。保存の検証が使う)
+
+        public static int GuidancePoints(int managerLv) { return 4 + (managerLv >= 3 ? 1 : 0) + (managerLv >= 6 ? 1 : 0); }
+
         public static double RunnerExpense(int members) { return WorldK.ExpPerRunner * members; }
 
-        public static double UpgradeCost(int currentLv) { return currentLv >= 5 ? WorldK.UpCostHi[currentLv - 5] : WorldK.UpBase + WorldK.UpSlope * currentLv; }
+        public static double UpgradeCost(int currentLv) { return currentLv <= 0 ? WorldK.NewCost : currentLv >= 5 ? WorldK.UpCostHi[currentLv - 5] : WorldK.UpBase + WorldK.UpSlope * currentLv; }
 
         public static int FacilityCap(int rank)
         {

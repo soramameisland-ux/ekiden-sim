@@ -70,7 +70,9 @@ INJURED = ("ks.cross_train", "ks.rest", None)
 
 # 施設・スタッフの効果係数(1レベルあたり。Lv1・不在は効果なし。Lv6 以上は eff_lv で 1/4 の効き)
 FC = dict(coach=0.06, track=0.12, hill=0.15, gym_xp=0.15, dorm_xp=0.12, dorm_r=0.02, nutri_r=0.02,
-          trainer_r=0.02, gym_inj=0.04, trainer_inj=0.03, trainer_dur=0.03, medical_dur=0.05)
+          trainer_r=0.02, gym_inj=0.04, trainer_inj=0.03, trainer_dur=0.03, medical_dur=0.05,
+          # L-70 ②: 新設の施設(高地・メンタル・合宿所)。Lv0 = 未設置で、効果の係数は『Lv』そのものに掛かる(Lv1 から効く)
+          altitude_xp=0.03, mental_xp=0.06, camp_xp=0.03, camp_inj=0.04)
 
 GROWTH = {  # 学年 1..4
     "Early":  [1.3, 1.1, 0.8, 0.6],
@@ -166,6 +168,11 @@ def lvl(fac, key):
     return eff_lv(fac.get(key, 1))
 
 
+def lvl0(fac, key):
+    """新設の施設・追加のスタッフ(L-70 ②)の、効果に使うレベル。未設置(キーなし)= 0。"""
+    return eff_lv(fac.get(key, 0))
+
+
 def menu_of(r, menu):
     return [m for m in menu if m]
 
@@ -238,7 +245,10 @@ def resolve_week(r, menu, fac, month_index, seed, runner_id, abs_week, camp=Fals
             gains[IDX[s]] += g
     stat_mult = {"SPD": 1 + FC["track"] * (lvl(fac, "track") - 1), "KCK": 1 + FC["track"] * (lvl(fac, "track") - 1),
                  "CLB": 1 + FC["hill"] * (lvl(fac, "hill") - 1), "DWN": 1 + FC["hill"] * (lvl(fac, "hill") - 1),
-                 "DUR": 1 + FC["gym_xp"] * (lvl(fac, "gym") - 1), "REC": 1 + FC["dorm_xp"] * (lvl(fac, "dorm") - 1)}
+                 "DUR": 1 + FC["gym_xp"] * (lvl(fac, "gym") - 1), "REC": 1 + FC["dorm_xp"] * (lvl(fac, "dorm") - 1),
+                 "STA": 1 + FC["altitude_xp"] * lvl0(fac, "altitude"),
+                 "MEN": 1 + FC["mental_xp"] * lvl0(fac, "mental"), "CON": 1 + FC["mental_xp"] * lvl0(fac, "mental")}
+    camp_mult = (1 + FC["camp_xp"] * lvl0(fac, "camp")) if camp else 1.0       # 合宿の週の全 XP(E_MAX の外)
     lv_ups = 0
     adds = [0] * 10
     rep["xp_add"] = adds
@@ -246,7 +256,7 @@ def resolve_week(r, menu, fac, month_index, seed, runner_id, abs_week, camp=Fals
         if gains[i] == 0 or r["stats"][i] >= r["pot"][i]:
             continue
         room = (1.0 - r["stats"][i] / r["pot"][i]) ** K["ROOM_EXP"]
-        add = round_half_up(gains[i] * K["GAIN_SCALE"] * e * stat_mult.get(s, 1.0) * room * (r["gm"][i] if "gm" in r else 1.0))   # gm: 素養による成長率の乗数(検証用のフック。無ければ 1)
+        add = round_half_up(gains[i] * K["GAIN_SCALE"] * e * (stat_mult.get(s, 1.0) * camp_mult) * room * (r["gm"][i] if "gm" in r else 1.0))   # gm: 素養による成長率の乗数(検証用のフック。無ければ 1)
         adds[i] = add
         r["xp"][i] += add
         n = 0
@@ -287,7 +297,7 @@ def resolve_week(r, menu, fac, month_index, seed, runner_id, abs_week, camp=Fals
         m_dur = 1.6 - r["stats"][IDX["DUR"]] / 100.0
         m_sk = (0.5 if "skill.iron_legs" in r["skills"] else 1.0) * (1.5 if "skill.injury_prone" in r["skills"] else 1.0)
         m_fac = (1.0 - FC["gym_inj"] * (lvl(fac, "gym") - 1)) * (1.0 - FC["trainer_inj"] * (lvl(fac, "trainer") - 1))
-        p = K["P0"] * m_fatigue(f0) * m_load * m_dur * m_sk * m_fac * (K["CAMP_INJ"] if camp else 1.0)
+        p = K["P0"] * m_fatigue(f0) * m_load * m_dur * m_sk * m_fac * (K["CAMP_INJ"] * (1.0 - FC["camp_inj"] * lvl0(fac, "camp")) if camp else 1.0)
         p = max(0.0, min(0.5, p))
         rep["injury_p"] = p
         u = rng_i.uniform()

@@ -62,8 +62,8 @@
 | `StyleFlow` | `Chase`(追い上げ型 `C`)`Even`(展開は普通 `E`)`Lead`(逃げ型 `L`)。個性の『展開』|
 | `Gift` | `Climber`(登坂)`Descender`(下り)`Ace`(エース)。まれな隠しの素養。10 §2 |
 | `Trait` | `Serious`(真面目)`Competitive`(負けず嫌い)`MyPace`(マイペース)`Passionate`(情熱家)`Careful`(慎重)`Cheerful`(お調子者)`Quiet`(寡黙)`Caring`(面倒見がよい)|
-| `StaffRole` | `Coach` `Trainer` `Nutritionist` `Manager` `Scout` |
-| `FacilityId` | `Dorm`(寮)`Track`(トラック)`Hill`(坂道コース)`Gym`(トレーニング室)`Medical`(医療室)|
+| `StaffRole` | `Coach` `Trainer` `Nutritionist` `Manager`(主務。置いたときだけ。L-70 ②)`Scout` |
+| `FacilityId` | `Dorm`(寮)`Track`(トラック)`Hill`(坂道コース)`Gym`(トレーニング室)`Medical`(医療室)`Altitude`(高地トレーニング施設)`Mental`(メンタルルーム)`Camp`(合宿所)(後ろの 3 つは新設。置いたときだけ。L-70 ②)|
 | `ScoutStatus` | `Unseen` `Seen` `Contacted` `Visited` `Committed`(入部確定)`Lost`(他校へ/辞退)|
 
 ---
@@ -295,8 +295,8 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 
 | 項目 | 範囲 |
 |------|------|
-| 施設レベル | 1〜8(`FacilityId` ごと。Lv6〜8 は監督ランクで解放。05 §3.3・L-70)。初期値は開始校の難易度で決まる(05。1〜5)|
-| スタッフレベル | 1〜8(`StaffRole` ごと。同上)|
+| 施設レベル | 1〜8(`FacilityId` ごと。Lv6〜8 は監督ランクで解放。05 §3.3・L-70)。初期値は開始校の難易度で決まる(05。1〜5)。**新設の施設(`Altitude` `Mental` `Camp`。L-70 ②)は 0〜8 で、0 = 未設置**(保存にはキーを出さない)|
+| スタッフレベル | 1〜8(`StaffRole` ごと。同上)。**主務(`Manager`)は 0〜8 で、0 = 不在**(保存には `staff` に出さない)|
 | スタッフ人数 | 役職ごとに最大1名(初期値案)。拡張枠は監督ランクで解放(01 §3.3)|
 
 ### 3.9 特別招聘券(Ticket)と ContentPack
@@ -534,7 +534,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | 項目 | 型 | 範囲・説明 |
 |------|----|-------------|
 | `funds` | int | 万円。0以上(マイナスは不可)|
-| `facilities` | map<FacilityId, int> | 1〜5 |
+| `facilities` | map<FacilityId, int> | 1〜8(Dorm・Track・Hill・Gym・Medical は常にある)。新設の施設(Altitude・Mental・Camp)は**置いたときだけ**キーが出る(1〜8。順は Medical のあと)|
 | `staff` | list<Staff> | |
 | `morale` | int | 0〜100 |
 | `captain_id` | int? | |
@@ -542,7 +542,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | `annual_plan` | { focus, target_race, peaking_mode } | 年度初めに決定。`focus`: `Focus`(推奨プランのテンプレート。08 R-04)。`target_race`: `RaceKind`(`Fall` / `National` / `NewYear`。**表示と予測の注目大会にだけ使い、規則には作用しない**。既定 `NewYear`)。`peaking_mode`: `map<RaceKind, PeakingMode>`(既定: 第一〜第三戦=Standard、予選会=Short、記録会=None)|
 | `monthly_plan` | map<Group, ThemeId> | 今月の計画 |
 | `custom_weeks` | map<Group, Week[4]>? | `th.custom` 選択時のみ |
-| `guidance_points` | int | 月4。月初に4へ戻る(繰り越さない)。個別指導(1人1ポイント。08 R-06)とイベントの `guide` が使う |
+| `guidance_points` | int | 月4(主務 Lv3 以上で 5・Lv6 以上で 6。05 §4.4)。月初にその数へ戻る(繰り越さない)。個別指導(1人1ポイント。08 R-06)とイベントの `guide` が使う。保存の範囲は 0〜6 |
 | `individual_menu` | map<runner_id, { until_abs_week, menu }> | 個別指導で指定したメニュー(ポイント練習2つ + 走行量)。今週から月末まで有効(03 §5.7)。月をまたがない |
 | `talked` | list<runner_id> | 今月に面談した選手(1人月1回。03 §7.2 M3)。月初に空 |
 | `scout_points` | int | 6〜2月の毎月 +4(ランクの追加分は6月)。**同じ年度の中では繰り越し**、3月に0(08 R-08)。使い方は 05 §7 |
@@ -561,8 +561,10 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | `id` | int | |
 | `role` | StaffRole | |
 | `name` | string | |
-| `level` | int | 1〜5 |
+| `level` | int | 1〜8 |
 | `salary` | int | 万円/年 |
+
+- 役職ごとに 1 名。`id` は Coach 1・Trainer 2・Nutritionist 3・Scout 4・**Manager 5**(主務は置いたときだけ `staff` に出る。L-70 ②)。
 
 ### 4.6 ScoutCandidate(スカウト候補)
 
@@ -699,7 +701,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | I-16 | `ob_network` の合計 = 自校の OBRecord 件数(`career_path` が確定した卒業生)|
 | I-18 | `run.invites_declared` ≥ これまでに入学した `recruit_source = Ticket` の選手数(宣言して入学前のものを含む)。`run.cleared` は一度設定したら変更しない。`cleared.no_invite = true` ⇒ クリア時点で `invites_declared = 0` |
 | I-19 | `OBRecord.role ≠ None` ⇒ `role_until` が未来。OBの役割は1人1つ。`event_state.mods` の `until` は未来(切れた補正は消す)。`Runner.ctr` のキーは 06 §10 の一覧のみ。1人の選手が1週に当事者になるイベントは1件まで(06 §7.2)|
-| I-20 | `individual_menu` のキーは自校の在籍選手。`until_abs_week` はその月の最終週以下。**故障が起きた選手の指定は破棄する**(ポイントは戻らない。03 §5.1 で故障が最優先)。`talked` は自校の在籍選手。`guidance_points ∈ [0, K_UI_GUIDE_POINTS(4)]`。`annual_plan.focus ∈ Focus`、`target_race ∈ {Fall, National, NewYear}`。`scout_points ≥ 0`(3月の年度末処理で0)(08 §8)|
+| I-20 | `individual_menu` のキーは自校の在籍選手。`until_abs_week` はその月の最終週以下。**故障が起きた選手の指定は破棄する**(ポイントは戻らない。03 §5.1 で故障が最優先)。`talked` は自校の在籍選手。`guidance_points ∈ [0, 6]`(月の初めの値は 4 + 主務の段階。05 §4.4)。`annual_plan.focus ∈ Focus`、`target_race ∈ {Fall, National, NewYear}`。`scout_points ≥ 0`(3月の年度末処理で0)(08 §8)|
 | I-21 | `style` は 3 文字で、型 ∈ {S,B,L}・走法 ∈ {P,F,S}・展開 ∈ {C,E,L}。`gifts` は {Climber, Descender, Ace} の重複なしで 2 個以下(10 §2)|
 
 ---

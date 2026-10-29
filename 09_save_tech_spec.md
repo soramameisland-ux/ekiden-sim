@@ -336,8 +336,8 @@
 
 | 項目 | 形・規則 |
 |------|----------|
-| `facilities` | `{ Dorm, Track, Hill, Gym, Medical }` |
-| `staff` | `[{ id, role(Coach / Trainer / Nutritionist / Scout), name, level, salary }]`(この 4 つ。`level` が施設・スタッフの 8 項目のうちの 4 つ、`salary` は `level` から導出 = 05 の `EXP_STAFF[level−1]`。読み込みでは無視)|
+| `facilities` | `{ Dorm, Track, Hill, Gym, Medical }` + **置いたときだけ** `Altitude` `Mental` `Camp`(この順。新設の施設。L-70 ②。なければ未設置 = Lv0)|
+| `staff` | `[{ id, role(Coach / Trainer / Nutritionist / Scout), name, level, salary }]`(この 4 つ。`level` が施設・スタッフの 9 項目のうちの 4 つ、`salary` は `level` から導出 = 05 の `EXP_STAFF[level−1]`。読み込みでは無視)+ **置いたときだけ** 末尾に `{ id: 5, role: Manager, … }`(主務。L-70 ②。なければ不在 = Lv0)|
 | `annual_plan` | `{ focus(Balanced / Speed / Long), target_race(Fall / National / NewYear), peaking_mode: { Fall, National, NewYear, Qualifier, Meet } }`(値は Standard / Short / None)|
 | `monthly_plan` | `{ A, B, C }` = 今月のテーマ |
 | `custom_weeks` | null または `{ A: [週 ×4], B, C }`。週 = `[ks1, ks2, 走行量]` |
@@ -442,7 +442,7 @@
 | I-17 | 上位級の入学人数 ≤ 奨学金枠 | W | 年度末の処理の中だけの整合。保存の時点では存在しない |
 | I-18 | `invites_declared ≥` 招聘で入学した人数。`cleared` は変えない | R | `invites_declared` を人数まで引き上げる(`cleared` は触らない)|
 | I-19 | 切れた補正(`until` が過去)は消す。`Runner.ctr` のキーは 06 §10 の一覧のみ | R | 切れた補正を捨てる・一覧にないキーを捨てる |
-| I-20 | `guidance_points ∈ [0,4]`・`scout_points ≥ 0`・`individual_menu` と `talked` は自校の在籍選手(個別指導の対象は故障なし)| R | 範囲に収める・存在しない/故障中のキーを捨てる |
+| I-20 | `guidance_points ∈ [0,6]`(月初の値は 4 + 主務の段階。05 §4.4)・`scout_points ≥ 0`・`individual_menu` と `talked` は自校の在籍選手(個別指導の対象は故障なし)| R | 範囲に収める・存在しない/故障中のキーを捨てる |
 | I-21 | `style` は 3 文字(型 ∈ {S,B,L}・走法 ∈ {P,F,S}・展開 ∈ {C,E,L})。`gifts` は {Climber, Descender, Ace} の重複なしで 2 個以下(在籍中の選手と OB の記録)| R | `style` が不正なら中立(`BFE`)に・`gifts` は有効なものだけを重複なしで残し、3 個以上は先頭の 2 個に |
 
 - **必須の項目が欠けている**(`schema_version` `clock` `player_team` `runners` `schools` `scenario` `rng` のどれか)・辞書でない・`rng.algorithm` が未知 ⇒ **致命**。

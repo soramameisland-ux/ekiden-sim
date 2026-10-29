@@ -197,17 +197,20 @@ namespace Ekiden.Domain.Game
         }
 
         // ------------------------------------------------------------ 施設・スタッフ(R-11)
-        /// <summary>施設・スタッフを 1 つ強化する(資金が足りるとき。上限は監督ランクで決まる)。key = <see cref="FacilityPolicy.Order"/> のどれか。</summary>
+        /// <summary>施設・スタッフを 1 つ強化する(資金が足りるとき。上限は監督ランクで決まる)。key = <see cref="FacilityPolicy.All"/> のどれか。新設の施設・追加のスタッフ(<see cref="FacilityPolicy.Extras"/>。Lv0 → 1)は、監督ランク <see cref="WorldK.NewMinRank"/> 以上で置ける。</summary>
         public OpResult UpgradeFacility(string key)
         {
-            if (Array.IndexOf(FacilityPolicy.Order, key) < 0) return OpResult.Fail(OpErr.FacilityUnknown, key);
+            if (Array.IndexOf(FacilityPolicy.All, key) < 0) return OpResult.Fail(OpErr.FacilityUnknown, key);
             FacilityLevels f = State.Fac;
             int lv = FacilityPolicy.Level(f, key);
-            int cap = WorldMath.FacilityCap(School.Rank());
+            int rank = School.Rank();
+            if (lv == 0 && rank < WorldK.NewMinRank) return OpResult.Fail(OpErr.FacilityRank, WorldK.NewMinRank);
+            int cap = WorldMath.FacilityCap(rank);
             if (lv >= cap) return OpResult.Fail(OpErr.FacilityCap, cap);
             double cost = WorldMath.UpgradeCost(lv);
             if (State.Funds < cost) return OpResult.Fail(OpErr.FacilityFunds, cost.ToString("F0"));
             FacilityPolicy.SetLevel(ref f, key, lv + 1);
+            if (key == "manager") State.GuidanceLeft += WorldMath.GuidancePoints(lv + 1) - WorldMath.GuidancePoints(lv);       // 月の途中で主務が上がったら、増えた分をすぐ使える
             State.Fac = f;
             State.Funds = Rounding.HalfUp(State.Funds - cost);
             SyncSchool();
@@ -227,6 +230,6 @@ namespace Ekiden.Domain.Game
             return LevelSum(f) - before;
         }
 
-        private static int LevelSum(FacilityLevels f) { return f.Coach + f.Trainer + f.Nutri + f.Dorm + f.Track + f.Hill + f.Gym + f.Medical + f.Scout; }
+        private static int LevelSum(FacilityLevels f) { return f.Coach + f.Trainer + f.Nutri + f.Dorm + f.Track + f.Hill + f.Gym + f.Medical + f.Scout + f.Altitude + f.Mental + f.Camp + f.Manager; }
     }
 }

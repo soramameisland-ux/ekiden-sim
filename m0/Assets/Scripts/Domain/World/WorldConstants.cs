@@ -41,6 +41,8 @@ namespace Ekiden.Domain.World
         public static readonly double[] ExpStaff = { 0, 40, 90, 160, 260, 380, 520, 680 };
         public const double ExpFacUpkeep = 8.0, ExpPerRunner = 15.0;
         public const double UpBase = 300.0, UpSlope = 250.0, Reserve = 500.0;
+        public const double NewCost = 2000.0;                                    // 新設の施設・追加のスタッフ(Lv0 → 1)の費用(L-70 ②)
+        public const int NewMinRank = 7;                                         // 新設・追加ができる監督ランク(Lv6 の解放と同じ)
         // 監督ランク
         public static readonly int[] RankCum = { 0, 6, 15, 30, 50, 80, 120, 170, 230, 300 };
         public const int FacCapBase = 3, FacCapR4 = 3, FacCapR5 = 5, FacCapR6 = 7, FacCapR7 = 9, FacCapR8 = 10;       // Lv6〜8 はランク 7 / 9 / 10 で解放(L-70)

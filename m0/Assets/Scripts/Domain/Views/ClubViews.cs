@@ -13,7 +13,7 @@ namespace Ekiden.Domain.Views
     public sealed class FacilityEffectView
     {
         /// <summary>効果のコード(文字列テーブルの <c>fx.{コード}</c>)。</summary>
-        public static readonly string[] Codes = { "xp_all", "injury_prob", "injury_dur", "recovery_r", "xp_rec", "xp_spd_kck", "xp_clb_dwn", "xp_dur", "scout_sd", "gift_kind" };
+        public static readonly string[] Codes = { "xp_all", "injury_prob", "injury_dur", "recovery_r", "xp_rec", "xp_spd_kck", "xp_clb_dwn", "xp_dur", "scout_sd", "gift_kind", "xp_sta", "xp_men_con", "camp_xp", "camp_injury", "guidance" };
 
         public string Code = "";
         public double Value, NextValue;
@@ -23,11 +23,12 @@ namespace Ekiden.Domain.Views
     {
         public string Key = "";                     // "dorm" など(FacilityPolicy.Order)
         public string NameKey = "";                 // "fac.{Key}.name"
-        public bool IsStaff;                        // スタッフ(コーチ・トレーナー・栄養士・スカウト担当)/ false = 施設
+        public bool IsStaff;                        // スタッフ(コーチ・トレーナー・栄養士・スカウト担当・主務)/ false = 施設
+        public bool IsExtra;                        // 新設の施設・追加のスタッフ(L-70 ②。Lv0 = 未設置・不在。推奨の対象外)
         public int Level, Cap;                      // 現在のレベルと、監督ランクで決まる上限
         public double? NextCost;                    // 次のレベルの費用(万円)。上限なら null
         public bool CanUpgrade;
-        public string BlockedBy;                    // 上げられない理由: "cap"(上限)/ "funds"(資金)/ null
+        public string BlockedBy;                    // 上げられない理由: "cap"(上限)/ "funds"(資金)/ "rank"(新設に要る監督ランクに届かない。新設・追加のみ)/ null
         public int RecommendedOrder;                // 推奨の順位(1 = 寮)
         public int RecommendedLevel;                // 『推奨をすべて実行』のあとのレベル(いまと同じなら対象外)
         public List<FacilityEffectView> Effects = new List<FacilityEffectView>();
@@ -43,6 +44,9 @@ namespace Ekiden.Domain.Views
     public sealed class OpsView
     {
         public readonly List<FacilityRowView> Rows = new List<FacilityRowView>();      // 推奨の順(寮 → スカウト → コーチ → …)
+        public readonly List<FacilityRowView> ExtraRows = new List<FacilityRowView>(); // 新設の施設・追加のスタッフ(高地 → メンタル → 合宿所 → 主務。L-70 ②)
+        public int NewMinRank;                      // 新設・追加ができる監督ランク
+        public int GuidancePoints;                  // 月の指導ポイント(主務のレベルで 4 / 5 / 6)
         public int Funds;
         public int Reserve;                         // 推奨の強化が残す予備費(万円)
         public int CoachRank, Cap;

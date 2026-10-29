@@ -89,7 +89,7 @@ namespace Ekiden.Persistence.Validation
             if (L(((JsonObject)s["run"])["invites_declared"]) < runners.Keys.Count(k => S(((JsonObject)runners[k])["recruit_source"]) == "Ticket")) v.Add("I-18");
             long now = SaveValidator.AbsWeek((JsonObject)s["clock"]);
             if (((JsonArray)((JsonObject)s["event_state"])["mods"]).Items.Any(m => L(((JsonObject)m)["until"]) <= now)) v.Add("I-19 mods");
-            if (!(0 <= L(pt["guidance_points"]) && L(pt["guidance_points"]) <= 4 && L(pt["scout_points"]) >= 0)) v.Add("I-20 points");
+            if (!(0 <= L(pt["guidance_points"]) && L(pt["guidance_points"]) <= Ekiden.Domain.World.WorldMath.GuidanceMax && L(pt["scout_points"]) >= 0)) v.Add("I-20 points");
             var menu = (JsonObject)pt["individual_menu"];
             foreach (string k in menu.Keys)
                 if (!runners.ContainsKey(k) || S(((JsonObject)((JsonObject)runners[k])["injury"])["severity"]) != "None") v.Add("I-20 menu " + k);

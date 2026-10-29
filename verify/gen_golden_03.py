@@ -18,6 +18,12 @@ import ref_model_10 as m10  # noqa: E402
 
 SKILLS = ["skill.summer_boy", "skill.recovery_plus", "skill.summer_fade", "skill.iron_legs", "skill.injury_prone", "skill.peaking_master"]
 FAC_KEYS = ["coach", "trainer", "nutri", "dorm", "track", "hill", "gym", "medical"]
+EXTRA_KEYS = ["altitude", "mental", "camp"]                  # L-70 ②: 新設の施設(Lv0 = 未設置 = キーなし)
+_XRNG = random.Random(20261029)                              # 新設の施設の抽選だけに使う別の乱数(従来の事例の抽選を動かさない)
+
+
+def extras(hi):
+    return {k: _XRNG.randint(1, hi) for k in EXTRA_KEYS if _XRNG.random() < 0.4}
 
 
 def rand_menu(rng):
@@ -57,6 +63,7 @@ def make_case(rng, with_indiv, risky=False):
     r["skills"] = set(rng.sample(SKILLS, rng.choice([0, 0, 1, 2, 3])))
     r["bond_avg"] = rng.random() * 1000.0
     fac = {k: rng.randint(1, 8) for k in FAC_KEYS if rng.random() < 0.9}      # L-70: Lv8 まで
+    fac.update(extras(8))
     style = gifts = None
     if with_indiv:
         style = dict(form=rng.choice(["Speed", "Balance", "Long"]), run=rng.choice(["Pack", "Free", "Solo"]), flow=rng.choice(["Chase", "Even", "Lead"]))
@@ -101,6 +108,7 @@ def make_career(rng, k, with_indiv):
     pot0 = [min(100, s + rng.randint(15, 35)) for s in stats0]
     gtype = rng.choice(["Early", "Normal", "Late"])
     fac = {key: rng.randint(1, 4) for key in FAC_KEYS}
+    fac.update(extras(4))
     plan = list(m3.STD_PLAN) if rng.random() < 0.7 else [rng.choice(list(m3.THEMES)) for _ in range(12)]
     r = m3.new_runner(stats0, pot0, 1, gtype)
     r["skills"] = set(rng.sample(SKILLS, rng.choice([0, 0, 1])))

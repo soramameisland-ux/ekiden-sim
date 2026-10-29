@@ -10,10 +10,20 @@ namespace Ekiden.Domain.World
         /// <summary>強化の順番(寮 → スカウト → コーチ → トラック → 坂道 → トレーニング室 → トレーナー → 栄養士 → 医療室)。</summary>
         public static readonly string[] Order = { "dorm", "scout", "coach", "track", "hill", "gym", "trainer", "nutri", "medical" };
 
+        /// <summary>新設の施設と追加のスタッフ(L-70 ②。高地・メンタル・合宿所・主務)。Lv0 = 未設置・不在。<b>おまかせの強化(<see cref="Upgrade"/>)は買わない</b>(画面の操作 <c>UpgradeFacility</c> だけ)。</summary>
+        public static readonly string[] Extras = { "altitude", "mental", "camp", "manager" };
+
+        /// <summary>ふつうの施設・スタッフ 9 つと新設・追加の 4 つ(画面の操作で強化できるもの)。</summary>
+        public static readonly string[] All = { "dorm", "scout", "coach", "track", "hill", "gym", "trainer", "nutri", "medical", "altitude", "mental", "camp", "manager" };
+
         public static int Level(FacilityLevels f, string k)
         {
             switch (k)
             {
+                case "altitude": return f.Altitude;
+                case "mental": return f.Mental;
+                case "camp": return f.Camp;
+                case "manager": return f.Manager;
                 case "dorm": return f.Dorm;
                 case "scout": return f.Scout;
                 case "coach": return f.Coach;
@@ -30,6 +40,10 @@ namespace Ekiden.Domain.World
         {
             switch (k)
             {
+                case "altitude": f.Altitude = v; break;
+                case "mental": f.Mental = v; break;
+                case "camp": f.Camp = v; break;
+                case "manager": f.Manager = v; break;
                 case "dorm": f.Dorm = v; break;
                 case "scout": f.Scout = v; break;
                 case "coach": f.Coach = v; break;

@@ -34,7 +34,7 @@ namespace Ekiden.Domain.Team
             if (yw == 0) s.RollYear();
             if (wk == 0)
             {
-                s.GuidanceLeft = 4;                                                         // 月初に 4 へ戻る(繰り越さない。02 §4.4)
+                s.GuidanceLeft = WorldMath.GuidancePoints(s.Fac.Manager);                // 月初に 4(主務 Lv3 以上で 5・Lv6 以上で 6)へ戻る(繰り越さない。02 §4.4)
                 s.Talked.Clear();
                 s.IndividualMenus.Clear();                                                  // 個別指導のメニューは月末まで(03 §5.7)
                 foreach (Runner r in s.Runners) r.RollMonthStats();                         // 能力の増減の基準(今月の初め・前の月の初め。08b G-14)

@@ -37,6 +37,7 @@ namespace Ekiden.Domain.Tests
                 {
                     case "coach": f.Coach = v; break; case "trainer": f.Trainer = v; break; case "nutri": f.Nutri = v; break; case "dorm": f.Dorm = v; break;
                     case "track": f.Track = v; break; case "hill": f.Hill = v; break; case "gym": f.Gym = v; break; case "medical": f.Medical = v; break;
+                    case "altitude": f.Altitude = v; break; case "mental": f.Mental = v; break; case "camp": f.Camp = v; break;      // L-70 ②: 新設の施設(キーなし = 未設置 = 0)
                 }
             }
             return f;

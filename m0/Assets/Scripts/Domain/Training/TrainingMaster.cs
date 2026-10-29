@@ -33,6 +33,8 @@ namespace Ekiden.Domain.Training
     {
         public int Coach, Trainer, Nutri, Dorm, Track, Hill, Gym, Medical;
         public int Scout;                                                  // スカウトのスタッフ(05。0 のままなら未設定)
+        /// <summary>新設の施設(高地・メンタル・合宿所)と追加のスタッフ(主務)。<b>0 = 未設置・不在</b>(1 以上を置くと、そのレベルから効く)。L-70 ②。</summary>
+        public int Altitude, Mental, Camp, Manager;
 
         public static FacilityLevels AllOne { get { return new FacilityLevels { Coach = 1, Trainer = 1, Nutri = 1, Dorm = 1, Track = 1, Hill = 1, Gym = 1, Medical = 1, Scout = 1 }; } }
         public static FacilityLevels AllTwo { get { return new FacilityLevels { Coach = 2, Trainer = 2, Nutri = 2, Dorm = 2, Track = 2, Hill = 2, Gym = 2, Medical = 2, Scout = 2 }; } }
@@ -64,6 +66,7 @@ namespace Ekiden.Domain.Training
             { nameof(K_TAPER_L_MAX), K_TAPER_L_MAX }, { nameof(K_SAFETY_F), K_SAFETY_F }, { nameof(K_RACE_FATIGUE_PER_KM), K_RACE_FATIGUE_PER_KM },
             { nameof(K_CAMP_XP), K_CAMP_XP }, { nameof(K_CAMP_INJ), K_CAMP_INJ },
             { "K_FAC_MAX", FacMax }, { "K_FAC_KNEE", FacKnee }, { "K_FAC_SLOPE_ABOVE", FacSlopeAbove },
+            { "K_FC_ALTITUDE", FcAltitude }, { "K_FC_MENTAL", FcMental }, { "K_FC_CAMP", FcCamp }, { "K_FC_CAMP_INJ", FcCampInj },
         };
 
         /// <summary>施設・スタッフの最大レベルと、効果が割り引かれるレベル(05 §4.2・03 §4.6。L-70)。Lv5 を超えた分は <see cref="FacSlopeAbove"/>(1/4)の効き。</summary>
@@ -76,6 +79,8 @@ namespace Ekiden.Domain.Training
         // 施設・スタッフの効果係数(1 レベルあたり)
         public const double FcCoach = 0.06, FcTrack = 0.12, FcHill = 0.15, FcGymXp = 0.15, FcDormXp = 0.12, FcDormR = 0.02, FcNutriR = 0.02,
             FcTrainerR = 0.02, FcGymInj = 0.04, FcTrainerInj = 0.03, FcTrainerDur = 0.03, FcMedicalDur = 0.05;
+        /// <summary>新設の施設の効果係数(1 レベルあたり。Lv0 = 未設置は効果なし。レベルは <see cref="EffLv"/>)。高地 = STA の XP・メンタル = MEN と CON の XP・合宿所 = 合宿の週の全 XP と故障の確率(L-70 ②)。</summary>
+        public const double FcAltitude = 0.03, FcMental = 0.06, FcCamp = 0.03, FcCampInj = 0.04;
 
         public static readonly double[][] GrowthByGrade =
         {

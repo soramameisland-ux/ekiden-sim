@@ -51,6 +51,7 @@ K = dict(
     EXP_STAFF=[0, 40, 90, 160, 260, 380, 520, 680], EXP_FAC_UPKEEP=8.0, EXP_PER_RUNNER=15.0,
     UP_BASE=300.0, UP_SLOPE=250.0, RESERVE=500.0,
     UP_COST_HI=[3000.0, 4000.0, 5000.0],     # L-70: Lv5→6 / 6→7 / 7→8 の費用(万円)。Lv5 までは UP_BASE + UP_SLOPE × Lv
+    NEW_COST=2000.0, NEW_MIN_RANK=7,         # L-70 ②: 新設の施設・追加のスタッフ(Lv0 → 1)の費用(万円)と、新設できる監督ランク。おまかせの方針は買わない(抽象の自校にも入らない)
     # 監督ランク
     RANK_CUM=[0, 6, 15, 30, 50, 80, 120, 170, 230, 300],
     # 他校
@@ -125,8 +126,36 @@ POINTS = [10, 6, 4, 2, 2, 2, 1, 1, 1, 1]
 eff_lv = r4.m3.eff_lv     # 効果に使うレベル(L-70。育成の参照モデルと同じ関数)
 
 
+EXTRA_FAC = ("altitude", "mental", "camp")          # L-70 ②: 新設の施設(Lv0 = 未設置)
+EXTRA_STAFF = ("manager",)                          # L-70 ②: 追加のスタッフ(主務。Lv0 = 不在)
+
+
+def extra_upkeep(fac):
+    """新設の施設の維持費(万円/年)= 8 × Lv(通常の施設は 8 × (Lv − 1))。主務の給与は extra_staff。"""
+    return K["EXP_FAC_UPKEEP"] * sum(fac.get(k, 0) for k in EXTRA_FAC)
+
+
+def extra_staff(fac):
+    """主務の給与(万円/年)。Lv0 = 不在 = 0。Lv1 以上は他のスタッフと同じ表(Lv1 = 0)。"""
+    lv = fac.get("manager", 0)
+    return K["EXP_STAFF"][lv - 1] if lv >= 1 else 0.0
+
+
+def can_build(rank):
+    """新設の施設・追加のスタッフを置ける(Lv0 → 1)監督ランクか。"""
+    return rank >= K["NEW_MIN_RANK"]
+
+
+def guidance_points(fac):
+    """月の指導ポイント(02 §4.4。L-70 ②・L-25)。主務 Lv3 以上で +1・Lv6 以上でさらに +1。"""
+    lv = fac.get("manager", 0)
+    return 4 + (1 if lv >= 3 else 0) + (1 if lv >= 6 else 0)
+
+
 def up_cost(lv):
-    """施設・スタッフを Lv → Lv+1 にする費用(万円)。Lv5 以上(L-70)は表。"""
+    """施設・スタッフを Lv → Lv+1 にする費用(万円)。Lv0(未設置)は新設費、Lv5 以上(L-70)は表。"""
+    if lv <= 0:
+        return K["NEW_COST"]
     hi = K["UP_COST_HI"]
     if lv >= 5 and hi:
         return hi[lv - 5]

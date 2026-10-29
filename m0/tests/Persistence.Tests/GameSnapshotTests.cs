@@ -406,5 +406,63 @@ namespace Ekiden.Persistence.Tests
                 Assert.AreEqual(a.Stats[i].Prestige, b.Stats[i].Prestige);
             }
         }
+        // ------------------------------------------------------------ 新設の施設・主務(L-70 ②)
+        private static string RunWithExtras(HashSet<int> saveAt, int weeks)
+        {
+            GameSession gs = GameSession.New(Seed, Difficulty.Mid);
+            gs.State.Fac.Altitude = 3; gs.State.Fac.Mental = 2; gs.State.Fac.Camp = 4; gs.State.Fac.Manager = 3;
+            gs.State.Funds = 9000;
+            for (int w = 0; w < weeks; w++)
+            {
+                if (saveAt.Contains(w)) gs = RoundTrip(gs);
+                gs.StepWeek();
+            }
+            return GameSnapshot.Capture(gs).ToJson();
+        }
+
+        [Test]
+        public void NewFacilitiesAndManager_SurviveSaveLoad_AreOmittedWhenAbsent_AndTheRunContinuesTheSame()
+        {
+            GameSession plain = GameSession.New(Seed, Difficulty.Mid);
+            JsonObject pt0 = (JsonObject)((JsonObject)GameSnapshot.Capture(plain)["team"])["player_team"];
+            CollectionAssert.AreEqual(new[] { "Dorm", "Track", "Hill", "Gym", "Medical" }, ((JsonObject)pt0["facilities"]).Keys.ToArray(), "置いていなければ従来の形のまま");
+            Assert.AreEqual(4, ((JsonArray)pt0["staff"]).Count, "主務がいなければ従来の 4 人");
+            GameSession gs = GameSession.New(Seed, Difficulty.Mid);
+            gs.State.Fac.Altitude = 3; gs.State.Fac.Mental = 2; gs.State.Fac.Camp = 4; gs.State.Fac.Manager = 6;
+            JsonObject pt = (JsonObject)((JsonObject)GameSnapshot.Capture(gs)["team"])["player_team"];
+            CollectionAssert.AreEqual(new[] { "Dorm", "Track", "Hill", "Gym", "Medical", "Altitude", "Mental", "Camp" }, ((JsonObject)pt["facilities"]).Keys.ToArray(), "置いたものだけ、この順で出る");
+            var staff = (JsonArray)pt["staff"];
+            Assert.AreEqual(5, staff.Count);
+            var mgr = (JsonObject)staff[4];
+            Assert.AreEqual("Manager", ((JsonString)mgr["role"]).Value);
+            Assert.AreEqual(6, ((JsonNumber)mgr["level"]).Int);
+            Assert.AreEqual((long)WorldK.ExpStaff[5], ((JsonNumber)mgr["salary"]).Int, "給与は Lv6 の表の値");
+            GameSession back = RoundTrip(gs);
+            Assert.AreEqual(3, back.State.Fac.Altitude); Assert.AreEqual(2, back.State.Fac.Mental); Assert.AreEqual(4, back.State.Fac.Camp); Assert.AreEqual(6, back.State.Fac.Manager);
+            Assert.AreEqual(GameSnapshot.Capture(gs).ToJson(), GameSnapshot.Capture(back).ToJson());
+            // 古いセーブ(新設のキーがない)は未設置として読める
+            ((JsonObject)pt["facilities"]).Remove("Altitude"); ((JsonObject)pt["facilities"]).Remove("Mental"); ((JsonObject)pt["facilities"]).Remove("Camp");
+            staff.Items.RemoveAt(4);
+            JsonObject snap = GameSnapshot.Capture(gs);
+            JsonObject team = (JsonObject)snap["team"];
+            ((JsonObject)team["player_team"])["facilities"] = pt["facilities"];
+            ((JsonObject)team["player_team"])["staff"] = staff;
+            GameSession old = GameSnapshot.Restore((JsonObject)JsonValue.Parse(snap.ToJson()));
+            Assert.AreEqual(0, old.State.Fac.Altitude + old.State.Fac.Mental + old.State.Fac.Camp + old.State.Fac.Manager);
+        }
+
+        [Test]
+        public void SaveLoadContinue_WithTheNewFacilities_EqualsContinueOnly()
+        {
+            const int weeks = 48 + 20;
+            string reference = RunWithExtras(new HashSet<int>(), weeks);
+            Assert.AreEqual(reference, RunWithExtras(new HashSet<int>(), weeks), "同じ入力で 2 回");
+            Assert.AreEqual(reference, RunWithExtras(new HashSet<int>(Enumerable.Range(1, weeks - 1)), weeks), "毎週 読み込み直す");
+            // 新設が実際に効いている(従来の進行とは違う)
+            GameSession plain = GameSession.New(Seed, Difficulty.Mid);
+            plain.State.Funds = 9000;
+            for (int w = 0; w < weeks; w++) plain.StepWeek();
+            Assert.AreNotEqual(GameSnapshot.Capture(plain).ToJson(), reference);
+        }
     }
 }

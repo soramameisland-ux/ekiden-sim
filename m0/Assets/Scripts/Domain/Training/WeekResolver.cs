@@ -107,6 +107,9 @@ namespace Ekiden.Domain.Training
             double hillMult = 1 + TrainingMaster.FcHill * (TrainingMaster.EffLv(fac.Hill) - 1);
             double gymMult = 1 + TrainingMaster.FcGymXp * (TrainingMaster.EffLv(fac.Gym) - 1);
             double dormMult = 1 + TrainingMaster.FcDormXp * (TrainingMaster.EffLv(fac.Dorm) - 1);
+            double altMult = 1 + TrainingMaster.FcAltitude * TrainingMaster.EffLv(fac.Altitude);          // L-70 ②: 新設の施設(Lv0 = 未設置は 1)
+            double mentalMult = 1 + TrainingMaster.FcMental * TrainingMaster.EffLv(fac.Mental);
+            double campMult = camp ? 1 + TrainingMaster.FcCamp * TrainingMaster.EffLv(fac.Camp) : 1.0;    // 合宿の週の全 XP(E_MAX の外)
             int lvUps = 0;
             for (int i = 0; i < StatInfo.Count; i++)
             {
@@ -119,7 +122,10 @@ namespace Ekiden.Domain.Training
                     case Stat.CLB: case Stat.DWN: statMult = hillMult; break;
                     case Stat.DUR: statMult = gymMult; break;
                     case Stat.REC: statMult = dormMult; break;
+                    case Stat.STA: statMult = altMult; break;
+                    case Stat.MEN: case Stat.CON: statMult = mentalMult; break;
                 }
+                statMult *= campMult;
                 double add0 = gains[i] * TrainingMaster.K_XP_SCALE * e * statMult * room;
                 if (r.Gm != null) add0 *= r.Gm[i];
                 int add = Rounding.HalfUp(add0);
@@ -169,7 +175,7 @@ namespace Ekiden.Domain.Training
                 double mDur = 1.6 - r.Stats[(int)Stat.DUR] / 100.0;
                 double mSk = (r.Skills.Contains("skill.iron_legs") ? 0.5 : 1.0) * (r.Skills.Contains("skill.injury_prone") ? 1.5 : 1.0);
                 double mFac = (1.0 - TrainingMaster.FcGymInj * (TrainingMaster.EffLv(fac.Gym) - 1)) * (1.0 - TrainingMaster.FcTrainerInj * (TrainingMaster.EffLv(fac.Trainer) - 1));
-                double p = TrainingMaster.K_P0 * MFatigue(f0) * mLoad * mDur * mSk * mFac * (camp ? TrainingMaster.K_CAMP_INJ : 1.0) * wm.InjMult;
+                double p = TrainingMaster.K_P0 * MFatigue(f0) * mLoad * mDur * mSk * mFac * (camp ? TrainingMaster.K_CAMP_INJ * (1.0 - TrainingMaster.FcCampInj * TrainingMaster.EffLv(fac.Camp)) : 1.0) * wm.InjMult;
                 p = Math.Max(0.0, Math.Min(TrainingMaster.K_P_MAX, p));
                 rep.InjuryP = p;
                 double u = rngI.Uniform();

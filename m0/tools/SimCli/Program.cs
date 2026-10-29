@@ -31,6 +31,7 @@ namespace Ekiden.SimCli
                 case "strings": return StringsCmd.Run(args.Skip(1).ToArray());
                 case "records": return RecordsCmd.Run(args.Skip(1).ToArray());
                 case "diag-real": return DiagRealCmd.Run(args.Skip(1).ToArray());
+                case "extras": return ExtrasCmd.Run(args.Skip(1).ToArray());
                 case "help":
                 default:
                     Console.WriteLine("SimCli コマンド:");

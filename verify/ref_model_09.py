@@ -693,7 +693,7 @@ def check_invariants(s):
     now = abs_week(s["clock"])
     if any(m["until"] <= now for m in s["event_state"]["mods"]):
         v.append("I-19 mods")
-    if not (0 <= pt["guidance_points"] <= 4 and pt["scout_points"] >= 0):
+    if not (0 <= pt["guidance_points"] <= 6 and pt["scout_points"] >= 0):
         v.append("I-20 points")
     for k, im in pt["individual_menu"].items():
         if k not in runners or runners[k]["injury"]["severity"] != "None":
@@ -837,7 +837,7 @@ def validate_and_repair(s):
     if len(live) != len(s["event_state"]["mods"]):
         s["event_state"]["mods"] = live
         fixes.append("I-19 mods")
-    gp, sp = max(0, min(4, pt["guidance_points"])), max(0, pt["scout_points"])
+    gp, sp = max(0, min(6, pt["guidance_points"])), max(0, pt["scout_points"])
     if (gp, sp) != (pt["guidance_points"], pt["scout_points"]):
         pt["guidance_points"], pt["scout_points"] = gp, sp
         fixes.append("I-20 points")
@@ -961,7 +961,10 @@ def team_save(rng, n=24, year=4, with_world_stub=False):
     menus = {str(i): dict(until_abs_week=now + 2, menu=["ks.sharpen", "ks.pace_run", "mil.low"]) for i in sorted(rng.sample(healthy, min(2, len(healthy))))}
     talked = sorted(rng.sample(ids, rng.randint(0, 3)))
     lv = {k: rng.randint(1, 5) for k in ("Dorm", "Track", "Hill", "Gym", "Medical", "Coach", "Trainer", "Nutritionist", "Scout")}
-    exp_staff = [0, 40, 90, 160, 260]
+    exp_staff = [0, 40, 90, 160, 260, 380, 520, 680]
+    xr = random.Random(str(rng.getstate()[1][:3]))      # L-70 ②: 新設の施設・主務の抽選だけに使う別の乱数(rng の状態から作る。rng は進めないので従来の抽選は動かない)
+    extra_fac = {k: xr.randint(1, 8) for k in ("Altitude", "Mental", "Camp") if xr.random() < 0.4}
+    manager_lv = xr.randint(1, 8) if xr.random() < 0.4 else 0
     fired = {e: dict(count=rng.randint(1, 5), last_week=rng.randint(0, now)) for e in sorted(rng.sample(EV_IDS, rng.randint(0, 4)))}
     year_counts = sort({**{e: rng.randint(0, 2) for e in rng.sample(EV_IDS, rng.randint(0, 3))}, "_total": rng.randint(0, 9)})
     runner_ev = {str(i): dict(last_month=rng.choice([-1, year * 12 - 3]), once=sorted(rng.sample(EV_IDS, rng.choice([0, 0, 1]))), cooldown=sort({e: rng.randint(0, now) for e in rng.sample(EV_IDS, rng.randint(0, 2))})) for i in ids}
@@ -976,14 +979,15 @@ def team_save(rng, n=24, year=4, with_world_stub=False):
         counters=dict(next_runner_id=base_id + n + rng.randint(0, 20), next_staff_id=5),
         player_team=dict(
             funds=rng.randint(0, 4000),
-            facilities=dict(Dorm=lv["Dorm"], Track=lv["Track"], Hill=lv["Hill"], Gym=lv["Gym"], Medical=lv["Medical"]),
-            staff=[dict(id=i + 1, role=role, name=f"ス{i}", level=lv[role], salary=exp_staff[lv[role] - 1]) for i, role in enumerate(STAFF_ROLES)],
+            facilities=dict(Dorm=lv["Dorm"], Track=lv["Track"], Hill=lv["Hill"], Gym=lv["Gym"], Medical=lv["Medical"], **extra_fac),
+            staff=[dict(id=i + 1, role=role, name=f"ス{i}", level=lv[role], salary=exp_staff[lv[role] - 1]) for i, role in enumerate(STAFF_ROLES)]
+                  + ([dict(id=5, role="Manager", name="ス4", level=manager_lv, salary=exp_staff[manager_lv - 1])] if manager_lv >= 1 else []),
             morale=rng.choice([60, 72.5]), captain_id=captain, manager_name=rng.choice(["監督", "山田"]),
             annual_plan=dict(focus=rng.choice(["Balanced", "Speed", "Long"]), target_race=rng.choice(["Fall", "National", "NewYear"]),
                              peaking_mode=dict(Fall="Standard", National=rng.choice(["Standard", "Short"]), NewYear="Standard", Qualifier="Short", Meet="None")),
             monthly_plan=dict(A="th.speed", B="th.base_build", C=rng.choice(["th.base_build", "th.custom"])),
             custom_weeks=rng.choice([None, {g: [["ks.core", "ks.pace_run", "mil.std"]] * 4 for g in GROUPS}]),
-            guidance_points=rng.randint(0, 4), individual_menu=menus, talked=talked, scout_points=rng.choice([0, 8, 12.5]), coach_rank=rng.randint(1, 9), ob_network=net,
+            guidance_points=rng.randint(0, 4) + (xr.randint(0, 2) if manager_lv >= 3 else 0), individual_menu=menus, talked=talked, scout_points=rng.choice([0, 8, 12.5]), coach_rank=rng.randint(1, 9), ob_network=net,
             tickets=dict(stock=rng.randint(0, 2), bank=0, last_used_year=rng.randint(-99, year), plan_anchor_year=rng.choice([None, 1]),
                          plan_granted_years=rng.choice([[], [1], [1, 5]]), milestones=sorted(rng.sample(["tm.win.fall", "tm.win.national", "tm.podium", "tm.rank.3"], rng.randint(0, 3))),
                          pending=rng.choice([None, dict(kind="Rookie", enroll_year=year + 1, prefecture_id=rng.choice([None, 13]))]),

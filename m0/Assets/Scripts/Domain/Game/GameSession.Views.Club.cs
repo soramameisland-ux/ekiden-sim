@@ -14,11 +14,17 @@ namespace Ekiden.Domain.Game
     /// <summary>運営・全国の大学・OB 名簿・歴史の読み取り API(SC-32・35・33・34)。状態は変えない。</summary>
     public sealed partial class GameSession
     {
-        private static bool IsStaffKey(string key) { return key == "coach" || key == "trainer" || key == "nutri" || key == "scout"; }
+        private static bool IsStaffKey(string key) { return key == "coach" || key == "trainer" || key == "nutri" || key == "scout" || key == "manager"; }
 
         private static FacilityEffectView Fx(string code, double perLevel, int lv)
         {
             return new FacilityEffectView { Code = code, Value = perLevel * (TrainingMaster.EffLv(lv) - 1), NextValue = perLevel * (TrainingMaster.EffLv(Math.Min(TrainingMaster.FacMax, lv + 1)) - 1) };               // 次のレベルの効果(最大レベルは上限なので同じ値)
+        }
+
+        /// <summary>新設の施設の効果(L-70 ②)。Lv0 = 未設置は 0。係数 × 効果に使うレベル(ふつうの施設の『Lv − 1』ではない)。</summary>
+        private static FacilityEffectView Fx0(string code, double perLevel, int lv)
+        {
+            return new FacilityEffectView { Code = code, Value = perLevel * TrainingMaster.EffLv(lv), NextValue = perLevel * TrainingMaster.EffLv(Math.Min(TrainingMaster.FacMax, lv + 1)) };
         }
 
         /// <summary>施設・スタッフの効果(03 §4.6)。コード → 文字列テーブルの <c>fx.{コード}</c>。</summary>
@@ -45,6 +51,15 @@ namespace Ekiden.Domain.Game
                     list.Add(Fx("injury_prob", -TrainingMaster.FcGymInj, lv));
                     break;
                 case "medical": list.Add(Fx("injury_dur", -TrainingMaster.FcMedicalDur, lv)); break;
+                case "altitude": list.Add(Fx0("xp_sta", TrainingMaster.FcAltitude, lv)); break;
+                case "mental": list.Add(Fx0("xp_men_con", TrainingMaster.FcMental, lv)); break;
+                case "camp":
+                    list.Add(Fx0("camp_xp", TrainingMaster.FcCamp, lv));
+                    list.Add(Fx0("camp_injury", -TrainingMaster.FcCampInj, lv));
+                    break;
+                case "manager":
+                    list.Add(new FacilityEffectView { Code = "guidance", Value = WorldMath.GuidancePoints(lv) - 4, NextValue = WorldMath.GuidancePoints(Math.Min(TrainingMaster.FacMax, lv + 1)) - 4 });
+                    break;
                 case "scout":
                     list.Add(new FacilityEffectView { Code = "scout_sd", Value = Scouting.InfoSd(lv), NextValue = Scouting.InfoSd(Math.Min(TrainingMaster.FacMax, lv + 1)) });
                     list.Add(new FacilityEffectView { Code = "gift_kind", Value = lv >= 3 ? 1 : 0, NextValue = Math.Min(TrainingMaster.FacMax, lv + 1) >= 3 ? 1 : 0 });
@@ -78,11 +93,27 @@ namespace Ekiden.Domain.Game
                 v.RecommendedCount += row.RecommendedLevel - lv;
                 v.Rows.Add(row);
             }
+            for (int i = 0; i < FacilityPolicy.Extras.Length; i++)                      // 新設の施設・追加のスタッフ(L-70 ②。推奨の対象外)
+            {
+                string key = FacilityPolicy.Extras[i];
+                int lv = FacilityPolicy.Level(f, key);
+                var row = new FacilityRowView
+                {
+                    Key = key, NameKey = "fac." + key + ".name", IsStaff = IsStaffKey(key), IsExtra = true, Level = lv, Cap = cap, RecommendedOrder = 0,
+                    RecommendedLevel = lv, Effects = FacilityEffects(key, lv),
+                };
+                if (lv < cap) row.NextCost = WorldMath.UpgradeCost(lv);
+                row.BlockedBy = lv == 0 && rank < WorldK.NewMinRank ? "rank" : (lv >= cap ? "cap" : (s.Funds < row.NextCost.Value ? "funds" : null));
+                row.CanUpgrade = row.BlockedBy == null;
+                v.ExtraRows.Add(row);
+            }
+            v.NewMinRank = WorldK.NewMinRank;
+            v.GuidancePoints = WorldMath.GuidancePoints(f.Manager);
             v.IncomeFormula = WorldMath.Income(School.Prestige, School.PrevPoints);
             v.IncomeMod = s.ModSum(ModKind.FundsYear);
             v.Income = v.IncomeFormula + v.IncomeMod;
-            v.Staff = WorldMath.StaffExpense(f.Coach, f.Trainer, f.Nutri, f.Scout);
-            v.Upkeep = WorldMath.FacilityUpkeep(f.Dorm, f.Track, f.Hill, f.Gym, f.Medical);
+            v.Staff = WorldMath.StaffExpense(f);
+            v.Upkeep = WorldMath.FacilityUpkeep(f);
             v.MembersExpense = WorldMath.RunnerExpense(s.Runners.Count);
             v.Expense = v.Staff + v.Upkeep + v.MembersExpense;
             v.Balance = v.Income - v.Expense;

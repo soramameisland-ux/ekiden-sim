@@ -286,7 +286,7 @@ namespace Ekiden.Persistence.Validation
                 es["mods"] = live;
                 fixes.Add("I-19 mods");
             }
-            long gp = Math.Max(0, Math.Min(4, L(pt["guidance_points"]))), sp = Math.Max(0, L(pt["scout_points"]));
+            long gp = Math.Max(0, Math.Min(Ekiden.Domain.World.WorldMath.GuidanceMax, L(pt["guidance_points"]))), sp = Math.Max(0, L(pt["scout_points"]));
             if (gp != L(pt["guidance_points"]) || sp != L(pt["scout_points"]))
             {
                 pt["guidance_points"] = N(gp);
