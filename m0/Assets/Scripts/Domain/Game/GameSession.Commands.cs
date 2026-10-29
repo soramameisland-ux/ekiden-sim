@@ -157,7 +157,7 @@ namespace Ekiden.Domain.Game
             {
                 Runner r = State.FindRunner(id);
                 if (r == null) return OpResult.Fail("登録できない選手がいる");
-                if (r.IsInjured) return OpResult.Fail("故障中の選手は登録できない");
+                if (!TeamRacing.CanRegister(r)) return OpResult.Fail("重傷の選手は登録できない");
                 if (r.Overseas) intl++;
             }
             if (intl > rule.IntlReg) return OpResult.Fail("留学生の登録は " + rule.IntlReg + " 人まで");

@@ -14,8 +14,14 @@ namespace Ekiden.Domain.Team
     /// <summary>自校(実体の選手)の大会の側(04 §4・§5.3・§10): 登録(おまかせ)・当日の準備・結果の選手への反映。</summary>
     public static class TeamRacing
     {
-        /// <summary>選手が大会に出られるか: 故障していない・イベントで欠場にされていない。</summary>
-        public static bool CanRun(TeamState s, Runner r) { return !r.IsInjured && !s.Bench.Contains(r.Id); }
+        /// <summary>選手が大会に出られるか: 軽傷までの故障(調子は −2 で出る。04 O3・03 §6)・イベントで欠場にされていない。中傷以上は出られない。</summary>
+        public static bool CanRun(TeamState s, Runner r) { return CanPlace(r) && !s.Bench.Contains(r.Id); }
+
+        /// <summary>オーダーに配置できるか(04 O3): 故障が軽傷まで。</summary>
+        public static bool CanPlace(Runner r) { return r.InjurySeverity <= InjurySeverity.Minor; }
+
+        /// <summary>登録できるか(04 E3): 重傷でない(中傷以下は登録できる。大会までに治らなければ出られず、差し替えになる)。</summary>
+        public static bool CanRegister(Runner r) { return r.InjurySeverity != InjurySeverity.Severe; }
 
         private static double LongRating(RaceRunner r) { return RaceTables.Rating(r.Stats, SectionType.Long); }
 

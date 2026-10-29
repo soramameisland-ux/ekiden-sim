@@ -81,7 +81,7 @@ namespace Ekiden.Domain.Tests
                 Assert.AreEqual(RaceKind.Fall, o.Kind);
                 Assert.AreEqual(row.Row.Injury != InjurySeverity.None, o.Injured);
                 if (!o.Injured) Assert.IsTrue(o.Tapered, "登録すると調整(ピーキング)の週が入る");
-                if (o.Injured) Assert.AreEqual(0.0, o.PGood);
+                Assert.That(o.PGood, Is.InRange(0.0, 1.0));
             }
             // 登録済みの選手は、FormOutlook(登録の見込みなしの版)と同じ
             foreach (int id in ev.Entered.Take(3))
@@ -209,16 +209,35 @@ namespace Ekiden.Domain.Tests
             Assert.GreaterOrEqual(close / (double)guided, 0.85, "個別指導は月末まで。そのあとの 24〜25 週は調整に戻る");
         }
 
+        /// <summary>故障中の選手: 大会の週にまだ治っていなければ調子は −2 で確定(好調以上の見込み 0)。それまでに治るなら、治ったあとの調子の分布で見込む(04 O3・03 §6)。</summary>
         [Test]
-        public void InjuredRunner_HasNoChanceOfAGoodForm()
+        public void InjuredRunner_IsFormMinus2_OnlyIfStillInjuredAtTheRace_AndMatchesTheRealWeeks()
         {
-            GameSession gs = AtWeek(15UL, Difficulty.Elite, Calendar.RaceWeeks[0] - 4);
-            Runner r = gs.State.Runners[2];
-            r.InjurySeverity = InjurySeverity.Moderate; r.InjuryWeeksLeft = 3;
-            FormOutlookView v = gs.FormOutlook(r.Id, RaceKind.Fall);
-            Assert.IsTrue(v.Injured);
-            Assert.AreEqual(0.0, v.PGood);
-            Assert.IsTrue(gs.Entry(RaceKind.Fall).Roster.Single(x => x.Row.Id == r.Id).Outlook.Injured);
+            foreach (int left in new[] { 7, 6, 5, 4, 3 })
+            {
+                GameSession gs = AtWeek(15UL, Difficulty.Elite, Calendar.RaceWeeks[0] - 4);       // 大会の 4 週前(月間の途中の週)
+                Runner r = gs.State.Runners[2];
+                r.InjurySeverity = InjurySeverity.Moderate; r.InjuryWeeksLeft = left;
+                FormOutlookView v = gs.FormOutlook(r.Id, RaceKind.Fall);
+                Assert.IsTrue(v.Injured);
+                Assert.IsTrue(gs.Entry(RaceKind.Fall).Roster.Single(x => x.Row.Id == r.Id).Outlook.Injured);
+                bool stillInjured = left > 5;                                                    // 解決される週は 4 週前から大会の週までの 5 回。週ごとに 1 ずつ減り、大会の週の解決のあとにも残っているか
+                if (stillInjured)
+                {
+                    Assert.AreEqual(1.0, v.Form[0], 1e-12, "left=" + left); Assert.AreEqual(0.0, v.PGood, 1e-12, "left=" + left);
+                }
+                else
+                {
+                    Assert.AreEqual(0.0, v.Form[0], 1e-9, "治っているなら −2 の確率は(調子の分布の裾だけ)小さい left=" + left); Assert.Greater(v.PGood, 0.0, "left=" + left);
+                }
+                // 実際の週を進めて、大会の週の解決のあとの故障の有無が見込みと一致する(確率の薄い新しい故障は起きない前提の選手を使う)
+                for (int w = 0; w < 4; w++) { gs.ResolveTraining(); gs.FinishWeek(); gs.AdvanceWeek(); }
+                Runner real = gs.State.FindRunner(r.Id);
+                Assert.AreEqual(Calendar.RaceWeeks[0], gs.YearWeek);
+                gs.ResolveTraining();
+                Assert.AreEqual(stillInjured, real.IsInjured, "実際の週の解決でも、治るかどうかは見込みと同じ left=" + left);
+                if (stillInjured) Assert.AreEqual(-2, real.Form, "left=" + left);
+            }
         }
 
         [Test]

@@ -298,7 +298,7 @@ namespace Ekiden.Domain.Game
                 v.Roster.Add(new EntryRowView
                 {
                     Row = RowOf(r, null), BestType = best, BestFit = bestP, BestMark = bestP >= 70.0 ? '◎' : (bestP >= 60.0 ? '〇' : '△'),
-                    Entered = entered.Contains(r.Id), CanEnter = !r.IsInjured, BlockedReason = r.IsInjured ? "injured" : null,
+                    Entered = entered.Contains(r.Id), CanEnter = TeamRacing.CanRegister(r), BlockedReason = TeamRacing.CanRegister(r) ? null : "injured",
                     Outlook = OutlookOf(r, kind, null, eo, true),
                 });
             }
@@ -307,7 +307,7 @@ namespace Ekiden.Domain.Game
             v.IntlRegistered = intl;
             if (entered.Count < rule.Run) v.Problems.Add(new ViewProblem { Code = "entry.short", Value = rule.Run });
             if (intl > rule.IntlReg) v.Problems.Add(new ViewProblem { Code = "entry.intl", Value = rule.IntlReg });
-            foreach (int id in entered.OrderBy(x => x)) { Runner r = s.FindRunner(id); if (r != null && r.IsInjured) v.Problems.Add(new ViewProblem { Code = "entry.injured", RunnerId = id }); }
+            foreach (int id in entered.OrderBy(x => x)) { Runner r = s.FindRunner(id); if (r != null && !TeamRacing.CanPlace(r)) v.Problems.Add(new ViewProblem { Code = "entry.injured", RunnerId = id }); }
             return v;
         }
 
@@ -359,7 +359,7 @@ namespace Ekiden.Domain.Game
                     Runner r = s.FindRunner(id);
                     if (r == null) continue;
                     if (r.Overseas) intl++;
-                    if (r.IsInjured) v.Problems.Add(new ViewProblem { Code = "order.injured", RunnerId = id });
+                    if (!TeamRacing.CanPlace(r)) v.Problems.Add(new ViewProblem { Code = "order.injured", RunnerId = id });
                     if (!s.Entries[k].Contains(id)) v.Problems.Add(new ViewProblem { Code = "order.not_entered", RunnerId = id });
                 }
                 if (intl > rule.IntlRun) v.Problems.Add(new ViewProblem { Code = "order.intl", Value = rule.IntlRun });

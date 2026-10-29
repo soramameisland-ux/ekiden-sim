@@ -96,8 +96,9 @@ namespace Ekiden.Domain.Game
             }
             ForecastResult fr = Forecaster.Run(Master, r, planned, s.Fac, s.Settings.AutoSafetyF > 0, r.BondAvg, s.ModsFor(r), SafetyF);
             v.Form = fr.Form != null ? fr.Form : new double[5];
+            if (fr.End != null && fr.End.IsInjured) v.Form = new[] { 1.0, 0.0, 0.0, 0.0, 0.0 };         // 大会の週にまだ故障中なら、調子は −2(03 §6。軽傷は出られる / 中傷以上は出られない)
             v.PInjury = fr.PInjury;
-            v.PGood = r.IsInjured || fr.Form == null ? 0.0 : (1.0 - fr.PInjury) * (fr.Form[3] + fr.Form[4]);
+            v.PGood = fr.Form == null ? 0.0 : (1.0 - fr.PInjury) * (v.Form[3] + v.Form[4]);
             v.FatigueAtRace = fr.End.Fatigue;
             return v;
         }

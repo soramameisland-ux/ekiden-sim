@@ -197,7 +197,7 @@ namespace Ekiden.Domain.Tests
                 double best = Enum.GetValues(typeof(SectionType)).Cast<SectionType>().Max(t => RaceTables.Rating(dv, t));
                 Assert.AreEqual(best, r.BestFit, 1e-12, "区間適性の最高のタイプ");
                 Assert.AreEqual(RaceTables.Rating(dv, r.BestType), r.BestFit, 1e-12);
-                Assert.AreEqual(!gs.State.FindRunner(r.Row.Id).IsInjured, r.CanEnter);
+                Assert.AreEqual(gs.State.FindRunner(r.Row.Id).InjurySeverity != InjurySeverity.Severe, r.CanEnter, "登録できないのは重傷だけ(04 E3)");
             }
             Assert.IsEmpty(e.Problems.Where(p => p.Code != "entry.short"), "おまかせ登録は検証を満たす");
             // 出走人数に足りない登録 → 指摘(確認を経て登録できる)
@@ -210,8 +210,12 @@ namespace Ekiden.Domain.Tests
             victim.InjuryWeeksLeft = 4;
             EntryView injured = gs.Entry(RaceKind.Fall);
             Assert.IsTrue(injured.Problems.Any(p => p.Code == "entry.injured" && p.RunnerId == victim.Id));
-            Assert.IsFalse(injured.Roster.First(r => r.Row.Id == victim.Id).CanEnter);
-            Assert.AreEqual("injured", injured.Roster.First(r => r.Row.Id == victim.Id).BlockedReason);
+            Assert.IsTrue(injured.Roster.First(r => r.Row.Id == victim.Id).CanEnter, "中傷は登録できる(04 E3)。大会までに治らなければ出られない");
+            victim.InjurySeverity = InjurySeverity.Minor;
+            Assert.IsFalse(gs.Entry(RaceKind.Fall).Problems.Any(p => p.Code == "entry.injured"), "軽傷は出られるので指摘しない");
+            victim.InjurySeverity = InjurySeverity.Severe;
+            Assert.IsFalse(gs.Entry(RaceKind.Fall).Roster.First(r => r.Row.Id == victim.Id).CanEnter);
+            Assert.AreEqual("injured", gs.Entry(RaceKind.Fall).Roster.First(r => r.Row.Id == victim.Id).BlockedReason);
         }
 
         [Test]

@@ -62,7 +62,7 @@ namespace Ekiden.Domain.Game
                 if (!State.Entries[k].Contains(id)) return OpResult.Fail("登録メンバーでない選手は配置できない");
                 Runner r = State.FindRunner(id);
                 if (r == null) return OpResult.Fail("その選手はいない");
-                if (r.IsInjured) return OpResult.Fail("故障中の選手は配置できない");
+                if (!TeamRacing.CanPlace(r)) return OpResult.Fail("中傷以上の故障の選手は配置できない(軽傷は配置できるが、調子は −2)");
                 if (r.Overseas) intl++;
             }
             if (intl > RaceTables.Rule(kind).IntlRun) return OpResult.Fail("留学生の出走は " + RaceTables.Rule(kind).IntlRun + " 人まで");
@@ -169,7 +169,7 @@ namespace Ekiden.Domain.Game
             {
                 Runner r = State.FindRunner(id);
                 if (r == null) return OpResult.Fail("登録できない選手がいる");
-                if (r.IsInjured) return OpResult.Fail("故障中の選手は登録できない");
+                if (!TeamRacing.CanRegister(r)) return OpResult.Fail("重傷の選手は登録できない");
             }
             _qualifierEntries = runnerIds.ToArray();
             return OpResult.Success;

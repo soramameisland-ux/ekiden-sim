@@ -241,9 +241,9 @@ namespace Ekiden.Domain.Tests
             Assert.IsFalse(o.Ok); StringAssert.Contains("二重", o.Reason);
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[0], 999 });
             Assert.IsFalse(o.Ok);
-            s.FindRunner(all[1]).InjurySeverity = InjurySeverity.Moderate;
+            s.FindRunner(all[1]).InjurySeverity = InjurySeverity.Severe;
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[0], all[1] });
-            Assert.IsFalse(o.Ok); StringAssert.Contains("故障", o.Reason);
+            Assert.IsFalse(o.Ok); StringAssert.Contains("重傷", o.Reason);
             for (int i = 2; i < 5; i++) s.FindRunner(all[i]).Overseas = true;
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[2], all[3], all[4] });
             Assert.IsFalse(o.Ok); StringAssert.Contains("留学生", o.Reason);
