@@ -228,5 +228,26 @@ namespace Ekiden.Persistence.Tests
             Assert.IsNotNull(again);
             CollectionAssert.IsEmpty(GameLoader.Load(again).Repairs, "もう一度中断しても、書かれるのは修復後の状態");
         }
+
+        /// <summary>履歴の順位表は大会が終わると変わらないので、作った JSON を使い回す(取り出しを速くする)。使い回しても、新しく作った場合と同じ内容で、増えた分は足される。</summary>
+        [Test]
+        public void TheHistoryCapture_ReusesPastEntries_AndStaysEqualToAFreshBuild()
+        {
+            GameSession gs = GameSession.New(12UL, Difficulty.Mid);
+            for (int i = 0; i < 48 * 2; i++) gs.StepWeek();
+            JsonObject a = GameSnapshot.Capture(gs);
+            var racesA = (JsonArray)((JsonObject)((JsonObject)a["world"])["history"])["race_records"];
+            int before = racesA.Count;
+            for (int i = 0; i < 48; i++) gs.StepWeek();
+            JsonObject b = GameSnapshot.Capture(gs);
+            var racesB = (JsonArray)((JsonObject)((JsonObject)b["world"])["history"])["race_records"];
+            Assert.Greater(racesB.Count, before, "1 年度ぶん増えた");
+            Assert.AreSame(racesA[0], racesB[0], "終わった大会の JSON は使い回す");
+            Assert.AreSame(racesA[before - 1], racesB[before - 1]);
+            // 復元した世界(使い回しのない新しい履歴)から取り出し直しても、同じ内容
+            GameSession back = GameSnapshot.Restore((JsonObject)JsonValue.Parse(b.ToJson()));
+            Assert.AreEqual(b.ToJson(), GameSnapshot.Capture(back).ToJson());
+            Assert.AreNotSame(racesB[0], ((JsonArray)((JsonObject)((JsonObject)GameSnapshot.Capture(back)["world"])["history"])["race_records"])[0], "別の履歴は別に作る");
+        }
     }
 }

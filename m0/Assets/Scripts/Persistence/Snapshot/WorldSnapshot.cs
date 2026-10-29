@@ -59,20 +59,25 @@ namespace Ekiden.Persistence.Snapshot
         private static JsonBool B(bool v) { return JsonBool.Of(v); }
 
         /// <summary>履歴(02 §4.9 の <c>history</c>)。大会の順位表は『学校 ID・合計タイム・繰り上げ(0/1)』の組を順位順に、記録は大会ごと(区間の添字順。なければ null)。</summary>
+        /// <summary>大会の順位表 1 件の JSON。順位表は大会が終わったあとは変わらない(追記だけ)ので、作った JSON を使い回す(100 年度で 300 件。取り出しの時間の約 3 割。使う側は読むだけ)。</summary>
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<RaceEntry, JsonObject> EntryJson = new System.Runtime.CompilerServices.ConditionalWeakTable<RaceEntry, JsonObject>();
+
+        private static JsonObject BuildEntry(RaceEntry e)
+        {
+            var ro = new JsonObject();
+            ro["year"] = N(e.Year);
+            ro["kind"] = N((int)e.Kind);
+            var rows = new JsonArray();
+            foreach (RaceRow r in e.Rows) rows.Add(new JsonArray(new JsonValue[] { N(r.SchoolId), N(r.TotalDs), N(r.Kuriage ? 1 : 0) }));
+            ro["rows"] = rows;
+            return ro;
+        }
+
         internal static JsonObject CaptureHistory(RaceHistory h)
         {
             var o = new JsonObject();
             var races = new JsonArray();
-            foreach (RaceEntry e in h.Races)
-            {
-                var ro = new JsonObject();
-                ro["year"] = N(e.Year);
-                ro["kind"] = N((int)e.Kind);
-                var rows = new JsonArray();
-                foreach (RaceRow r in e.Rows) rows.Add(new JsonArray(new JsonValue[] { N(r.SchoolId), N(r.TotalDs), N(r.Kuriage ? 1 : 0) }));
-                ro["rows"] = rows;
-                races.Add(ro);
-            }
+            foreach (RaceEntry e in h.Races) races.Add(EntryJson.GetValue(e, BuildEntry));
             o["race_records"] = races;
             var course = new JsonArray();
             for (int k = 0; k < 3; k++)
