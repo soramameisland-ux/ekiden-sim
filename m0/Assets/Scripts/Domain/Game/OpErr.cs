@@ -53,6 +53,7 @@ namespace Ekiden.Domain.Game
         public static readonly ErrDef FacilityCap = Def("err.facility.cap", "n");
         public static readonly ErrDef FacilityFunds = Def("err.facility.funds", "n");
         public static readonly ErrDef FacilityRank = Def("err.facility.rank", "n");
+        public static readonly ErrDef SettingInvalid = Def("err.setting.invalid", "key");
         public static readonly ErrDef OrderWindow = Def("err.order.window");
         public static readonly ErrDef OrderNeedEntry = Def("err.order.need_entry");
         public static readonly ErrDef OrderCount = Def("err.order.count", "n");

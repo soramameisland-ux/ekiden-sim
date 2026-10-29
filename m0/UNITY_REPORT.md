@@ -144,4 +144,4 @@ EditMode 試験(`Assets/Tests/EditMode`・asmdef `Ekiden.Unity.Tests`。`-runTes
 
 1. **L-71 は直した**(09 D-13)。`Domain/Numerics/ExactDouble.cs`(整数部・小数部を整数で読み `m / 10^k`)を、JSON の数の読み取り・条件式の数・`Fmt.ParseTime` に使う。`double.Parse` の直接の呼び出しは試験(`ExactDoubleTests` のソース走査)で禁止。.NET では `dotnet test` 736 件・再現性の目印・T1・T3 すべて不変/合格。**Unity で確かめること**: ゲート B(メニュー Ekiden → Verify)を Editor と IL2CPP で再実行して T3 が全部一致すること、EditMode の `ExactNumberTests`(20 万個)が通ること。
 2. UI Toolkit のまま進める(U-17 は、モバイル実機の測定のあとで最終決定)。
-3. 観戦モード・おまかせなどの設定は、命令として Domain に足す(別の commit)。
+3. 観戦モード・おまかせなどの設定は、命令として Domain に足した(`GameSession.Settings.cs`: `SetSpectateMode` `SetPlanAuto` `SetEventAuto` `SetScoutAuto` `SetAutoSafety`。08 §13.6)。画面の 2 か所(`Screens.Home.cs` の月間計画のおまかせ・`Dialogs.cs` のポーズの観戦モード)は命令を呼ぶように直した。**Unity でコンパイルが通ることを確かめる**。

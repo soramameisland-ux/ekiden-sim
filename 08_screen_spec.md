@@ -985,6 +985,7 @@ T = 8(目標)、S = 年間ポイント − 2×T(視察する人数。ランク1�
 | SC-24 当日 | `OpenRaceDay(kind)` → `RaceDay`: `View(区間)`(適性・余裕の目安・期待時間)/ `Swap(区間, 控え)` / `ResetSwaps` / `SetInstruction` / `ApplyGauge`(目安どおり)/ `UseRecommended`(おまかせ)/ `Preview()` | 04 §5.3・§9.1。初期値はおまかせ。確定の前なら何度でも |
 | SC-25 レース進行 | `RaceDay.Start` → 区間ごとに `SetInstruction` → `NextIncident` → `UseGeki` → `Advance`(中継所の順位表)/ `Complete` | 04 §9.1・§9.2。通過した区間は変えられない |
 | 予選会の登録 | `SetQualifierEntries(12 名)` | 04 §3.2。出さなければおまかせ |
+| SC-04 設定・SC-40 ポーズ | `SetSpectateMode(mode)`(Full / Digest / ResultOnly)/ `SetPlanAuto(on)`(オンにしたら今月の推奨プランに引き直す)/ `SetEventAuto(on)` / `SetScoutAuto(on)` / `SetAutoSafety(75 / 85 / 0)` | R-13。画面は `State.Settings` を直接書かない。範囲外は `err.setting.invalid` で拒否。どれも結果の決定性には影響しない(止まる場所と自動で行うことだけを変える)。文字の倍率・色覚などの端末の設定(`DeviceSettings`)は端末側で、この命令の対象外 |
 | SC-32 強化 | `UpgradeFacility(key)` / `UpgradeRecommended()` | R-11。年度末の精算(`SettleYear`)のあと、入学の割り当て(`TurnoverYear`)の前 |
 | SC-27〜SC-30 スカウト | `ScoutObserve` / `ScoutTalk` / `ScoutInvite`(`ViewCandidate` で見え方)/ `AutoScoutObserve` / `AutoScoutRecruit` | R-08・05 §7。時期・ポイント・順序・競合度・情報の段階 |
 

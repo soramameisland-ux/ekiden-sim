@@ -131,7 +131,7 @@ namespace Ekiden.Unity.UI
             if (v.CampMonth) detail.Text(C.T("scr.plan.camp"), "warn");
             detail.Text(C.T("scr.home.guidance", "n", v.GuidanceLeft.ToString()), "sub");
             if (v.OutlookRace.HasValue) detail.Text(C.T("scr.plan.outlook", "race", C.RaceName(v.OutlookRace.Value), "weeks", v.OutlookWeeks.ToString()), "sub");
-            detail.Button(C.T(v.PlanAuto ? "scr.plan.to_manual" : "scr.plan.to_auto"), () => { S.State.Settings.PlanAuto = !v.PlanAuto; if (S.State.Settings.PlanAuto) C.Check(S.ApplyRecommendedPlan()); R.Rebuild(); });
+            detail.Button(C.T(v.PlanAuto ? "scr.plan.to_manual" : "scr.plan.to_auto"), () => { C.Check(S.SetPlanAuto(!v.PlanAuto)); R.Rebuild(); });
             p.Actions.Button(Flow ? C.T("ui.home") : C.T("ui.back"), Flow ? (System.Action)R.Home : R.Back);
             p.Actions.Button(C.T("scr.plan.apply_recommended"), () => { if (C.Check(S.ApplyRecommendedPlan())) R.Rebuild(); });
             if (Flow) p.Primary(C.T("ui.decide_continue"), R.Continue);

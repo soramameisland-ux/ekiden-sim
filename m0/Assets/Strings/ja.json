@@ -192,6 +192,7 @@
   "err.scout.points": "スカウトのポイントが足りない",
   "err.scout.talk_season": "声かけできるのは 12〜2 月です",
   "err.scout.talked_already": "声かけ済みです",
+  "err.setting.invalid": "その設定は選べない({key})",
   "err.ticket.active_max": "在籍する招聘選手が上限({n} 名)です",
   "err.ticket.month": "宣言できるのは 6〜2 月です",
   "err.ticket.none": "特別招聘券がありません",
