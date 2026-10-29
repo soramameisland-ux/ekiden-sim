@@ -22,7 +22,7 @@ namespace Ekiden.SimCli
             bool real = Common.Flag(args, "real");
             var starts = which == "all" ? new[] { Difficulty.Elite, Difficulty.Mid, Difficulty.Low } : new[] { (Difficulty)Enum.Parse(typeof(Difficulty), which) };
             int bad = 0;
-            if (real) return RunReal(starts, n, years, Common.Flag(args, "skilled"));
+            if (real) return RunReal(starts, n, years, Common.Flag(args, "skilled"), Common.Flag(args, "scout-button"), Common.Flag(args, "flow-only"));
             foreach (Difficulty d in starts)
             {
                 Acceptance.Band b = Acceptance.Bands[d];
@@ -58,7 +58,7 @@ namespace Ekiden.SimCli
         }
 
         /// <summary>実体の選手を持つ自校(GameSession)の指標を、抽象の自校の帯(参照)と並べて出す。+3 ありの世界で、抽象の自校(同じシード)も回して比べる。</summary>
-        private static int RunReal(Difficulty[] starts, int n, int years, bool skilled = false)
+        private static int RunReal(Difficulty[] starts, int n, int years, bool skilled = false, bool scoutButton = false, bool flowOnly = false)
         {
             if (skilled) return RunSkilled(starts, n, years);
             int bad = 0;
@@ -67,7 +67,7 @@ namespace Ekiden.SimCli
                 Acceptance.Band b = Acceptance.Bands[d];
                 var sw = Stopwatch.StartNew();
                 var real = new SeedResult[n];
-                Parallel.For(0, n, i => real[i] = Acceptance.RunSeedReal(Common.WorldSeed(i + 1), years, d, Acceptance.FirstYearForRates, null));
+                Parallel.For(0, n, i => real[i] = Acceptance.RunSeedReal(Common.WorldSeed(i + 1), years, d, Acceptance.FirstYearForRates, null, false, scoutButton, flowOnly));
                 double tReal = sw.Elapsed.TotalSeconds;
                 SeedResult r = Acceptance.Mean(real);
                 sw.Restart();

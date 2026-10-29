@@ -52,4 +52,4 @@
 - **保存の境目**: 週の最初の処理(`BeginWeek`)は前の週の終わりに走る。復元後は派生値の再計算(`Refresh`)が要る。
 - **生成物は手で編集しない**: ゴールデン(`tests/*/Golden/*.json.gz`)・`EventCatalog.g.cs`・`NameTable.g.cs`・`Pace50Table.g.cs` は `verify/gen_*.py` が作る。
 - **仕様書の定数表はテストが読む**(`DocSyncTests`)。表の値を変えたらコードを合わせる。表を足したら `verify/lint_tables.py`(列数の検査)。
-- **文字列**: `Assets/Strings/ja.json` が正(キーは約 660)。語は文字列テーブルのキーで返し、Domain に表示用の文を持たない(例外: `OpResult` の理由。L-63 ③)。
+- **文字列**: `Assets/Strings/ja.json` が正(キーは約 740)。語は文字列テーブルのキーで返し、Domain に表示用の文を持たない(例外: `OpResult` の理由。L-63 ③)。

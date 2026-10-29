@@ -45,12 +45,35 @@ namespace Ekiden.Domain.World
         }
 
         /// <summary>実体の選手を持つ自校(<see cref="Game.GameSession"/>。『おまかせ』)で years 年度回す。指標の出し方は <see cref="RunSeed"/> と同じ。</summary>
-        public static SeedResult RunSeedReal(ulong masterSeed, int years, Difficulty start, int from = FirstYearForRates, double? eliteBonus = null, bool skilled = false)
+        /// <param name="scoutButton">進行制御を通し、スカウトを画面の『おまかせスカウト』ボタン(08 R-08。目標 8 人)で行う(L-58)。<paramref name="skilled"/> が false のとき、ほかはおまかせ。
+        /// 比べるときの基準は <paramref name="flowOnly"/>(進行制御を通すが、スカウトは年度末の検算済みの方針 = <c>scout_auto</c>)。</param>
+        public static SeedResult RunSeedReal(ulong masterSeed, int years, Difficulty start, int from = FirstYearForRates, double? eliteBonus = null, bool skilled = false, bool scoutButton = false, bool flowOnly = false)
         {
             Game.GameSession gs = Game.GameSession.New(masterSeed, start, eliteBonus);
-            if (!skilled) gs.PlayYears(years);
+            if (scoutButton || flowOnly) PlayScoutPolicy(gs, years, scoutButton);
+            else if (!skilled) gs.PlayYears(years);
             else PlaySkilled(gs, years);
             return Summarize(gs.Stats, years, from);
+        }
+
+        /// <summary>進行制御を通し、月末レポートの停止(おまかせの計画では月の初めに止まらないので、毎月必ず止まるここ)で『おまかせスカウト』のボタンを押す(視察は 6〜11 月・勧誘は 12〜2 月。毎月 1 回)。<paramref name="button"/> が false なら、年度末の <c>scout_auto</c> のまま(基準)。</summary>
+        public static void PlayScoutPolicy(Game.GameSession gs, int years, bool button)
+        {
+            var flow = new Game.GameFlow(gs, autoUpgrade: true, autoTickets: true);
+            gs.State.Settings.EventAuto = true;
+            gs.State.Settings.ScoutAuto = !button;
+            int done = 0;
+            while (done < years)
+            {
+                Game.Stop s = flow.Advance();
+                if (s.Kind == Game.StopKind.MonthReport && button)
+                {
+                    int m = gs.YearWeek / 4;
+                    if (m >= 2 && m <= 7) gs.AutoScoutObserve();
+                    else if (m >= 8 && m <= 10) gs.AutoScoutRecruit();
+                }
+                else if (s.Kind == Game.StopKind.YearEndTurnover) done++;
+            }
         }
 
         /// <summary>検算用の上級者の方針(04 §14.4): 進行制御(<see cref="Game.GameFlow"/>)を通して、当日変更は期待時間が最小の控えと、指示は期待時間が最小の指示にする。

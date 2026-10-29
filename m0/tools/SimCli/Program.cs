@@ -35,7 +35,7 @@ namespace Ekiden.SimCli
                     Console.WriteLine("  world [シード数 20] [年度数 80]   自校なしの世界の指標(05 §14.1)を出す");
                     Console.WriteLine("  play [シード 1] [Elite|Mid|Low|Club] [年度数 10]   実体の選手を持つ自校(『おまかせ』)を 1 回プレイして年度ごとの経過を出す");
                     Console.WriteLine("  flow [シード 1] [Elite|Mid|Low|Club] [年度数 2] [--events]   進行制御(08 §6)の停止の並びを出す(何も操作しない流れ = おまかせの確認つき)");
-                    Console.WriteLine("  accept [Elite|Mid|Low|all] [シード数 120] [年度数 45] [--no-equiv]   統計の受け入れ(09 §16.3。T4。強豪県の +3 あり/なしの 2 本立て。L-44)");
+                    Console.WriteLine("  accept [Elite|Mid|Low|all] [シード数 120] [年度数 45] [--no-equiv] [--real [--skilled | --scout-button | --flow-only]]   統計の受け入れ(09 §16.3。T4。強豪県の +3 あり/なしの 2 本立て。L-44)。--real = 実体の自校(T4c)。--skilled = 上級の方針 / --scout-button = スカウトを画面のボタン(R-08)で(L-58)/ --flow-only = その基準(進行制御を通すだけ)");
                     Console.WriteLine("  stability [シード数 2] [年度数 300] [Elite|Mid|Low]   長期の安定(09 §17.3。例外・不変条件の違反なし、戦力の頭打ち)");
                     Console.WriteLine("  determinism [シード数 4] [年度数 45]   T3 決定性(同じ入力で 2 回・保存 → 読み込み → 続行・並列)のバイト一致");
                     Console.WriteLine("  bench [--quick]   性能の予算(09 §14.2。T5)");

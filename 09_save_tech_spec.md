@@ -789,7 +789,7 @@ EntitlementGuarded(provider, cache, now, hw, run_total):
 
 **実装(M1 準備)**
 - 部品: `Platform/Abstractions/ILocalization.cs`(`Get(key, 名前, 値, …)`・`Has`)・`TableLocalization.cs`(差し込み `{名前}`・`{{ }}`・欠落は開発 `⟦キー⟧` / `⟦名前⟧`、製品 `？`・キーの欠落は診断ログに 1 回)・`Persistence/Strings/StringTable.cs`(厳格な読み書き。キーの重複・空のキー・文字列でない値・末尾の余計な文字は不正。書くときはキーの昇順)・`Verification/StringsLint.cs`(キーの書式・本文が空でない・差し込みの書式・呼び出しの引数との一致 `CheckCalls`・文字の集合 `Charset`・フォントにない文字 `MissingFrom`)。
-- 表: `Assets/Strings/ja.json`(544 件。イベントの題名 52 件・選択肢 80 件・校名 36 件・高校名 216 件ほか)。`SimCli strings seed` が、ID から決まるキー(`Verification/StringsSeed.cs`。イベント・特殊能力・シナリオは Domain の名称から、練習・施設・能力・大会などは仮の名称)のうち**表にないものだけ**を足す(既にある本文は変えない)。以後は **ja.json が正**で、本文の編集は ja.json に直接行う。
+- 表: `Assets/Strings/ja.json`(738 件。イベントの題名 52 件・選択肢 80 件・校名 36 件・高校名 216 件ほか)。`SimCli strings seed` が、ID から決まるキー(`Verification/StringsSeed.cs`。イベント・特殊能力・シナリオは Domain の名称から、練習・施設・能力・大会などは仮の名称)のうち**表にないものだけ**を足す(既にある本文は変えない)。以後は **ja.json が正**で、本文の編集は ja.json に直接行う。
 - 検査: `SimCli strings lint` = 書式 / `strings chars [ja.json] [フォントの文字のファイル]` = 使われている文字(表の本文 + 名前の表 + 整形が出す文字)とフォントにない文字(L-31)。`StringsCoverageTests` が、**ID から決まるキーがすべて表にあること**・書式の指摘が 0 であることを CI で確かめる(新しいイベント・特殊能力・練習・施設などの ID を足すと、表に足すまで落ちる)。
 - 表に入れないもの: `EventDef.Hint`(設計メモ。覚醒イベントでは特殊能力の等級)。呼び出し側(画面)の `CheckCalls` の登録は、画面ができてから(M1)。
 
