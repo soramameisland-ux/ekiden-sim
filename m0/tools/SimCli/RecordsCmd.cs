@@ -31,6 +31,11 @@ namespace Ekiden.SimCli
             public bool[][] ByPlayer = { new bool[6], new bool[8], new bool[10] };
             public int[][] Final = { new int[6], new int[8], new int[10] };
             public int[][] Burn = { new int[6], new int[8], new int[10] };
+            // 予熱の記録を初期値にしたとき(--own): 年度ごとの更新の回数・初回の年度・自校の走者による更新の回数・期末の保持者が自校の走者か
+            public int[][] Changes = { new int[6], new int[8], new int[10] };
+            public int[][] FirstChange = { new int[6], new int[8], new int[10] };
+            public int[][] PlayerChanges = { new int[6], new int[8], new int[10] };
+            public bool[][] HeldByPlayer = { new bool[6], new bool[8], new bool[10] };
         }
 
         public static int Run(string[] args)
@@ -41,6 +46,7 @@ namespace Ekiden.SimCli
             int years = Common.IntArg(pos, 2, 45);
             var res = new SeedRec[n];
             Parallel.For(0, n, i => res[i] = One(mode, Common.WorldSeed(i + 1), years));
+            if (Common.Flag(args, "own")) return Own(res, mode, n, years);
             Console.WriteLine("== 区間記録の検算  開始 = " + mode + "  シード " + n + "  " + years + " 年度(予熱 15 年度の後から)");
             Console.WriteLine("   実在の記録(秒)より、ゲーム内の最速が速くなった割合。『他校』= 記録を出したのが他校の走者(RunnerId 0)。単位は秒。");
             string[] names = { "第一戦型", "第二戦型", "第三戦型" };
@@ -65,6 +71,32 @@ namespace Ekiden.SimCli
                         + "  " + fin[n / 2].ToString("0.0").PadLeft(10) + " (" + Gap(fin[n / 2], real) + ")"
                         + "  " + Pct(broke, n).PadLeft(6) + "  " + Pct(atStart, n).PadLeft(6) + "  " + (broke == 0 ? "-" : Pct(byOther, broke)).PadLeft(6) + "  " + (broke == 0 ? "-" : firsts[firsts.Length / 2].ToString()).PadLeft(4));
                 }
+            }
+            return 0;
+        }
+
+        /// <summary>予熱で自然にできた記録を初期値にする現行の方式で、記録がどれだけ長く持つか・誰が更新するか(--own)。</summary>
+        private static int Own(SeedRec[] res, string mode, int n, int years)
+        {
+            Console.WriteLine("== 現行方式(予熱 15 年度の記録が初期値)  開始 = " + mode + "  シード " + n + "  " + years + " 年度");
+            string[] names = { "第一戦型", "第二戦型", "第三戦型" };
+            int[] cnt = { 6, 8, 10 };
+            for (int k = 0; k < 3; k++)
+            {
+                double ch = 0, pch = 0; int never = 0, held = 0, total = 0, byYear10 = 0, byYear20 = 0;
+                var firsts = new List<int>();
+                foreach (SeedRec r in res)
+                    for (int si = 0; si < cnt[k]; si++)
+                    {
+                        total++; ch += r.Changes[k][si]; pch += r.PlayerChanges[k][si];
+                        if (r.Changes[k][si] == 0) never++; else { firsts.Add(r.FirstChange[k][si]); if (r.FirstChange[k][si] <= 10) byYear10++; if (r.FirstChange[k][si] <= 20) byYear20++; }
+                        if (r.HeldByPlayer[k][si]) held++;
+                    }
+                firsts.Sort();
+                Console.WriteLine("-- " + names[k] + "  1 区間あたりの更新回数 " + (ch / total).ToString("0.00") + "(うち自校の走者 " + (pch / total).ToString("0.00") + ")"
+                    + "  初回の更新の中央値 " + (firsts.Count == 0 ? "-" : firsts[firsts.Count / 2].ToString()) + " 年度"
+                    + "  10 年度以内に抜かれた " + Pct(byYear10, total) + "  20 年度以内 " + Pct(byYear20, total) + "  期間内に一度も抜かれない " + Pct(never, total)
+                    + "  期末の保持者が自校の走者 " + Pct(held, total));
             }
             return 0;
         }
@@ -101,6 +133,13 @@ namespace Ekiden.SimCli
                 {
                     if (c[si] == null) continue;
                     if (burn) r.Burn[k][si] = c[si].TimeDs;
+                    else if (c[si].TimeDs < r.Final[k][si])
+                    {
+                        r.Changes[k][si]++;
+                        if (r.FirstChange[k][si] == 0) r.FirstChange[k][si] = year;
+                        if (c[si].RunnerId > 0) r.PlayerChanges[k][si]++;
+                    }
+                    r.HeldByPlayer[k][si] = c[si].RunnerId > 0;
                     r.Final[k][si] = c[si].TimeDs;
                     if (r.First[k][si] == int.MaxValue && c[si].TimeDs < Real[k][si]) { r.First[k][si] = year; r.ByPlayer[k][si] = c[si].RunnerId > 0; }
                 }
