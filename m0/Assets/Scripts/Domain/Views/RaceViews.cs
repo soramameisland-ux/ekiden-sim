@@ -176,6 +176,32 @@ namespace Ekiden.Domain.Views
         public bool Record;                          // 区間記録を更新した(この区間の走者)
     }
 
+    /// <summary>予選会の自校の選手 1 人(SC-26 の予選会)。上位 10 名のタイムが合計に数えられる。</summary>
+    public sealed class QualifierRunnerView
+    {
+        public int Rank;                             // 自校の中の順位(タイムの小さい順。1〜12)
+        public int RunnerId;
+        public string FamilyName = "", GivenName = "";
+        public int Ds;                               // 20km のタイム
+        public bool Counted;                         // 合計に数えられる(上位 10 名)
+    }
+
+    /// <summary>予選会の結果(SC-26 の予選会。04 §3.2)。シード外の年度だけ。保存しない(予選会の直後の停止で使う)。</summary>
+    public sealed class QualifierResultView
+    {
+        public bool Held;                            // 今年度の予選会の結果がある
+        public bool OwnEntered;                      // 自校が出た(シード外)
+        public int Teams;                            // 出場校の数
+        public int PassCount;                        // 通過校の数(上位 10 校)
+        public int OwnRank;                          // 自校の順位(出なければ 0)
+        public bool Passed;                          // 自校が通過した
+        public int OwnTotalDs;                       // 自校の合計(上位 10 名)
+        public int LineDs;                           // 通過ラインの合計(10 位)
+        public int MarginDs;                         // 通過: 次点(11 位)の合計 − 自校(≥ 0 = 余裕)/ 落選: 自校 − 通過ライン(> 0 = 足りなかった)
+        public List<ResultRowView> Overall = new List<ResultRowView>();      // 順位表(自校の位置へスクロールできる)
+        public List<QualifierRunnerView> Own = new List<QualifierRunnerView>();   // 自校の 12 名(タイムの小さい順)
+    }
+
     /// <summary>大会の結果(SC-26)。総合・区間賞・自校の区間ごと・評価ポイント。大会の見どころは `Highlights`、記録の更新は `Records`。</summary>
     public sealed class RaceResultView
     {

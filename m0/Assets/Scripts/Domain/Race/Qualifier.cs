@@ -17,6 +17,7 @@ namespace Ekiden.Domain.Race
         public int Total;       // 上位 10 名の合計(ds)
         public int Id;
         public int[] Times;     // 個人(ds。小さい順)
+        public int[] RunnerIds; // Times と同じ並びの選手 ID(自校の選手。他校の抽象の選手・補充要員は 0)
     }
 
     public static class Qualifier
@@ -29,6 +30,7 @@ namespace Ekiden.Domain.Race
             foreach (QualifierTeam t in teams)
             {
                 var times = new List<int>();
+                var order = new List<int>();                  // 走った順の番号(同じタイムは番号の小さい方を先に)
                 for (int ri = 0; ri < t.Runners.Length; ri++)
                 {
                     RaceRunner r = t.Runners[ri];
@@ -38,11 +40,15 @@ namespace Ekiden.Domain.Race
                     double bt = RaceMath.BaseTime(d, 1.0, p);
                     double tt = bt * (1.0 + RaceMath.FormAdj(r) + RaceMath.EnvAdj(env, r) + dr.Noise + dr.Boost + dr.Stall) + bt * dr.Brake;
                     times.Add(Rounding.HalfUp(tt * 10.0));
+                    order.Add(ri);
                 }
-                times.Sort();
+                order.Sort((a, b) => times[a] != times[b] ? times[a].CompareTo(times[b]) : a.CompareTo(b));
+                var sorted = new int[times.Count];
+                var ids = new int[times.Count];
+                for (int i = 0; i < sorted.Length; i++) { sorted[i] = times[order[i]]; ids[i] = t.Runners[order[i]].RunnerId; }
                 int total = 0;
-                for (int i = 0; i < Math.Min(RaceConstants.QualCount, times.Count); i++) total += times[i];
-                outList.Add(new QualifierResult { Total = total, Id = t.Id, Times = times.ToArray() });
+                for (int i = 0; i < Math.Min(RaceConstants.QualCount, sorted.Length); i++) total += sorted[i];
+                outList.Add(new QualifierResult { Total = total, Id = t.Id, Times = sorted, RunnerIds = ids });
             }
             RaceSimulator.StableSort(outList, (a, b) => a.Total != b.Total ? a.Total.CompareTo(b.Total) : a.Id.CompareTo(b.Id));
             return outList;

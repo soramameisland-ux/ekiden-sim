@@ -392,6 +392,37 @@ namespace Ekiden.Domain.Game
             return list.OrderByDescending(c => c.Fit).ThenBy(c => c.Row.Id).ToList();
         }
 
+        // ------------------------------------------------------------ 予選会の結果(SC-26 の予選会)
+        /// <summary>今年度の予選会の結果。まだ行われていない・結果が残っていない(読み込み直したあと)ときは <c>Held = false</c>。</summary>
+        public QualifierResultView QualifierResult()
+        {
+            var v = new QualifierResultView { PassCount = RaceConstants.QualPass };
+            YearState ys = _ys;
+            if (ys == null || !ys.QualifierDone || ys.QualifierResults == null || ys.QualifierResults.Count == 0) return v;
+            List<QualifierResult> res = ys.QualifierResults;
+            v.Held = true;
+            v.Teams = res.Count;
+            int first = res[0].Total;
+            int line = res[Math.Min(RaceConstants.QualPass, res.Count) - 1].Total;
+            v.LineDs = line;
+            for (int i = 0; i < res.Count; i++)
+                v.Overall.Add(new ResultRowView { Rank = i + 1, SchoolId = res[i].Id, SchoolNameKey = "school." + res[i].Id + ".name", TotalDs = res[i].Total, GapDs = res[i].Total - first, IsOwn = res[i].Id == School.Id });
+            int mine = res.FindIndex(r => r.Id == School.Id);
+            if (mine < 0) return v;
+            QualifierResult own = res[mine];
+            v.OwnEntered = true;
+            v.OwnRank = mine + 1;
+            v.OwnTotalDs = own.Total;
+            v.Passed = mine < RaceConstants.QualPass;
+            v.MarginDs = v.Passed ? (res.Count > RaceConstants.QualPass ? res[RaceConstants.QualPass].Total - own.Total : 0) : own.Total - line;
+            for (int i = 0; i < own.Times.Length; i++)
+            {
+                Runner r = own.RunnerIds != null && own.RunnerIds[i] != 0 ? State.FindRunner(own.RunnerIds[i]) : null;
+                v.Own.Add(new QualifierRunnerView { Rank = i + 1, RunnerId = own.RunnerIds != null ? own.RunnerIds[i] : 0, FamilyName = r != null ? r.FamilyName : "", GivenName = r != null ? r.GivenName : "", Ds = own.Times[i], Counted = i < RaceConstants.QualCount });
+            }
+            return v;
+        }
+
         // ------------------------------------------------------------ 大会の結果(SC-26)
         /// <summary>走った大会の結果。<paramref name="own"/> は <see cref="PlayWeekRaces"/> が返した自校の結果(予想順位に使う。なければ null)。</summary>
         public RaceResultView RaceResult(RaceOutcome race, RaceInfo? own = null)
