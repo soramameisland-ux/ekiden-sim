@@ -66,6 +66,11 @@
 | `Enrollment()` → `EnrollmentView` | `Missed`(惜しかった候補。名前・★・出身 + 理由 `miss.*` + 入った学校 + 競り負けの差) | SC-14 |
 | `Graduation()` / `Obs()` → `GraduateRowView` | `CountryName`(留学生の出身国) | SC-13・33 |
 | `History()` → `HistoryView` | `Champions`(歴代の優勝校。予熱の年度 = ゲーム開始前の歴史を含む `PreGame`)・`CourseRecords`・`TeamRecords` | SC-34 |
+| `Home()` → `HomeView` | `UnreadNotifications`(ベルの未読数) | SC-08 |
+| `Notifications()` → `NotificationsView` | 通知(新しい順・最大 30 件・未読)。`MarkNotificationRead` / `MarkAllNotificationsRead` / `Notify`(App 層から) | SC-38 |
+| `EventDialog(f)` → `ChoiceView.Effects` の `EffectView` | OB の役割の `Mod` / `ModValue`(役割が作る補正)。要約の文は App 層の `EffectText.Summary`(R-15。`efx.*`)。選択肢の本文に数字は書かない(L-63 ①) | SC-36 |
+| `QualifierResult()` → `QualifierResultView` | 予選会の結果(順位表・通過ライン・自校の差・自校の 12 名のタイム)。保存しない | SC-26 |
+| `Entry(kind)` / `Order(kind)` の判定 | 登録は重傷だけ不可・配置は中傷以上が不可(軽傷は出られる。`TeamRacing.CanRegister` / `CanPlace`。L-59)。`FormOutlook` は大会の週にまだ故障中なら調子 −2 で確定 | SC-21・22 |
 
 見どころ・記録・調子の見込みの文は `hl.*` / `miss.*` のキーに `{school}` `{sec}` などを当てはめる(文字列表)。
 
