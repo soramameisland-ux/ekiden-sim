@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Ekiden.Domain.Game;
 using Ekiden.Domain.Race;
 using Ekiden.Persistence.Json;
@@ -151,6 +152,9 @@ namespace Ekiden.Persistence.Snapshot
             return SuspendSnapshot.BuildPayload(Body, flow.SuspendRace, midWeek: true);
         }
 
+        /// <summary>直近の <see cref="Resume"/> で直した項目(診断ログ用)。</summary>
+        public readonly List<string> LastRepairs = new List<string>();
+
         /// <summary>中断セーブのペイロードから、復元した流れを作る(最初の『続ける』から、中断した場所へ戻る)。壊れている・合わないときは null(スロットの先頭を使う)。</summary>
         public GameFlow Resume(JsonValue payload, bool autoUpgrade = false, bool autoTickets = false)
         {
@@ -159,9 +163,14 @@ namespace Ekiden.Persistence.Snapshot
             bool midWeek;
             if (!SuspendSnapshot.TryRead(payload, out body, out race, out midWeek)) return null;
             GameFlow flow;
+            LastRepairs.Clear();
             try
             {
-                flow = new GameFlow(GameSnapshot.Restore(body), autoUpgrade, autoTickets);
+                LoadOutcome lo = GameLoader.Load(body);                      // 通常の読み込みと同じ検証・修復(09 §7)
+                if (lo.Session == null) return null;
+                body = lo.Body;
+                LastRepairs.AddRange(lo.Repairs);
+                flow = new GameFlow(lo.Session, autoUpgrade, autoTickets);
             }
             catch (Exception e) when (e is InvalidCastException || e is FormatException || e is JsonException || e is OverflowException || e is InvalidOperationException)
             {

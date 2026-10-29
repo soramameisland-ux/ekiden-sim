@@ -16,6 +16,9 @@ namespace Ekiden.Persistence.Validation
     public static class SaveValidator
     {
         public static readonly string[] FatalKeys = { "schema_version", "clock", "player_team", "runners", "schools", "scenario", "rng" };
+
+        /// <summary>実際のセーブ(<c>GameSnapshot</c>)の自校の半分(<c>team</c>)に必要な項目。他校(<c>schools</c> <c>rival_runners</c>)は世界の半分にあり、その検査は <c>WorldInvariants</c> が受け持つ。</summary>
+        public static readonly string[] FatalKeysTeam = { "schema_version", "clock", "player_team", "runners", "scenario", "rng" };
         private const string StyleForm = "SBL", StyleRun = "PFS", StyleFlow = "CEL";
         private static readonly string[] GiftsOk = { "Climber", "Descender", "Ace" };
 
@@ -67,30 +70,46 @@ namespace Ekiden.Persistence.Validation
                 long g = L(r["grade"]);
                 if (!(1 <= g && g <= 4)) why.Add("I-03 " + k);
             }
-            var seen = new HashSet<long>();
-            foreach (JsonValue scv in (JsonArray)s["schools"])
+            if (s.ContainsKey("schools"))                                  // 自校の半分だけのとき(ValidateAndRepairTeam)は、他校の検査はしない
             {
-                var sc = (JsonObject)scv;
-                var roster = (JsonArray)sc["roster"];
-                foreach (JsonValue rid in roster)
+                var seen = new HashSet<long>();
+                foreach (JsonValue scv in (JsonArray)s["schools"])
                 {
-                    if (!seen.Add(L(rid))) why.Add("I-06 " + L(rid));
+                    var sc = (JsonObject)scv;
+                    var roster = (JsonArray)sc["roster"];
+                    foreach (JsonValue rid in roster)
+                    {
+                        if (!seen.Add(L(rid))) why.Add("I-06 " + L(rid));
+                    }
+                    bool isPlayer = sc.ContainsKey("is_player") && sc["is_player"] is JsonBool && ((JsonBool)sc["is_player"]).Value;
+                    if (roster.Count > (isPlayer ? 60 : 40)) why.Add("I-07/I-13 roster " + L(sc["id"]));
                 }
-                bool isPlayer = sc.ContainsKey("is_player") && sc["is_player"] is JsonBool && ((JsonBool)sc["is_player"]).Value;
-                if (roster.Count > (isPlayer ? 60 : 40)) why.Add("I-07/I-13 roster " + L(sc["id"]));
             }
-            var rivalIds = ((JsonArray)s["rival_runners"]).Items.Select(x => L(((JsonObject)x)["id"])).ToList();
-            if (new HashSet<long>(rivalIds).Count != rivalIds.Count || rivalIds.Any(ids.Contains)) why.Add("I-11 dup");
+            if (s.ContainsKey("rival_runners"))
+            {
+                var rivalIds = ((JsonArray)s["rival_runners"]).Items.Select(x => L(((JsonObject)x)["id"])).ToList();
+                if (new HashSet<long>(rivalIds).Count != rivalIds.Count || rivalIds.Any(ids.Contains)) why.Add("I-11 dup");
+            }
+            else if (!s.ContainsKey("schools"))
+            {
+                // 自校の半分のみ: 在籍の上限(I-07)は runners の数で見る
+                if (runners.Count > 60) why.Add("I-07 roster player");
+            }
             return why;
         }
 
         /// <summary>検証と修復。入力は変えない(複製に直す)。致命なら Fatal に理由。</summary>
-        public static ValidationResult ValidateAndRepair(JsonValue input)
+        public static ValidationResult ValidateAndRepair(JsonValue input) { return Run(input, FatalKeys); }
+
+        /// <summary>自校の半分(<c>GameSnapshot</c> の <c>team</c>)の検証と修復。他校の項目(<c>schools</c> <c>rival_runners</c>)がなければ、その検査と修復は省く。</summary>
+        public static ValidationResult ValidateAndRepairTeam(JsonValue team) { return Run(team, FatalKeysTeam); }
+
+        private static ValidationResult Run(JsonValue input, string[] fatalKeys)
         {
             var res = new ValidationResult();
             var root = input as JsonObject;
             if (root == null) { res.Fatal = "fatal:not-dict"; return res; }
-            foreach (string k in FatalKeys)
+            foreach (string k in fatalKeys)
                 if (!root.ContainsKey(k)) { res.Fatal = "fatal:missing-" + k; return res; }
             List<string> why = FatalCheck(root);
             if (why.Count > 0) { res.Fatal = "fatal:" + why[0]; return res; }
@@ -190,17 +209,18 @@ namespace Ekiden.Persistence.Validation
                 }
                 r["bonds"] = new JsonArray(d.Select(kv => (JsonValue)new JsonArray(new JsonValue[] { N(kv.Key), N(kv.Value) })));
             }
-            foreach (JsonValue xv in (JsonArray)s["rival_runners"])
-            {
-                var x = (JsonObject)xv;
-                double p = D(x["prog"]);
-                double pr = Math.Max(0.0, Math.Min(0.95, p));             // I-13: 進捗は 0〜0.95
-                if (pr != p)
+            if (s.ContainsKey("rival_runners"))
+                foreach (JsonValue xv in (JsonArray)s["rival_runners"])
                 {
-                    x["prog"] = new JsonNumber(pr);
-                    fixes.Add("I-13 prog " + L(x["id"]));
+                    var x = (JsonObject)xv;
+                    double p = D(x["prog"]);
+                    double pr = Math.Max(0.0, Math.Min(0.95, p));         // I-13: 進捗は 0〜0.95
+                    if (pr != p)
+                    {
+                        x["prog"] = new JsonNumber(pr);
+                        fixes.Add("I-13 prog " + L(x["id"]));
+                    }
                 }
-            }
             var pt = (JsonObject)s["player_team"];
             if (L(pt["funds"]) < 0)
             {
@@ -292,7 +312,8 @@ namespace Ekiden.Persistence.Validation
             }
             long mx = 0;
             foreach (long id in ids) mx = Math.Max(mx, id);
-            foreach (JsonValue xv in (JsonArray)s["rival_runners"]) mx = Math.Max(mx, L(((JsonObject)xv)["id"]));
+            if (s.ContainsKey("rival_runners"))
+                foreach (JsonValue xv in (JsonArray)s["rival_runners"]) mx = Math.Max(mx, L(((JsonObject)xv)["id"]));
             var counters = (JsonObject)s["counters"];
             if (L(counters["next_runner_id"]) <= mx)
             {

@@ -27,6 +27,7 @@ namespace Ekiden.App
         public GameHost Host;
         public string Error;
         public readonly List<HostNotice> Notices = new List<HostNotice>();
+        public readonly List<string> Repairs = new List<string>();        // 読み込みで直した項目(診断ログ用。利用者には知らせない。09 §7.1)
     }
 
     /// <summary>
@@ -102,10 +103,12 @@ namespace Ekiden.App
             var result = new OpenResult();
             SlotRecovery used = null;
             GameSession session = null;
+            LoadOutcome loaded = null;
             int tried = 0;
             foreach (SlotRecovery rec in store.RecoveryCandidates(slot, confirmManual))
             {
-                session = TryRestore(rec.Payload);
+                loaded = GameLoader.Load(rec.Payload);                      // 検証・修復 → 復元 → 世界の不変条件(09 §7)。失敗なら次の候補へ
+                session = loaded.Session;
                 if (session != null) { used = rec; break; }
                 tried++;
             }
@@ -114,6 +117,7 @@ namespace Ekiden.App
                 result.Error = "load_failed";
                 return result;
             }
+            result.Repairs.AddRange(loaded.Repairs);
             long now = env.Clock.UtcNow();
             if (used.NewestWasBroken || tried > 0 || used.Source != RecoverySource.Auto)
                 result.Notices.Add(new HostNotice { Kind = NoticeKind.RecoveredFromOlder, Detail = used.Source + " counter " + used.Header.SaveCounter, At = now });
@@ -136,6 +140,7 @@ namespace Ekiden.App
                 if (flow != null)
                 {
                     resumed = true;
+                    result.Repairs.AddRange(cp.LastRepairs);
                     play = Math.Max(play, sus.Header.Num("play_seconds", 0));
                 }
                 else
@@ -154,21 +159,6 @@ namespace Ekiden.App
             foreach (HostNotice n in result.Notices) host.Saves.Notices.Add(n);
             result.Host = host;
             return result;
-        }
-
-        /// <summary>保存された状態から <see cref="GameSession"/> を作る。形が合わない・壊れているときは null(保存の層の境目なので、例外の種類は問わない)。</summary>
-        private static GameSession TryRestore(JsonValue payload)
-        {
-            var o = payload as JsonObject;
-            if (o == null) return null;
-            try
-            {
-                return GameSnapshot.Restore(o);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
         }
 
         // ------------------------------------------------------------ 進める

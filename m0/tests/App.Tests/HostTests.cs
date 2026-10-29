@@ -448,6 +448,74 @@ namespace Ekiden.App.Tests
             Assert.IsTrue(o.Notices.Any(n => n.Kind == NoticeKind.RecoveredFromOlder));
         }
 
+        /// <summary>最新の世代の本体を書き換えた(より新しい保存番号で置き換えた)ものを、そのスロットの先頭にする。</summary>
+        private static JsonObject DamageNewest(MemoryFileStore fs, Action<JsonObject> damage)
+        {
+            var store = new SlotStore(fs);
+            SlotLoad head = store.LoadAuto(1);
+            var body = (JsonObject)JsonValue.Parse(head.Payload.ToJson());
+            damage(body);
+            fs.WriteAtomic(SlotStore.AutoPath(1, head.Generation), Eksv.Encode(new HeaderBuilder { Slot = 1, LineageId = Lineage, SaveCounter = head.Header.SaveCounter + 5 }.Build(), body), null);
+            return body;
+        }
+
+        private static JsonObject FirstRunner(JsonObject body)
+        {
+            var runners = (JsonObject)((JsonObject)body["team"])["runners"];
+            return (JsonObject)runners[runners.Keys.First()];
+        }
+
+        [Test]
+        public void Open_WhenTheNewestGenerationFailsTheValidation_FallsBackToTheOlderOne()
+        {
+            var fs = new MemoryFileStore();
+            GameHost a = GameHost.NewGame(Env(fs, new FakeClock()), 1, Seed, Difficulty.Mid);
+            ToStop(a, s => s.Kind == StopKind.MonthReport);
+            DamageNewest(fs, b => FirstRunner(b)["grade"] = new JsonNumber(0L));                  // 学年が範囲外: 直すと選手を作ることになる = 致命(09 §7.1 I-03)
+            OpenResult o = GameHost.Open(Env(fs, new FakeClock()), 1);
+            Assert.IsNotNull(o.Host, "ひとつ前の世代で開く");
+            Assert.IsTrue(o.Notices.Any(n => n.Kind == NoticeKind.RecoveredFromOlder));
+            CollectionAssert.IsEmpty(o.Repairs);
+        }
+
+        [Test]
+        public void Open_RepairsSilently_AndTheNextAutosaveWritesTheRepairedState()
+        {
+            var fs = new MemoryFileStore();
+            GameHost a = GameHost.NewGame(Env(fs, new FakeClock()), 1, Seed, Difficulty.Mid);
+            ToStop(a, s => s.Kind == StopKind.MonthReport);
+            DamageNewest(fs, b => { FirstRunner(b)["fatigue"] = new JsonNumber(150L); FirstRunner(b)["motivation"] = new JsonNumber(9L); });
+            OpenResult o = GameHost.Open(Env(fs, new FakeClock()), 1);
+            Assert.IsNotNull(o.Host);
+            Assert.IsTrue(o.Repairs.Any(r => r.StartsWith("I-05")), string.Join(",", o.Repairs));
+            Assert.IsFalse(o.Notices.Any(n => n.Kind == NoticeKind.RecoveredFromOlder), "直せたので最新の世代を使う。利用者には知らせない(09 §7.1)");
+            Assert.LessOrEqual(o.Host.Session.State.Runners.Max(r => r.Fatigue), 100);
+            ToStop(o.Host, s => s.Kind == StopKind.MonthReport);                                   // 次の自動セーブは修復後の状態
+            OpenResult again = GameHost.Open(Env(fs, new FakeClock()), 1);
+            Assert.IsNotNull(again.Host);
+            CollectionAssert.IsEmpty(again.Repairs, "もう直すものはない");
+        }
+
+        [Test]
+        public void ResumingASuspendedGame_Repairs_AndTheNextSuspendCarriesTheRepairedState()
+        {
+            var fs = new MemoryFileStore();
+            GameHost a = GameHost.NewGame(Env(fs, new FakeClock()), 1, Seed, Difficulty.Mid);
+            ToStop(a, s => s.Kind == StopKind.MonthReport);                                          // 週の途中
+            Assert.IsTrue(a.OnAppPause());
+            var store = new SlotStore(fs);
+            SlotLoad sus = store.ReadSuspend();
+            var payload = (JsonObject)JsonValue.Parse(sus.Payload.ToJson());
+            FirstRunner(payload)["fatigue"] = new JsonNumber(150L);
+            store.WriteSuspend(sus.Header.Header, payload);
+            OpenResult o = GameHost.Open(Env(fs, new FakeClock()), 1);
+            Assert.IsTrue(o.Host.ResumedFromSuspend);
+            Assert.IsTrue(o.Repairs.Any(r => r.StartsWith("I-05")), "中断セーブからの再開でも直す: " + string.Join(",", o.Repairs));
+            Assert.IsTrue(o.Host.OnAppPause());
+            var again = (JsonObject)store.ReadSuspend().Payload;
+            CollectionAssert.IsEmpty(GameLoader.Load(again).Repairs, "もう一度中断しても、書かれるのは修復後の状態");
+        }
+
         [Test]
         public void Open_WhenNothingCanBeRead_FailsWithoutDeletingFiles()
         {

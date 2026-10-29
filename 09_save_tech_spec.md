@@ -448,6 +448,17 @@
 - **必須の項目が欠けている**(`schema_version` `clock` `player_team` `runners` `schools` `scenario` `rng` のどれか)・辞書でない・`rng.algorithm` が未知 ⇒ **致命**。
 - **修復は冪等**: 修復後のセーブをもう一度検証しても、修復は入らない。**正常なセーブは1項目も変わらない**。
 
+### 7.1b 実際のセーブの形への掛け方(L-66 ①)
+
+実際のセーブ(`GameSnapshot` = `world` / `team` / `session`)は、仕様の `SaveData` の形を**自校の半分**(`team` = `clock` `rng` `scenario` `run` `counters` `player_team` `runners` `ob_records` `event_state` `settings`)と**世界の半分**(`world` = 他校の名簿・候補・履歴)に分けて持つ。検証もそれに合わせる(`GameLoader.Load`)。
+
+1. `team` に `SaveValidator.ValidateAndRepairTeam`(I-01〜I-21 のうち自校に関わるもの。必須項目は `schema_version` `clock` `player_team` `runners` `scenario` `rng`。他校の項目 `schools` `rival_runners` がなければ、その検査と修復は省く。自校の在籍が 60 人を超えれば致命 = I-07)。致命 → 失敗(回復の順で次の候補へ)/ 修復あり → 修復後の `team` で続ける。
+2. 復元(`GameSnapshot.Restore`)。形が合わず例外になるものは失敗。
+3. 世界の半分は復元してから `WorldInvariants`(W-1〜W-4: 学校の数・名声の範囲・名簿の人数と学年・選手の範囲)で検査し、違反があれば失敗(世界は『直す』と選手を作ることになるので修復しない)。
+4. 修復したら、次の自動セーブは**修復後の状態**を書く(§7.1)。中断セーブからの再開(`SuspendCheckpoint.Resume`)も同じ関門を通り、再開した流れがもう一度中断しても修復後の本体を使う。
+
+正常なセーブは 1 項目も変わらない(複数の開始校・シード・6 年度の約 350 の時点で、修復 0・本体が同じ)。修復の一覧は `OpenResult.Repairs`(診断ログ用)。
+
 ### 7.2 検算(TV-6。`ref_model_09.py validate`)
 
 独立に書いた検査(`check_invariants`)と、修復(`validate_and_repair`)を、ランダムなセーブ(自校 40 人・2 校・OB 30・補正・券)で確かめた。
@@ -1096,6 +1107,7 @@ verify/              参照モデル(Python)。仕様の正本の検算
   - **書き込み**: 要求は待っている 1 件に畳む(新しい要求は古い再試行も取り消す)。失敗は `K_SAVE_RETRY_S` 秒後に 1 回だけ再試行(`Tick`)、それも失敗なら通知(`AutosaveFailed` / 空き不足は `DiskFull`)してゲームは続け、次のきっかけでもう一度。保存番号は失敗で飛ばさない。`Synchronous = false` にすれば `Pump` を別のスレッドで呼べる。中断セーブは待っている自動セーブを先に書き、`base_counter` = スロットの先頭の保存番号。
   - **開く**: `SlotStore.RecoveryCandidates`(§4.5 の順の候補)を先頭から試し、**コンテナとして有効でも中身が復元できなければ次の候補**へ。最新が使えなければ `RecoveredFromOlder`。中断セーブは、先頭の世代を使え・同じ歴史・`base_counter` が先頭と等しいときだけ再開(`ResumedFromSuspend`。最初の自動セーブが成功してから消す)。合わなければ捨てて `SuspendDiscarded`(別のスロットの中断セーブには触らない)。すべて失敗なら Host は null でファイルは消さない。
   - **検算**: 1 年度の自動セーブのすべて(17 か所)から開き直して年度末まで続けても、続けたまま = 同じ状態 / 週の初め・月末レポート・大会の当日・イベントの選択での中断 → 再開が同じ年度末 / 書き込みの失敗(再試行・通知・次のきっかけ・古い状態を書き足さない)/ 回復の順 / プレイ時間(中断中は数えない)。呼び出し位置・再試行・使い切りなどを 1 つずつ壊すとテストが落ちる。
+- **読み込み時の検証・修復(§7.1b。L-66 ①)**: `Persistence/Snapshot/GameLoader.cs`(`LoadOutcome` = 復元した `GameSession`・本体・致命の理由・修復の一覧)。`GameHost.Open` と `SuspendCheckpoint.Resume` が使う。`SaveValidator.ValidateAndRepairTeam` を足した(`schools` `rival_runners` がなければ省く。完全な `SaveData` の形では従来どおりで、参照モデルとの差分テストは変わらない)。試験(`GameLoaderTests`・`HostTests`): 正常なセーブの修復 0 / 範囲外 21 種を直して続けられ・冪等・続けたあとも修復 0 / 致命(I-11・I-03・I-02・必須項目の欠落・型の違い・在籍 60 人超・世界の名声)で失敗 / 最新の世代が致命なら前の世代へ / 修復は利用者に知らせない / 中断セーブからの再開も同じ。
 - **通知のログ(08 §7.5・08a SC-38。08b G-07)**: `Team/Notification.cs`・`TeamState.Notifications`(新しい順・最大 `K_NOTIFY_MAX` = 30・`Unread`)。足すのは `GameSession` の週の処理(故障 = `ResolveTraining`・疲労の警告 = 月の第 3 週に 1 回・イベント・特別招聘券・大会の予定 = 出場権のある大会のエントリー開始 / 大会の週 / 予選会の週)と、外から `GameSession.Notify`(`GameHost.OnSaveNotice` が自動セーブ・手動セーブの失敗と空き不足を `AutosaveFailed` で足す。購入状態の不明 `Entitlement` は呼ぶ側)。文は `code` から `nt.*` の文字列キーで組む(`NotificationsView.Items[i].TextKey / ArgKey / Target`)。保存 = `player_team.notifications`(§5.6。**追加の項目**: ないセーブは空)。読み取りは `Notifications()`、既読は `MarkNotificationRead` / `MarkAllNotificationsRead`、ホームの未読数は `HomeView.UnreadNotifications`。乱数を使わないので決定性の目印(抽象の自校)は変わらない。
 - **実績(02 §3.10・01 §3.3。08b G-08)**: `Domain/Achievements/`(`AchievementMaster` 23 件・`AchievementFacts`・`AchievementRules`。事実から『いま満たしている ID』を返す純関数)と、`App/AchievementTracker.cs`(`ProfileData` に解除の日時を記録 = 一度解除したら消えない・ストアへの通知待ち `Pending` に積む・クリアの記録を 1 件)。`GameHost.Advance` が停止のたびに呼ぶ(山の神は走った大会の結果から)。`HostEnvironment.Profile` に Unity 側が読み込んだ `ProfileData` を渡す。**プロフィールのコンテナ(`profile.a/b.eksv`)の読み書き・マージ・ストアへの通知は Unity 側**(`ProfileData.Merge` と `LocalState.PendingUnlocks` は実装ずみ)。
 - **調子の見込み(08 R-05 ⑥。08b G-15)**: `Game/GameSession.Views.Outlook.cs`。読み取りだけ(保存は増えない)。この作業で見つけた既存のずれ 2 つを直した: ①`Forecaster` が安全網の閾値を定数 85 に固定していた(設定 75 / 0 を無視。`safetyF` を引数に)②個別指導のメニューの期限(`UntilAbsWeek` = 翌月の第 1 週)を含めて数えていた(月をまたぐ見込みでずれた。`>` に)。
