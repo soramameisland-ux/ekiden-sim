@@ -101,7 +101,7 @@ namespace Ekiden.Domain.Text
         public static long ParseTime(string s)
         {
             string[] parts = s.Split(':');
-            double sec = double.Parse(parts[parts.Length - 1], CultureInfo.InvariantCulture);
+            double sec = ExactDouble.Parse(parts[parts.Length - 1]);
             long m = long.Parse(parts[parts.Length - 2], CultureInfo.InvariantCulture);
             long h = parts.Length == 3 ? long.Parse(parts[0], CultureInfo.InvariantCulture) : 0;
             return h * 36000 + m * 600 + Rounding.HalfUpLong(sec * 10);

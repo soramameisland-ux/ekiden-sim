@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Ekiden.Domain.Numerics;
 
 namespace Ekiden.Domain.Events
 {
@@ -100,7 +101,7 @@ namespace Ekiden.Domain.Events
                     while (j < n && (IsAsciiDigit(src[j]) || src[j] == '.')) j++;
                     string text = src.Substring(i, j - i);
                     double v;
-                    if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) throw new DslException("不正な数値 " + text + ": " + src);
+                    if (!ExactDouble.TryParse(text, out v)) throw new DslException("不正な数値 " + text + ": " + src);
                     toks.Add(new Token(TokKind.Num, text, v));
                     i = j;
                 }

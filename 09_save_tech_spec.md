@@ -938,6 +938,7 @@ verify/              参照モデル(Python)。仕様の正本の検算
 | D-10 | 保存する `double`(`fame_hist` `base_prestige` `coach_q` `a0` `gap` `prog` `prestige`。M0 の自校の抽象では `funds` も)は代入のときに **`Q6`** を通す(§5.3。L-45)。M0 の統合は『状態の取り出し → 復元で全部の double が閉じていること』を `WorldSnapshot.NotQ6Closed` と T3 ② で確かめる|
 | D-11 | Domain は不正な入力で例外を投げてよい(Presentation が防ぐ)。**セーブの読み込みの経路は例外ではなく `LoadError`**(Persistence)で返す |
 | D-12 | **浮動小数の和は、仕様に書いた順に左から素朴に足す**(区間適性値の重みつきの和など)。補正つきの和・並べ替え・並列の和を使わない。Python の組み込み `sum()` は 3.12 以降は補正つきで、版によって最後のビットが変わるため、参照モデルも明示的なループで足す(M0 段階 4 の差分テストで見つかった)|
+| D-13 | **保存と条件式の数の読み取りは `ExactDouble`(`Domain/Numerics`)を使い、`double.Parse` / `TryParse` / `Convert.ToDouble` を直接呼ばない**(L-71)。Unity(Mono・IL2CPP)の `double.Parse` は、まれに最近接に丸めず 1 ulp ずれる(`Q6` の値で約 0.05%。.NET は 0)。整数部・小数部を整数 m(≤ 2^53)として読み、`m / 10^k`(k ≤ 22)を 1 回の除算で求める(IEEE の除算は最近接。`Q6.Round` と同じ形なので、小数 6 桁以下はビット一致)。指数つき・仮数が 2^53 を超える数(保存には出ない)だけ従来の `double.TryParse` に回す。試験: `ExactDoubleTests`(100 万個・ソースの走査で直接呼び出しを禁止)・`JsonTests`・Unity の EditMode `ExactNumberTests` |
 
 ### 15.4 プラットフォームの抽象
 
@@ -1139,7 +1140,7 @@ verify/              参照モデル(Python)。仕様の正本の検算
 - **ゲート B の再実行(2026-10-30。L-68〜L-70 のあと)**: Unity 6000.3.24f1・Windows 11(10.0.26200)・i5-12400F。**T1 は合格**(Editor(Mono)・IL2CPP とも `compare_vectors.py` が `139 行: 不一致 0`)。**T3 は不合格 1 件**(Editor・IL2CPP とも同じ = 抽象の自校のシード 1・中堅の『② 毎年度』だけ。ほかの ①②③ と実体の自校はバイト一致。`result.txt` は `NG T3 の不一致 1 件`、終了コード 1)。.NET 8(SimCli・Windows)では同じ検査がバイト一致する。
   - **原因(特定済み・未修正)**: Mono / IL2CPP の `double.Parse` が、**まれに最近接の double に丸めない**(1 ulp ずれる)。100 万個の `Q6` の値で『`Q6.Round(x)` → `ToString("F6")` → `double.Parse`』の往復を比べると、.NET は 0 件・Unity(Mono)は **502 件**(約 0.05%)が元の値と違う(例: `18.232545` → `Q6.Round` は `0x40323b8811b1d92b`、Mono の `double.Parse` は `…d92c`。`decimal` 経由の変換は 100% 一致)。保存の JSON(`Persistence/Json/Json.cs` の数の読み取り)を通ると、まれに値が 1 ulp 変わり、続きの計算が変わる(この例では年度 21 で他校の順位点が 5 → 4)。保存の中身(JSON)は同じなので、取り出し → 読み込み → 取り出しの往復では見つからない。
   - **影響**: Unity のビルドでは、約束 5『保存 → 読み込み → 続行 = 続行のみ』が**まれに崩れる**(破綻ではなく、1 ulp の差が判定の境目に当たったときだけ結果が変わる)。前回(10-28)の合格は、境目に当たらなかっただけと見られる。
-  - **直し方の案(判断待ち。L-71)**: JSON の数の読み取りを、`double.Parse` に頼らず『10 進の整数部と小数部を整数として読み、`n / 10^k`(`k ≤ 6` は `Q6.Round` と同じ割り算)』にする。`Q6` の値なら .NET と Unity の両方で `Q6.Round` とビット一致する。規則・保存の形式は変わらない。
+  - **修正(L-71。2026-10-30。Unity での再確認待ち)**: 上の案のとおり、JSON の数の読み取り(`Persistence/Json/Json.cs`)と条件式の数(`Domain/Events/Dsl/Parser.cs`)・`Fmt.ParseTime` を `ExactDouble`(D-13)に変えた。規則・保存の形式は変わらない。.NET で確認したこと: `dotnet test` 736 件合格(`ExactDoubleTests` 31 件を追加)・再現性の目印(先頭 8 件の SHA)は不変・T1 139 行一致・T3 バイト一致。`ExactDouble` の速い経路を『逆数を掛ける』に壊すと 5 件、`Json.cs` を `double.Parse` に戻すとソース走査の試験が落ちる(変異で確認)。**Unity では、Editor と IL2CPP で ゲート B(T3)を再実行し、EditMode の `ExactNumberTests`(20 万個の読み戻し)が通ることを確かめる**(修正前は約 100 個がずれる)。
 - **未了**: T5(性能・GC)の IL2CPP での実測(`bench`)と、§15.5 の UI 技術の検証は、ゲート B のあと。
 
 ---

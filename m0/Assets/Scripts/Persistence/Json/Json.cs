@@ -300,7 +300,7 @@ namespace Ekiden.Persistence.Json
                 if (i == d) throw new JsonException("指数に数字がない");
             }
             string raw = s.Substring(start, i - start);
-            double v = double.Parse(raw, NumberStyles.Float, CultureInfo.InvariantCulture);
+            double v = Ekiden.Domain.Numerics.ExactDouble.Parse(raw);                     // double.Parse は Unity で 1 ulp ずれることがある(L-71)ので、最近接を保証する読み取りを使う
             long l = 0;
             if (isInt && !long.TryParse(raw, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out l)) isInt = false;
             if (isInt && raw == "-0") { isInt = false; }

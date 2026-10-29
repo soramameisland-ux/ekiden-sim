@@ -16,6 +16,26 @@ namespace Ekiden.Persistence.Tests
             CollectionAssert.AreEqual(new[] { "b", "a", "n", "e", "big", "neg", "s" }, ((JsonObject)v).Keys.ToArray());
         }
 
+        /// <summary>保存の数は、書いて読み戻すとビット一致する(L-71。Unity の double.Parse はまれに 1 ulp ずれる = Unity 側の同じ試験は Assets/Tests/EditMode/ExactNumberTests.cs)。</summary>
+        [Test]
+        public void Q6Numbers_AreReadBackBitExactly_ThroughTheJsonReader()
+        {
+            ulong s = 88172645463325252UL;
+            var vals = new System.Collections.Generic.List<double>();
+            for (int i = 0; i < 20000; i++)
+            {
+                s ^= s << 13; s ^= s >> 7; s ^= s << 17;
+                vals.Add(Ekiden.Domain.Numerics.Q6.Round(((s >> 11) / 9007199254740992.0 - 0.5) * 2000.0));
+            }
+            vals.Add(18.232545);
+            var arr = new JsonArray();
+            foreach (double d in vals) arr.Add(new JsonNumber(d));
+            JsonArray back = (JsonArray)JsonValue.Parse(arr.ToJson());
+            Assert.AreEqual(vals.Count, back.Count);
+            for (int i = 0; i < vals.Count; i++)
+                Assert.AreEqual(BitConverter.DoubleToInt64Bits(vals[i] == 0 ? 0.0 : vals[i]), BitConverter.DoubleToInt64Bits(((JsonNumber)back[i]).Value), "要素 " + i + " = " + vals[i].ToString("R"));
+        }
+
         [Test]
         public void Writer_NewNumbers_AreIntegersOrQ6()
         {

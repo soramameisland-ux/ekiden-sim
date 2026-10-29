@@ -32,7 +32,7 @@
 
 ```
 cd m0
-dotnet test Ekiden.sln -c Release          # 704 件(Domain 525 + Persistence 139 + App 40)。約 1.5 分。全部緑が前提
+dotnet test Ekiden.sln -c Release          # 736 件(Domain 556 + Persistence 140 + App 40)。約 1.5 分。全部緑が前提
 dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)
@@ -72,7 +72,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 
 - ゲート A(済): Unity で Domain / Persistence がエラー 0。**asmdef の `references` と `.csproj` の `ProjectReference` は両方で確かめる**(`dotnet test` だけでは asmdef の参照漏れが出ない)。
 - ゲート B(**合格**。IL2CPP の Windows ビルドで T1 全行一致・T3 一致。2026-10-28): 再実行の手順は README(メニュー Ekiden → Verify)。結果の `vectors.txt` は `python -I tools/compare_vectors.py <ファイル>` で照合する。
-- ゲート B の再実行(2026-10-30。L-68〜L-70 のあと): T1 は 139 行一致。**T3 は 1 件不一致**(Editor・IL2CPP とも。原因は L-71 = Unity の `double.Parse`。09 §17.8)。
+- ゲート B の再実行(2026-10-30。L-68〜L-70 のあと): T1 は 139 行一致。**T3 は 1 件不一致**(Editor・IL2CPP とも。原因は L-71 = Unity の `double.Parse`。09 §17.8)→ **`ExactDouble` に直した(.NET では確認ずみ。Unity でゲート B と `ExactNumberTests` を再実行して確かめる)**。
 - 画面の試験: EditMode(`Assets/Tests/EditMode`。`-runTests -testPlatform EditMode -assemblyNames Ekiden.Unity.Tests`)と、プレイヤーの自動進行(`-ekidenAuto`。`m0/README.md`)。
 
 ## 受け入れ基準(09 §16.3)
@@ -87,8 +87,8 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 - 文字列は `m0/Assets/Strings/ja.json`(正)。ID を足したら `SimCli strings seed`(足りないキーだけ足す)。本文を編集するときは ja.json を直接。`EventDef.Hint` は設計メモで表に入れない(L-63)。
 - 仕様 00〜10 は一巡済み。**M0(段階 0〜10)完了**。M1 準備として、実体の自校 + 世界(`GameSession`)・手動操作の入口・スカウト・進行制御・区間オーダー・当日(L-56)・**中断セーブ(レース進行中を含む。09 §4.6。L-62)**まで Domain / Persistence に入っている。
 - **画面向けの読み取り API(Views)**: `m0/Assets/Scripts/Domain/Views/` + `Game/GameSession.Views*.cs`。画面ごとの対応(○ △ ✗)と足りないもの(G-01〜G-17)は **`08b_screen_data.md`**。Views は状態を変えず、語は文字列テーブルのキーで返し、隠す情報(素質・体質・成長タイプ・未判明の素養)を型に入れない。新しい View を足すときは、実際の状態と**独立に計算した値**との突き合わせ + 変異(わざと壊してテストが落ちること)で確かめる。型の形は `ViewSchemaTests`(リフレクション)が守る: 隠す情報の名前(`Potential` `Q` `A0` など)を持たず、`Runner` / `TeamState` / `School` などの実体を抱え込まない(例外は表に書く)。
-- **M1(ブランチ `unity-m1`。2026-10-30 の夜間作業。結果は `m0/UNITY_REPORT.md`)**: Unity 側の足場(`Assets/Scripts/Unity/`: `UnityFileStore`・`GameApp`・`GameBootstrap`)・UI Toolkit の画面(`Unity/UI/`: `ScreenRouter`・`FocusGrid`・`UiRoot`・約 25 画面とダイアログ・自動進行 `AutoRunner`)・EditMode 試験(`Assets/Tests/EditMode`)・日本語フォント(Noto Sans JP。OFL)。画面の文字は ja.json の `scr.*` / `dlg.*` / `ui.*`。ゲート B の再実行で、**Unity の `double.Parse` が 1 ulp ずれる不具合(L-71)**を見つけた(未修正。T3 の 1 件が不一致)。
-- **次**: L-71 の修正の判断 → M1 の残り(`UNITY_REPORT.md` の『次にやること』)。モバイル実機の性能・タッチ・実際のパッドの操作感・見た目の判断・uGUI への切り替えの判断はユーザー。
+- **M1(ブランチ `unity-m1`。2026-10-30 の夜間作業。結果は `m0/UNITY_REPORT.md`)**: Unity 側の足場(`Assets/Scripts/Unity/`: `UnityFileStore`・`GameApp`・`GameBootstrap`)・UI Toolkit の画面(`Unity/UI/`: `ScreenRouter`・`FocusGrid`・`UiRoot`・約 25 画面とダイアログ・自動進行 `AutoRunner`)・EditMode 試験(`Assets/Tests/EditMode`)・日本語フォント(Noto Sans JP。OFL)。画面の文字は ja.json の `scr.*` / `dlg.*` / `ui.*`。ゲート B の再実行で、**Unity の `double.Parse` が 1 ulp ずれる不具合(L-71)**を見つけた(`ExactDouble` に直した。Unity での再確認待ち)。
+- **次**: Unity でゲート B の再実行(L-71 の確認)→ M1 の残り(`UNITY_REPORT.md` の『次にやること』)。モバイル実機の性能・タッチ・実際のパッドの操作感・見た目の判断・uGUI への切り替えの判断はユーザー。
 - **残っている課題**(`00_spec_index.md` の L-xx が正): L-60 ①(檄の先行使用。観戦を見てから)・L-66(移行 `SaveMigrator` は最初に版を上げるときにつなぐ / クラウド同期と購入状態 / 書き込みのスレッドは Unity の層)・L-53 ⑤(他校の先発の出身高校 `rival_same_hs` は近似)・L-52(高校の強さの表。強さの差が要る機能を作るときに定義する)・L-05(資金の使い道)。L-55(実体が抽象より少し弱い)は原因を特定して受け入れ済み = 第二戦の調子(05 §14.11)。そのほか: 観戦モードの演出・月末レポートの項目・新規ゲームの画面(Unity の層)。L-61(予選会の当日の画面)は**作らない方針**で決定。
 
 ## 落とし穴(過去に踏んだもの)
@@ -100,7 +100,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 - 世界の保存の `School.Funds` は週の終わりに `SyncSchool()` で同期する(古い値が残る)。
 - IL2CPP のビルドでは `BitConverter.IsLittleEndian` が `False` と出た(x64 なのに)。エンディアンに依存するコードを書かない(いまのゲームのコードは使っていない)。
 - IL2CPP のビルドには **Visual Studio の C++ ツール(MSVC v143)と Windows SDK の両方**が要る。Unity のモジュールを足したあとは Unity を再起動する。
-- **Unity(Mono / IL2CPP)の `double.Parse` は、まれに最近接に丸めない**(L-71)。保存の JSON の数の読み取りがこれに当たる。.NET では起きないので `dotnet test` では見つからない。
+- **Unity(Mono / IL2CPP)の `double.Parse` は、まれに最近接に丸めない**(L-71)。.NET では起きないので `dotnet test` では見つからない。**数の読み取りは `ExactDouble`(`Domain/Numerics`。09 D-13)だけを使い、`double.Parse` / `TryParse` / `Convert.ToDouble` を Domain・Persistence・App に直接書かない**(`ExactDoubleTests` がソースを走査して止める)。
 - Editor スクリプトでシーンを作るとき、`EditorSceneManager.NewScene` は使っていない資産を解放する。その前に読み込んだ資産(PanelSettings など)の参照は無効になり、シーンに保存されない(UI が真っ黒になる)。シーンを作ってから読み込む。
 - UI Toolkit の `ScrollView.ScrollTo` を、画面を組み立てた直後(レイアウトの前)に呼ぶと例外になる(`schedule.Execute` で次に回す)。
 - `Platform/Fake`(`FakeClock` など)には asmdef がないので、Unity の試験の asmdef からは参照できない。

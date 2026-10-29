@@ -140,3 +140,8 @@ EditMode 試験(`Assets/Tests/EditMode`・asmdef `Ekiden.Unity.Tests`。`-runTes
 4. 観戦モードの演出(区間ごとの時間・ダイジェスト。08 R-14)と、1 年度が約 30 分に収まるかの計測(01 §13 の完了条件)。
 5. T5 の `bench` を `Verification` に足して IL2CPP で測る。
 6. 太字のフォント・縦持ち・見た目(美術)。
+## 判断の結果(クラウド側。2026-10-30 の昼)
+
+1. **L-71 は直した**(09 D-13)。`Domain/Numerics/ExactDouble.cs`(整数部・小数部を整数で読み `m / 10^k`)を、JSON の数の読み取り・条件式の数・`Fmt.ParseTime` に使う。`double.Parse` の直接の呼び出しは試験(`ExactDoubleTests` のソース走査)で禁止。.NET では `dotnet test` 736 件・再現性の目印・T1・T3 すべて不変/合格。**Unity で確かめること**: ゲート B(メニュー Ekiden → Verify)を Editor と IL2CPP で再実行して T3 が全部一致すること、EditMode の `ExactNumberTests`(20 万個)が通ること。
+2. UI Toolkit のまま進める(U-17 は、モバイル実機の測定のあとで最終決定)。
+3. 観戦モード・おまかせなどの設定は、命令として Domain に足す(別の commit)。
