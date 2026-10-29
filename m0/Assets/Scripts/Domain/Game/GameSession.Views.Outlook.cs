@@ -89,7 +89,7 @@ namespace Ekiden.Domain.Game
                 else if (s.IndividualMenus.TryGetValue(r.Id, out im) && im.UntilAbsWeek > s.AbsWeek + off) { menu = new Menu(im.Menu.Key1, im.Menu.Key2, im.Menu.Mileage); individual = true; }
                 else
                 {
-                    int taper = TeamWeek.TaperIndex(s, w, kk => (assumeEntered && kk == k) || entries.Entered(kk, r.Id));
+                    int taper = TeamWeek.TaperIndex(s, w, kk => (assumeEntered && kk == k) || entries.Entered(kk, r.Id), w == Calendar.QualifierWeek && s.InQualifier != null && s.InQualifier(r));
                     if (taper >= 0) { menu = Master.Taper[taper]; v.Tapered = true; }
                 }
                 planned.Add(new PlannedWeek { Menu = menu, MonthIndex = month, Camp = theme == "th.camp", Individual = individual });       // 合宿の印は 03 §5.1 の MenuFor と同じ(テーマだけで決まる)

@@ -54,7 +54,7 @@ namespace Ekiden.Domain.Game
     public sealed partial class GameSession : IPlayerSide
     {
         public const int BurnInYears = 15;
-        public const int QualifierWeek = 26;               // 10 月第 3 週(04 §3.2)
+        public const int QualifierWeek = Calendar.QualifierWeek;               // 10 月第 3 週(04 §3.2)
         public const int TicketDeclareWeek = 40;           // 2 月の最初の週: 招聘の宣言(おまかせ)。大会の節目はすべて済んでいる
         public const int RaceFatigueWeekThird = 36;
 
@@ -116,6 +116,7 @@ namespace Ekiden.Domain.Game
             School school = world.Schools.Single(s => s.IsPlayer);
             var gs = new GameSession(state.Seed, world.Rngs, world, school, TrainingMaster.CreateDefault(), EventCatalogData.Create());
             gs.State = state;
+            state.InQualifier = gs.InQualifierRoster;
             gs.Stats.AddRange(extras.Stats);
             gs._yearWins = extras.YearWins;
             gs._racePower = extras.RacePower;
@@ -185,6 +186,7 @@ namespace Ekiden.Domain.Game
             }
             School.Roster.Clear();                                       // 以後、自校の選手は TeamState が持つ(世界の抽象の名簿は空)
             State = s;
+            s.InQualifier = InQualifierRoster;
             s.AssignRecommendedGroups();                                 // 新規ゲームの開始時は推奨の編成(08 R-04)
             SyncSchool();
             _week.BeginWeek(s);                                          // 最初の週の最初の処理(以後は各週の終わりで次の週のぶんを行う)
@@ -286,7 +288,7 @@ namespace Ekiden.Domain.Game
             int yw = TeamWeek.YearWeek(s), year = Year;
             own = null;
             if (yw == RaceFatigueWeekThird) _racePower = Q6.Round(OwnPower());      // 保存する値は Q6 で閉じる(09 D-10)
-            if (yw == QualifierWeek) { World.PlayQualifier(_ys); _qualifierEntries = null; }
+            if (yw == QualifierWeek) { World.PlayQualifier(_ys); ApplyQualifierFatigue(); _qualifierEntries = null; }
             int k = Array.IndexOf(Calendar.RaceWeeks, yw);
             if (k < 0) return null;
             var kind = (RaceKind)k;
@@ -301,6 +303,19 @@ namespace Ekiden.Domain.Game
             int earned = TicketMilestones.EarnAfterRace(s.Tickets, year, k + 1, rank, _yearWins);
             if (earned > 0) s.Notify(NotifyKind.Ticket, "earned", 0, earned);
             return race;
+        }
+
+        /// <summary>予選会に出た自校の選手(12 名)の疲労(L-53 ①)。20km を走ったので、大会と同じ『距離 km × K_RACE_FATIGUE_PER_KM』(04 §10)。名声・評価ポイント・経験値・やる気には入れない(04 §3.2 ④)。</summary>
+        private void ApplyQualifierFatigue()
+        {
+            QualifierResult own = _ys.QualifierResults == null ? null : _ys.QualifierResults.Find(q => q.Id == School.Id);
+            if (own == null || own.RunnerIds == null) return;
+            int add = Rounding.HalfUp(RaceConstants.QualKm * TrainingMaster.K_RACE_FATIGUE_PER_KM);
+            foreach (int id in own.RunnerIds)
+            {
+                Runner r = id == 0 ? null : State.FindRunner(id);
+                if (r != null) r.Fatigue = Math.Max(0, Math.Min(100, r.Fatigue + add));
+            }
         }
 
         /// <summary>④イベントの発生の判定(06 §7.2 の前半。状態は変えない)。</summary>

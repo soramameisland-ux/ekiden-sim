@@ -12,6 +12,7 @@ namespace Ekiden.Domain.Team
     {
         public const int WeeksPerYear = 48;
         public static readonly int[] RaceWeeks = { 25, 28, 36 };          // 第一戦・第二戦・第三戦の年内の週
+        public const int QualifierWeek = 26;                               // 予選会(10 月第 3 週。04 §3.2)
 
         public static int FloorDiv(int a, int b)
         {
@@ -166,6 +167,7 @@ namespace Ekiden.Domain.Team
     public sealed class TeamState
     {
         public ulong Seed;                      // マスタ乱数(検算用の rival_same_hs の近似に使う)
+        public Func<Runner, bool> InQualifier;  // 予選会の登録メンバーか(保存しない。持ち主の GameSession が、予選会の登録 + 状態から答える。ピーキングの対象 03 §5.3)
         public int AbsWeek;
         public readonly List<Runner> Runners = new List<Runner>();
         public readonly BondTable Bonds = new BondTable();

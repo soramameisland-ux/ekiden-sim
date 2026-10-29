@@ -305,6 +305,30 @@ namespace Ekiden.Persistence.Tests
             Assert.AreEqual(GameSnapshot.Capture(gs).ToJson(), GameSnapshot.Capture(back).ToJson());
         }
 
+        /// <summary>予選会の週の調整(L-53 ②)は、保存した予選会の登録と状態から答えが決まる(保存しない述語を読み込み後に作り直す)。保存 → 読み込みのあとも、各選手の調整の添字と、その週の結果が変わらない。</summary>
+        [Test]
+        public void QualifierWeekTaper_SurvivesSaveLoad_AndTheWeekPlaysTheSame()
+        {
+            GameSession gs = null;
+            for (ulong seed = Seed; seed < Seed + 12 && gs == null; seed++)
+            {
+                GameSession t = GameSession.New(seed, Difficulty.Low);
+                while (t.YearWeek < Ekiden.Domain.Team.Calendar.QualifierWeek) t.StepWeek();
+                if (!t.PrepareYear().Seeds.Contains(t.School.Id)) gs = t;
+            }
+            Assert.IsNotNull(gs, "試験の前提: シード外の年度がある");
+            foreach (Ekiden.Domain.Entities.Runner r in gs.State.Runners) { r.InjurySeverity = Ekiden.Domain.Entities.InjurySeverity.None; r.InjuryWeeksLeft = 0; }
+            var ids = gs.State.Runners.OrderBy(r => r.Id).Skip(2).Take(12).Select(r => r.Id).ToList();
+            Assert.IsTrue(gs.SetQualifierEntries(ids).Ok);
+            GameSession back = RoundTrip(gs);
+            int[] want = gs.State.Runners.Select(r => Ekiden.Domain.Team.TeamWeek.TaperIndex(gs.State, r, Ekiden.Domain.Team.Calendar.QualifierWeek)).ToArray();
+            int[] got = back.State.Runners.Select(r => Ekiden.Domain.Team.TeamWeek.TaperIndex(back.State, r, Ekiden.Domain.Team.Calendar.QualifierWeek)).ToArray();
+            CollectionAssert.AreEqual(want, got);
+            Assert.AreEqual(12, got.Count(i => i == 3), "登録メンバー 12 名が予選会の週の調整");
+            gs.StepWeek(); back.StepWeek();
+            Assert.AreEqual(GameSnapshot.Capture(gs).ToJson(), GameSnapshot.Capture(back).ToJson(), "予選会の週(調整・走った疲労)を保存をまたいで同じに解く");
+        }
+
         [Test]
         public void SettledYear_CanBeSavedAndResumed()
         {

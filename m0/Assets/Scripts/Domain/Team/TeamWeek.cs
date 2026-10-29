@@ -89,12 +89,14 @@ namespace Ekiden.Domain.Team
         /// <summary>ピーキング(03 §5.3): その大会の登録メンバーに、大会週 t の 3 週前から <c>TAPER[1..4]</c>(重なるときは後ろから詰める)。Short は t−1 と t だけ(<c>TAPER[3..4]</c>)。None は適用しない。-1 = 適用なし。</summary>
         public static int TaperIndex(TeamState s, Runner r, int yw)
         {
-            return TaperIndex(s, yw, k => s.Entries[k].Contains(r.Id));
+            return TaperIndex(s, yw, k => s.Entries[k].Contains(r.Id), yw == Calendar.QualifierWeek && s.InQualifier != null && s.InQualifier(r));
         }
 
         /// <summary>同じ規則で、『大会 k に登録されている』かどうかを呼ぶ側が決める版(登録の前は、おまかせ登録の見込みで調整週を予測する)。</summary>
-        public static int TaperIndex(TeamState s, int yw, Func<int, bool> entered)
+        public static int TaperIndex(TeamState s, int yw, Func<int, bool> entered, bool inQualifier = false)
         {
+            // 予選会(L-53 ②): 既定は Short(t−1, t)。直前の第一戦の週(25)が p なので start = max(t−1, p+1) = t で、予選会の週は TAPER[4] だけ。第二戦の調整(start = 26)より先に当てる
+            if (inQualifier && yw == Calendar.QualifierWeek && s.Plan.Peaking[3] != PeakingMode.None) return 3;
             for (int k = 0; k < 3; k++)
             {
                 if (!entered(k)) continue;

@@ -176,5 +176,22 @@ namespace Ekiden.Domain.Game
         }
 
         public IReadOnlyList<int> QualifierEntries { get { return _qualifierEntries; } }
+
+        /// <summary>予選会の登録メンバーか(ピーキングの対象。03 §5.3・L-53 ②)。シード校は予選会に出ないので false。手動の登録があればそれ(出られる選手だけ)、なければおまかせ(出られる選手の長距離の適性の上位 12 名)。</summary>
+        private bool InQualifierRoster(Runner r)
+        {
+            if (PrepareYear().Seeds.Contains(School.Id)) return false;
+            if (_qualifierEntries != null) return Array.IndexOf(_qualifierEntries, r.Id) >= 0 && TeamRacing.CanRun(State, r);
+            if (!TeamRacing.CanRun(State, r)) return false;
+            double mine = RaceTables.Rating(RaceRunner.From(r).Stats, SectionType.Long);
+            int better = 0;
+            foreach (Runner o in State.Runners)
+            {
+                if (o == r || !TeamRacing.CanRun(State, o)) continue;
+                double theirs = RaceTables.Rating(RaceRunner.From(o).Stats, SectionType.Long);
+                if (theirs > mine || (theirs == mine && o.Id < r.Id)) better++;
+            }
+            return better < RaceConstants.QualEntry;
+        }
     }
 }
