@@ -31,6 +31,7 @@ K = dict(
     INTEREST_PER_POINT=12.0, INTEREST_MAX=90.0, SCHOLARSHIP=0.0, SCHOLARSHIP_N=0,
     V_TOP=51.5, V_GAP_W=0.3, SCHOL_SLOTS={"Elite": 6, "Mid": 3, "Low": 1}, PLAYER_SCHOL_BASE=3, PLAYER_SCHOL_MAX=5,
     PLAYER_RACE_BONUS=0.0, FAC_CAP_BASE=3, FAC_CAP_R4=3, FAC_CAP_R5=5,
+    FAC_CAP_R6=7, FAC_CAP_R7=9, FAC_CAP_R8=10, FAC_MAX=8, FAC_KNEE_POLICY=5,   # L-70: Lv6〜8(ランク 7 / 9 / 10 で解放)。効果に使うレベルは ref_model_03.eff_lv(Lv5 を超えた分が 1/4 の効き)
     RACE_MODEL="full", SPEC_ON=True, PLAYER_NOVICE=False, PLAYER_MODE="auto", EVENT_FUNDS=0.0,
     TICKET_MODE="free", TICKET_STOCK_MAX=2, TICKET_ACTIVE_MAX=2, PLAN_CYCLE=4, PLAN_COUNT=2,
     TICKET_EARN="v07", TICKET_BANK=True,     # 07 §4: 獲得の一覧(v05 = 05 時点の6個)/ 失効させず繰り延べる
@@ -47,8 +48,9 @@ K = dict(
     COACH_SD=0.05, COACH_REVERT=0.05, COACH_MAX=0.30, COACH_LV=15.0, COACH_OFFER=60.0, TIER_BASE={"Elite": 720.0, "Mid": 300.0, "Low": 60.0},
     # 資金(万円)
     INC_BASE=800.0, INC_PRESTIGE=1.0, INC_PRESTIGE2=0.0012, INC_POINT=25.0,
-    EXP_STAFF=[0, 40, 90, 160, 260], EXP_FAC_UPKEEP=8.0, EXP_PER_RUNNER=15.0,
+    EXP_STAFF=[0, 40, 90, 160, 260, 380, 520, 680], EXP_FAC_UPKEEP=8.0, EXP_PER_RUNNER=15.0,
     UP_BASE=300.0, UP_SLOPE=250.0, RESERVE=500.0,
+    UP_COST_HI=[3000.0, 4000.0, 5000.0],     # L-70: Lv5→6 / 6→7 / 7→8 の費用(万円)。Lv5 までは UP_BASE + UP_SLOPE × Lv
     # 監督ランク
     RANK_CUM=[0, 6, 15, 30, 50, 80, 120, 170, 230, 300],
     # 他校
@@ -120,9 +122,27 @@ FORM_DIST = [(-0.015, 0.54), (-0.007, 0.30), (0.0, 0.12), (0.012, 0.04)]  # 03 �
 POINTS = [10, 6, 4, 2, 2, 2, 1, 1, 1, 1]
 
 
+eff_lv = r4.m3.eff_lv     # 効果に使うレベル(L-70。育成の参照モデルと同じ関数)
+
+
+def up_cost(lv):
+    """施設・スタッフを Lv → Lv+1 にする費用(万円)。Lv5 以上(L-70)は表。"""
+    hi = K["UP_COST_HI"]
+    if lv >= 5 and hi:
+        return hi[lv - 5]
+    return K["UP_BASE"] + K["UP_SLOPE"] * lv
+
+
+def fac_cap(rank):
+    """施設・スタッフの強化の上限(監督ランクで決まる。L-70 で Lv8 まで)。"""
+    cap = (K["FAC_CAP_BASE"] + (1 if rank >= K["FAC_CAP_R4"] else 0) + (1 if rank >= K["FAC_CAP_R5"] else 0)
+           + (1 if rank >= K["FAC_CAP_R6"] else 0) + (1 if rank >= K["FAC_CAP_R7"] else 0) + (1 if rank >= K["FAC_CAP_R8"] else 0))
+    return min(cap, K["FAC_MAX"])
+
+
 def lv_eff(fac):
     keys = ("coach", "trainer", "nutri", "dorm", "track", "hill", "gym", "medical")
-    return sum(fac[k] for k in keys) / len(keys)
+    return sum(eff_lv(fac[k]) for k in keys) / len(keys)
 
 
 # ------------------------------------------------------------------ 世界の生成・更新
@@ -210,7 +230,7 @@ class School:
         return r
 
     def dorm(self):
-        return self.fac["dorm"] if self.is_player else min(5.0, self.lv())
+        return eff_lv(self.fac["dorm"]) if self.is_player else min(5.0, self.lv())
 
     def schol_slots(self):
         if self.is_player:
@@ -365,7 +385,7 @@ def choose_targets(player, schools, pool, rng):
     rk = player.rank()
     points = 36 + 4 * (rk // 3)
     k = int(points // K["POINTS_PER_TARGET"])
-    info_sd = max(1.0, K["SCOUT_INFO_SD0"] - K["SCOUT_INFO_SD_STEP"] * (player.scout_lv - 1))
+    info_sd = max(1.0, K["SCOUT_INFO_SD0"] - K["SCOUT_INFO_SD_STEP"] * (eff_lv(player.scout_lv) - 1))
     lv = player.lv()
     p10 = {}
     for s in schools:
@@ -551,14 +571,18 @@ def play_year(schools, year, rng, pool_rng, player, stats, policy_on):
         upkeep = K["EXP_FAC_UPKEEP"] * sum(player.fac[k] - 1 for k in ("dorm", "track", "hill", "gym", "medical"))
         runners = K["EXP_PER_RUNNER"] * len(player.roster)
         player.funds += income - staff - upkeep - runners + K["EVENT_FUNDS"]       # 06 §16: イベントによる年間の資金の増減(万円)
-        cap = K["FAC_CAP_BASE"] + (1 if player.rank() >= K["FAC_CAP_R4"] else 0) + (1 if player.rank() >= K["FAC_CAP_R5"] else 0)
+        cap = fac_cap(player.rank())
         order = list(K["UPGRADE_ORDER"])
         while True:
             cand = [k for k in order if player.fac[k] < cap]
             if not cand:
                 break
-            k = cand[0] if K["UPGRADE_STRICT"] else min(cand, key=lambda x: (player.fac[x], order.index(x)))
-            cost = K["UP_BASE"] + K["UP_SLOPE"] * player.fac[k]
+            base = [x for x in cand if player.fac[x] < K["FAC_KNEE_POLICY"]]
+            if base:       # Lv5 までは、これまでどおり順番(寮 → スカウト → …)に上限まで
+                k = base[0] if K["UPGRADE_STRICT"] else min(base, key=lambda x: (player.fac[x], order.index(x)))
+            else:          # Lv5 を超える強化(L-70)は、全部が Lv5 になってから。レベルの低いものから 1 つずつ(同じなら順番)
+                k = min(cand, key=lambda x: (player.fac[x], order.index(x)))
+            cost = up_cost(player.fac[k])
             if player.funds - cost < K["RESERVE"]:
                 break
             player.funds -= cost
@@ -805,12 +829,12 @@ def vectors():
     print(f"収入={income:.1f} (800 + 600 + 0.0012*600^2 + 25*20) / スタッフ={staff} / 施設維持={upkeep} / 部員={runners} / 差引={income - staff - upkeep - runners:.1f}")
     print("== TV-6 施設・スタッフの強化費用(Lv n → n+1)", {n: K['UP_BASE'] + K['UP_SLOPE'] * n for n in (1, 2, 3, 4)})
     print("== TV-7 監督ランクと施設上限")
-    for pts in (0, 5, 6, 14, 15, 29, 30, 49, 50, 300):
+    for pts in (0, 5, 6, 14, 15, 29, 30, 49, 50, 119, 120, 229, 230, 299, 300):
         rk = 1
         for i, x in enumerate(K["RANK_CUM"]):
             if pts >= x:
                 rk = i + 1
-        cap = K["FAC_CAP_BASE"] + (1 if rk >= K["FAC_CAP_R4"] else 0) + (1 if rk >= K["FAC_CAP_R5"] else 0)
+        cap = fac_cap(rk)
         print(f"  累計{pts:3d}点 → ランク{rk:2d} 施設上限Lv{cap}", end=";")
     print()
     print("== TV-8 成長の進捗率(近似式)")

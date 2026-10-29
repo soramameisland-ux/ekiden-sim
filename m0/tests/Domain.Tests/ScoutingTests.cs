@@ -39,7 +39,9 @@ namespace Ekiden.Domain.Tests
         {
             double[] expect = { 8.0, 6.8, 5.6, 4.4, 3.2 };
             for (int lv = 1; lv <= 5; lv++) Assert.AreEqual(expect[lv - 1], Scouting.InfoSd(lv), 1e-12, "Lv" + lv);
-            Assert.AreEqual(1.0, Scouting.InfoSd(10));
+            double[] hi = { 8.0 - 1.2 * 4.25, 8.0 - 1.2 * 4.5, 8.0 - 1.2 * 4.75 };      // Lv6〜8(L-70): 効果に使うレベル 5.25 / 5.5 / 5.75
+            for (int lv = 6; lv <= 8; lv++) Assert.AreEqual(hi[lv - 6], Scouting.InfoSd(lv), 1e-12, "Lv" + lv);
+            Assert.AreEqual(1.0, Scouting.InfoSd(100), "下限は 1.0");
         }
 
         [Test]

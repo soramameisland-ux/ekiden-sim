@@ -85,7 +85,7 @@ namespace Ekiden.Domain.Screens
             double eBond = 1.0 + r.BondK * ((bondAvg ?? r.BondAvg) / 1000.0);
             double e = WeekResolver.EFatigue(f0) * TrainingMaster.MotivationE[r.Motivation]
                        * TrainingMaster.GrowthByGrade[(int)r.GrowthType][Math.Min(r.Grade, 4) - 1]
-                       * (1.0 + TrainingMaster.FcCoach * (fac.Coach - 1)) * eBond;
+                       * (1.0 + TrainingMaster.FcCoach * (TrainingMaster.EffLv(fac.Coach) - 1)) * eBond;
             if (camp) e *= TrainingMaster.K_CAMP_XP * (r.Skills.Contains("skill.summer_boy") ? 1.1 : 1.0);
             e *= wm.EMult;
             if (individual) e *= r.IndMult;
@@ -94,10 +94,10 @@ namespace Ekiden.Domain.Screens
             for (int i = 0; i < gains.Length; i++) gains[i] += k1.Gain[i];
             for (int i = 0; i < gains.Length; i++) gains[i] += k2.Gain[i];
             if (mil != null) for (int i = 0; i < gains.Length; i++) gains[i] += mil.Gain[i];
-            double trackMult = 1 + TrainingMaster.FcTrack * (fac.Track - 1);
-            double hillMult = 1 + TrainingMaster.FcHill * (fac.Hill - 1);
-            double gymMult = 1 + TrainingMaster.FcGymXp * (fac.Gym - 1);
-            double dormMult = 1 + TrainingMaster.FcDormXp * (fac.Dorm - 1);
+            double trackMult = 1 + TrainingMaster.FcTrack * (TrainingMaster.EffLv(fac.Track) - 1);
+            double hillMult = 1 + TrainingMaster.FcHill * (TrainingMaster.EffLv(fac.Hill) - 1);
+            double gymMult = 1 + TrainingMaster.FcGymXp * (TrainingMaster.EffLv(fac.Gym) - 1);
+            double dormMult = 1 + TrainingMaster.FcDormXp * (TrainingMaster.EffLv(fac.Dorm) - 1);
             int lv = 0;
             for (int i = 0; i < StatInfo.Count; i++)
             {
@@ -127,7 +127,7 @@ namespace Ekiden.Domain.Screens
                 if (r.Stats[i] >= r.Potential[i]) r.Xp[i] = 0;
             }
             rep.Levelups = lv;
-            double care = TrainingMaster.FcDormR * (fac.Dorm - 1) + TrainingMaster.FcNutriR * (fac.Nutri - 1) + TrainingMaster.FcTrainerR * (fac.Trainer - 1);
+            double care = TrainingMaster.FcDormR * (TrainingMaster.EffLv(fac.Dorm) - 1) + TrainingMaster.FcNutriR * (TrainingMaster.EffLv(fac.Nutri) - 1) + TrainingMaster.FcTrainerR * (TrainingMaster.EffLv(fac.Trainer) - 1);
             double rr = TrainingMaster.K_R_BASE + TrainingMaster.K_R_REC * r.Stats[(int)Stat.REC] / 100.0 + care + k1.RBonus + k2.RBonus
                         + (r.Skills.Contains("skill.recovery_plus") ? 0.05 : 0.0)
                         - (r.Skills.Contains("skill.summer_fade") && monthIndex >= 3 && monthIndex <= 5 ? 0.05 : 0.0);
@@ -150,7 +150,7 @@ namespace Ekiden.Domain.Screens
                 double mLoad = Math.Max(0.5, 1.0 + k1.Risk + k2.Risk + (mil != null ? mil.Risk : 0.0));
                 double mDur = 1.6 - r.Stats[(int)Stat.DUR] / 100.0;
                 double mSk = (r.Skills.Contains("skill.iron_legs") ? 0.5 : 1.0) * (r.Skills.Contains("skill.injury_prone") ? 1.5 : 1.0);
-                double mFac = (1.0 - TrainingMaster.FcGymInj * (fac.Gym - 1)) * (1.0 - TrainingMaster.FcTrainerInj * (fac.Trainer - 1));
+                double mFac = (1.0 - TrainingMaster.FcGymInj * (TrainingMaster.EffLv(fac.Gym) - 1)) * (1.0 - TrainingMaster.FcTrainerInj * (TrainingMaster.EffLv(fac.Trainer) - 1));
                 double p = TrainingMaster.K_P0 * WeekResolver.MFatigue(f0) * mLoad * mDur * mSk * mFac * (camp ? TrainingMaster.K_CAMP_INJ : 1.0) * wm.InjMult;
                 rep.InjuryP = Math.Max(0.0, Math.Min(TrainingMaster.K_P_MAX, p));
             }

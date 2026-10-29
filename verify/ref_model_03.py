@@ -68,7 +68,7 @@ TAPER = [("ks.build_up", "ks.sharpen", "mil.std"), ("ks.sharpen", "ks.pace_run",
 SAFE = ("ks.core", "ks.rest", "mil.low")
 INJURED = ("ks.cross_train", "ks.rest", None)
 
-# 施設・スタッフの効果係数(1レベルあたり。Lv1・不在は効果なし)
+# 施設・スタッフの効果係数(1レベルあたり。Lv1・不在は効果なし。Lv6 以上は eff_lv で 1/4 の効き)
 FC = dict(coach=0.06, track=0.12, hill=0.15, gym_xp=0.15, dorm_xp=0.12, dorm_r=0.02, nutri_r=0.02,
           trainer_r=0.02, gym_inj=0.04, trainer_inj=0.03, trainer_dur=0.03, medical_dur=0.05)
 
@@ -154,8 +154,16 @@ def m_fatigue(f):
     return 4.0
 
 
+FAC_KNEE, FAC_SLOPE_ABOVE = 5, 0.25      # L-70: 施設・スタッフは Lv8 まで。効果に使うレベルは、Lv5 を超えた分が 1/4 の効き
+
+
+def eff_lv(lv):
+    return float(lv) if lv <= FAC_KNEE else FAC_KNEE + FAC_SLOPE_ABOVE * (lv - FAC_KNEE)
+
+
 def lvl(fac, key):
-    return fac.get(key, 1)
+    """効果に使うレベル(L-70。Lv5 までは Lv そのまま)。"""
+    return eff_lv(fac.get(key, 1))
 
 
 def menu_of(r, menu):

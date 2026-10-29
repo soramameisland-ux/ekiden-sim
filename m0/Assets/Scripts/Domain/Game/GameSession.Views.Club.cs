@@ -18,7 +18,7 @@ namespace Ekiden.Domain.Game
 
         private static FacilityEffectView Fx(string code, double perLevel, int lv)
         {
-            return new FacilityEffectView { Code = code, Value = perLevel * (lv - 1), NextValue = perLevel * Math.Min(4, lv) };               // 次のレベルの効果(Lv5 は上限なので同じ値)
+            return new FacilityEffectView { Code = code, Value = perLevel * (TrainingMaster.EffLv(lv) - 1), NextValue = perLevel * (TrainingMaster.EffLv(Math.Min(TrainingMaster.FacMax, lv + 1)) - 1) };               // 次のレベルの効果(最大レベルは上限なので同じ値)
         }
 
         /// <summary>施設・スタッフの効果(03 §4.6)。コード → 文字列テーブルの <c>fx.{コード}</c>。</summary>
@@ -46,8 +46,8 @@ namespace Ekiden.Domain.Game
                     break;
                 case "medical": list.Add(Fx("injury_dur", -TrainingMaster.FcMedicalDur, lv)); break;
                 case "scout":
-                    list.Add(new FacilityEffectView { Code = "scout_sd", Value = Scouting.InfoSd(lv), NextValue = Scouting.InfoSd(Math.Min(5, lv + 1)) });
-                    list.Add(new FacilityEffectView { Code = "gift_kind", Value = lv >= 3 ? 1 : 0, NextValue = Math.Min(5, lv + 1) >= 3 ? 1 : 0 });
+                    list.Add(new FacilityEffectView { Code = "scout_sd", Value = Scouting.InfoSd(lv), NextValue = Scouting.InfoSd(Math.Min(TrainingMaster.FacMax, lv + 1)) });
+                    list.Add(new FacilityEffectView { Code = "gift_kind", Value = lv >= 3 ? 1 : 0, NextValue = Math.Min(TrainingMaster.FacMax, lv + 1) >= 3 ? 1 : 0 });
                     break;
             }
             return list;

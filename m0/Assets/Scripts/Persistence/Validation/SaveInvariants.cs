@@ -78,7 +78,7 @@ namespace Ekiden.Persistence.Validation
             var pt = (JsonObject)s["player_team"];
             if (L(pt["funds"]) < 0) v.Add("I-12 funds");
             var fac = (JsonObject)pt["facilities"];
-            if (fac.Keys.Any(k => !(1 <= L(fac[k]) && L(fac[k]) <= 5))) v.Add("I-12 fac");
+            if (fac.Keys.Any(k => !(1 <= L(fac[k]) && L(fac[k]) <= Ekiden.Domain.Training.TrainingMaster.FacMax))) v.Add("I-12 fac");
             JsonValue cap = pt.Get("captain_id");
             if (cap != null && !cap.IsNull && (!runners.ContainsKey(L(cap).ToString()) || L(((JsonObject)runners[L(cap).ToString()])["grade"]) < 3)) v.Add("I-09");
             var t = (JsonObject)pt["tickets"];

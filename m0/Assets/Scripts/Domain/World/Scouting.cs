@@ -49,7 +49,7 @@ namespace Ekiden.Domain.World
         /// <summary>σ_info = max(1, 8 − 1.2 × (スカウト担当 Lv − 1))。</summary>
         public static double InfoSd(int scoutLv)
         {
-            return Math.Max(1.0, InfoSd0 - InfoSdStep * (scoutLv - 1));
+            return Math.Max(1.0, InfoSd0 - InfoSdStep * (Training.TrainingMaster.EffLv(scoutLv) - 1));
         }
 
         /// <summary>視察で見える Q の見積もり = Q + N(0, σ_info)。候補の look_seed から決まる(label 8・b = 11)ので、同じ候補は同じ誤差で見える。</summary>

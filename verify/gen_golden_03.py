@@ -56,7 +56,7 @@ def make_case(rng, with_indiv, risky=False):
         r["inj"] = (sev, rng.randint(1, 12))
     r["skills"] = set(rng.sample(SKILLS, rng.choice([0, 0, 1, 2, 3])))
     r["bond_avg"] = rng.random() * 1000.0
-    fac = {k: rng.randint(1, 5) for k in FAC_KEYS if rng.random() < 0.9}
+    fac = {k: rng.randint(1, 8) for k in FAC_KEYS if rng.random() < 0.9}      # L-70: Lv8 まで
     style = gifts = None
     if with_indiv:
         style = dict(form=rng.choice(["Speed", "Balance", "Long"]), run=rng.choice(["Pack", "Free", "Solo"]), flow=rng.choice(["Chase", "Even", "Lead"]))

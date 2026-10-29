@@ -1,3 +1,4 @@
+using System;
 using Ekiden.Domain.Numerics;
 using Ekiden.Domain.Training;
 
@@ -47,8 +48,11 @@ namespace Ekiden.Domain.World
             int cap = WorldMath.FacilityCap(rank);
             while (true)
             {
+                // Lv5 までは順番(寮 → スカウト → …)に上限まで。Lv5 を超える強化(L-70)は、全部が Lv5 になってから、レベルの低いものから 1 つずつ(同じなら順番)
                 string pick = null;
-                foreach (string k in Order) if (Level(f, k) < cap) { pick = k; break; }
+                foreach (string k in Order) if (Level(f, k) < Math.Min(cap, TrainingMaster.FacKnee)) { pick = k; break; }
+                if (pick == null)
+                    foreach (string k in Order) if (Level(f, k) < cap && (pick == null || Level(f, k) < Level(f, pick))) pick = k;
                 if (pick == null) break;
                 double cost = WorldMath.UpgradeCost(Level(f, pick));
                 if (funds - cost < WorldK.Reserve) break;

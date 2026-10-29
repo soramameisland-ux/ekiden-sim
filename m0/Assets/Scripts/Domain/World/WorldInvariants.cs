@@ -51,7 +51,7 @@ namespace Ekiden.Domain.World
                 if (!p.IsPlayer) errs.Add("W-5 自校の旗");
                 if (!(p.Funds >= 0)) errs.Add("W-5 資金 " + p.Funds);
                 int[] lv = { p.Fac.Coach, p.Fac.Trainer, p.Fac.Nutri, p.Fac.Dorm, p.Fac.Track, p.Fac.Hill, p.Fac.Gym, p.Fac.Medical, p.Fac.Scout };
-                foreach (int l in lv) if (l < 1 || l > 5) errs.Add("W-5 施設レベル " + l);
+                foreach (int l in lv) if (l < 1 || l > Training.TrainingMaster.FacMax) errs.Add("W-5 施設レベル " + l);
                 if (p.ScoutLv != p.Fac.Scout) errs.Add("W-5 スカウトのレベル");
                 foreach (KeyValuePair<int, int> kv in p.Ob) if (kv.Value < 0) errs.Add("W-5 OB の人数");
                 int active = 0;

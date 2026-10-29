@@ -295,8 +295,8 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 
 | 項目 | 範囲 |
 |------|------|
-| 施設レベル | 1〜5(`FacilityId` ごと)。初期値は開始校の難易度で決まる(05)|
-| スタッフレベル | 1〜5(`StaffRole` ごと)|
+| 施設レベル | 1〜8(`FacilityId` ごと。Lv6〜8 は監督ランクで解放。05 §3.3・L-70)。初期値は開始校の難易度で決まる(05。1〜5)|
+| スタッフレベル | 1〜8(`StaffRole` ごと。同上)|
 | スタッフ人数 | 役職ごとに最大1名(初期値案)。拡張枠は監督ランクで解放(01 §3.3)|
 
 ### 3.9 特別招聘券(Ticket)と ContentPack
@@ -401,7 +401,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | `name` / `description` | string | 名称テーブル | — |
 | `strength_rank` | int | 開始校を選ぶ戦力順位(先発10人の力の平均の順位)| 1〜36 |
 | `prestige` / `fame_hist` | int / double? | 名声と名声ポイントの履歴の上書き(省略なら、その学校のまま)| 0〜1000 / 0〜40 |
-| `facilities` / `staff` | map<id, int> | 施設・スタッフのレベル | 各 1〜5 |
+| `facilities` / `staff` | map<id, int> | 施設・スタッフのレベル | 各 1〜8 |
 | `funds` | int | 資金(万円)| 0〜5000 |
 | `members` | int? | 部員数(省略なら、その学校の名簿のまま)| 5〜40 |
 | `ob_level` | int? | 各地方のOBの人数の初期値 | 0〜25 |
@@ -691,7 +691,7 @@ supply_weight = { A:4.0, B:2.5, C:1.5, D:1.0 }[pop_tier] × (elite ? 1.3 : 1.0)
 | I-09 | `captain_id` は自校の在籍選手で、`grade ≥ 3` |
 | I-10 | エントリーした選手は自校の在籍選手。留学生の登録数・出走数は `RaceRules` の上限以下 |
 | I-11 | 実行時IDは一意で再利用されない |
-| I-12 | `funds ≥ 0`。施設レベルは1〜5 |
+| I-12 | `funds ≥ 0`。施設レベルは1〜8 |
 | I-13 | 各校の `roster` は40人以下。他校の `RivalRunner` は `0 ≤ prog ≤ 0.95`。1学年の入学人数は定員(05 §2)以下 |
 | I-17 | 上位級(`V ≥ V_TOP`)の入学人数は、その年度の奨学金枠(05 §2)以下 |
 | I-14 | `tickets.stock ∈ [0, K_TICKET_STOCK_MAX]`、`stock < K_TICKET_STOCK_MAX` ⇒ `bank = 0`。入手の合計 = 使用の合計 + `stock` + `bank`(失効しない)。券の使用は同一年度に `K_TICKET_PER_YEAR` 回まで。在籍する `recruit_source = Ticket` の数 + `pending`(0/1)≤ `K_TICKET_ACTIVE_MAX` |

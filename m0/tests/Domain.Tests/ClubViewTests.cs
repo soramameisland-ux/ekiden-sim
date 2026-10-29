@@ -56,7 +56,15 @@ namespace Ekiden.Domain.Tests
                 foreach (FacilityEffectView e in r.Effects.Where(e => e.Code != "scout_sd" && e.Code != "gift_kind")) Assert.AreEqual(0.0, e.Value, 1e-12, "Lv1 は効果なし: " + r.Key + " " + e.Code);
             Assert.AreEqual(8.0, gs.Ops().Rows.Single(r => r.Key == "scout").Effects.Single(e => e.Code == "scout_sd").Value, 1e-12);
             SetAll(gs, 5);
-            Assert.AreEqual(gs.Ops().Rows.Single(r => r.Key == "coach").Effects[0].Value, gs.Ops().Rows.Single(r => r.Key == "coach").Effects[0].NextValue, 1e-12, "Lv5 は次がない(同じ値)");
+            FacilityEffectView c5 = gs.Ops().Rows.Single(r => r.Key == "coach").Effects[0];
+            Assert.AreEqual(0.24, c5.Value, 1e-12); Assert.AreEqual(0.06 * 4.25, c5.NextValue, 1e-12, "Lv5 → 6 は Lv5 を超えた分が 1/4 の効き(L-70): 効果に使うレベルは 5.25");
+            SetAll(gs, 7);
+            FacilityEffectView c7 = gs.Ops().Rows.Single(r => r.Key == "coach").Effects[0];
+            Assert.AreEqual(0.06 * 4.5, c7.Value, 1e-12); Assert.AreEqual(0.06 * 4.75, c7.NextValue, 1e-12);
+            Assert.AreEqual(8.0 - 1.2 * 4.5, gs.Ops().Rows.Single(r => r.Key == "scout").Effects.Single(e => e.Code == "scout_sd").Value, 1e-12, "σ = 8 − 1.2 × (効果に使うレベル − 1)");
+            SetAll(gs, 8);
+            FacilityEffectView c8 = gs.Ops().Rows.Single(r => r.Key == "coach").Effects[0];
+            Assert.AreEqual(c8.Value, c8.NextValue, 1e-12, "Lv8 は次がない(同じ値)");
         }
 
         [Test]

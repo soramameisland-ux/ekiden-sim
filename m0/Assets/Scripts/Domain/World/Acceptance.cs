@@ -21,9 +21,9 @@ namespace Ekiden.Domain.World
 
         public static readonly Dictionary<Difficulty, Band> Bands = new Dictionary<Difficulty, Band>
         {
-            { Difficulty.Elite, new Band { Win = 0.590, WinTol = 0.044, Triple = 0.305, TripleTol = 0.053, Clear = 6.35, ClearTol = 1.07, P = 72.49, PTol = 0.29 } },
-            { Difficulty.Mid, new Band { Win = 0.553, WinTol = 0.058, Triple = 0.275, TripleTol = 0.056, Clear = 12.99, ClearTol = 2.21, P = 72.18, PTol = 0.44 } },
-            { Difficulty.Low, new Band { Win = 0.441, WinTol = 0.071, Triple = 0.185, TripleTol = 0.052, Clear = 25.48, ClearTol = 3.44, P = 70.90, PTol = 1.01 } },
+            { Difficulty.Elite, new Band { Win = 0.658, WinTol = 0.044, Triple = 0.383, TripleTol = 0.056, Clear = 6.35, ClearTol = 1.07, P = 72.98, PTol = 0.29 } },
+            { Difficulty.Mid, new Band { Win = 0.585, WinTol = 0.062, Triple = 0.321, TripleTol = 0.063, Clear = 12.99, ClearTol = 2.21, P = 72.47, PTol = 0.47 } },
+            { Difficulty.Low, new Band { Win = 0.461, WinTol = 0.073, Triple = 0.204, TripleTol = 0.056, Clear = 25.48, ClearTol = 3.44, P = 71.02, PTol = 1.03 } },
         };
 
         /// <summary>強豪県の +3(02 §6)を入れた世界の戦力 P は、入れない世界(= 参照モデルと同じ構成)より高くなる(L-44)。その差(同じシード・対)が取ってよい範囲。</summary>

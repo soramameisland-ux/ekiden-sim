@@ -104,9 +104,9 @@ namespace Ekiden.Domain.Tests
         [Test]
         public void TV7_RankAndCap()
         {
-            int[] pts = { 0, 5, 6, 14, 15, 29, 30, 49, 50, 300 };
-            int[] rank = { 1, 1, 2, 2, 3, 3, 4, 4, 5, 10 };
-            int[] cap = { 3, 3, 3, 3, 4, 4, 4, 4, 5, 5 };
+            int[] pts = { 0, 5, 6, 14, 15, 29, 30, 49, 50, 119, 120, 229, 230, 299, 300 };
+            int[] rank = { 1, 1, 2, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9, 10 };
+            int[] cap = { 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 8 };            // ランク 3 / 5 / 7 / 9 / 10 で Lv4 / 5 / 6 / 7 / 8(L-70)
             for (int i = 0; i < pts.Length; i++)
             {
                 var s = new School { CumPoints = pts[i] };

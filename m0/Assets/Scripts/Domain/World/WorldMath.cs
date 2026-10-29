@@ -83,11 +83,12 @@ namespace Ekiden.Domain.World
 
         public static double RunnerExpense(int members) { return WorldK.ExpPerRunner * members; }
 
-        public static double UpgradeCost(int currentLv) { return WorldK.UpBase + WorldK.UpSlope * currentLv; }
+        public static double UpgradeCost(int currentLv) { return currentLv >= 5 ? WorldK.UpCostHi[currentLv - 5] : WorldK.UpBase + WorldK.UpSlope * currentLv; }
 
         public static int FacilityCap(int rank)
         {
-            return WorldK.FacCapBase + (rank >= WorldK.FacCapR4 ? 1 : 0) + (rank >= WorldK.FacCapR5 ? 1 : 0);
+            return WorldK.FacCapBase + (rank >= WorldK.FacCapR4 ? 1 : 0) + (rank >= WorldK.FacCapR5 ? 1 : 0)
+                   + (rank >= WorldK.FacCapR6 ? 1 : 0) + (rank >= WorldK.FacCapR7 ? 1 : 0) + (rank >= WorldK.FacCapR8 ? 1 : 0);
         }
     }
 }

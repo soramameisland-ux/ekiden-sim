@@ -231,9 +231,9 @@ namespace Ekiden.Persistence.Validation
             foreach (string f in fac.Keys.ToList())
             {
                 long lv = L(fac[f]);
-                if (!(1 <= lv && lv <= 5))
+                if (!(1 <= lv && lv <= Ekiden.Domain.Training.TrainingMaster.FacMax))
                 {
-                    fac[f] = N(Math.Max(1, Math.Min(5, lv)));
+                    fac[f] = N(Math.Max(1, Math.Min(Ekiden.Domain.Training.TrainingMaster.FacMax, lv)));
                     fixes.Add("I-12 fac");
                 }
             }

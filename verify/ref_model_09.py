@@ -678,7 +678,7 @@ def check_invariants(s):
     pt = s["player_team"]
     if pt["funds"] < 0:
         v.append("I-12 funds")
-    if any(not (1 <= lv <= 5) for lv in pt["facilities"].values()):
+    if any(not (1 <= lv <= 8) for lv in pt["facilities"].values()):
         v.append("I-12 fac")
     cap = pt.get("captain_id")
     if cap is not None and (str(cap) not in runners or runners[str(cap)]["grade"] < 3):
@@ -808,8 +808,8 @@ def validate_and_repair(s):
         pt["funds"] = 0
         fixes.append("I-12 funds")
     for f, lv in list(pt["facilities"].items()):
-        if not (1 <= lv <= 5):
-            pt["facilities"][f] = max(1, min(5, lv))
+        if not (1 <= lv <= 8):
+            pt["facilities"][f] = max(1, min(8, lv))
             fixes.append("I-12 fac")
     cap = pt.get("captain_id")
     if cap is not None and (str(cap) not in runners or runners[str(cap)]["grade"] < 3):

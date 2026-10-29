@@ -28,7 +28,7 @@ namespace Ekiden.Domain.Training
         }
     }
 
-    /// <summary>施設・スタッフのレベル(1〜5。1 = 効果なし)。</summary>
+    /// <summary>施設・スタッフのレベル(1〜8。1 = 効果なし。6 以上は監督ランク 7 / 9 / 10 で解放。L-70)。効果に使うレベルは <see cref="TrainingMaster.EffLv"/>。</summary>
     public struct FacilityLevels
     {
         public int Coach, Trainer, Nutri, Dorm, Track, Hill, Gym, Medical;
@@ -63,7 +63,15 @@ namespace Ekiden.Domain.Training
             { nameof(K_R_MIN), K_R_MIN }, { nameof(K_R_MAX), K_R_MAX }, { nameof(K_P0), K_P0 }, { nameof(K_P_MAX), K_P_MAX },
             { nameof(K_TAPER_L_MAX), K_TAPER_L_MAX }, { nameof(K_SAFETY_F), K_SAFETY_F }, { nameof(K_RACE_FATIGUE_PER_KM), K_RACE_FATIGUE_PER_KM },
             { nameof(K_CAMP_XP), K_CAMP_XP }, { nameof(K_CAMP_INJ), K_CAMP_INJ },
+            { "K_FAC_MAX", FacMax }, { "K_FAC_KNEE", FacKnee }, { "K_FAC_SLOPE_ABOVE", FacSlopeAbove },
         };
+
+        /// <summary>施設・スタッフの最大レベルと、効果が割り引かれるレベル(05 §4.2・03 §4.6。L-70)。Lv5 を超えた分は <see cref="FacSlopeAbove"/>(1/4)の効き。</summary>
+        public const int FacMax = 8, FacKnee = 5;
+        public const double FacSlopeAbove = 0.25;
+
+        /// <summary>効果に使うレベル。Lv5 までは Lv そのまま、Lv6 以上は Lv5 を超えた分が 1/4 の効き(5.25 / 5.5 / 5.75)。</summary>
+        public static double EffLv(int lv) { return lv <= FacKnee ? lv : FacKnee + FacSlopeAbove * (lv - FacKnee); }
 
         // 施設・スタッフの効果係数(1 レベルあたり)
         public const double FcCoach = 0.06, FcTrack = 0.12, FcHill = 0.15, FcGymXp = 0.15, FcDormXp = 0.12, FcDormR = 0.02, FcNutriR = 0.02,

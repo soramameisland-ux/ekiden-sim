@@ -63,7 +63,7 @@ namespace Ekiden.Domain.World
 
         public static List<ScenarioDef> BuiltIn() { return new List<ScenarioDef> { Elite(), Mid(), Low(), Club() }; }
 
-        private static bool Lv(int v) { return v >= 1 && v <= 5; }
+        private static bool Lv(int v) { return v >= 1 && v <= 5; }       // 開始時のレベル(各 1〜5。Lv6〜8 はランクで解放。L-70)
 
         /// <summary>検証(07 §10.1 の範囲)。違反の文言のリスト(空なら適合)。</summary>
         public static List<string> Validate(IEnumerable<ScenarioDef> defs)

@@ -32,7 +32,7 @@ namespace Ekiden.Domain.World
         /// <summary>施設・スタッフの平均レベル(8 項目。05 §5)。</summary>
         public static double LvEff(FacilityLevels f)
         {
-            return (f.Coach + f.Trainer + f.Nutri + f.Dorm + f.Track + f.Hill + f.Gym + f.Medical) / 8.0;
+            return (TrainingMaster.EffLv(f.Coach) + TrainingMaster.EffLv(f.Trainer) + TrainingMaster.EffLv(f.Nutri) + TrainingMaster.EffLv(f.Dorm) + TrainingMaster.EffLv(f.Track) + TrainingMaster.EffLv(f.Hill) + TrainingMaster.EffLv(f.Gym) + TrainingMaster.EffLv(f.Medical)) / 8.0;
         }
 
         /// <summary>施設レベル(他校は名声と指導体制から。05 §9.2)。</summary>
@@ -42,7 +42,7 @@ namespace Ekiden.Domain.World
             return Clamp(1.0 + WorldK.RivalFacCoef * Math.Pow(Prestige / 1000.0, WorldK.RivalFacExp) + WorldK.CoachLv * CoachQ, 0.5, 6.5);
         }
 
-        public double Dorm() { return IsPlayer ? Fac.Dorm : Math.Min(5.0, Lv()); }
+        public double Dorm() { return IsPlayer ? TrainingMaster.EffLv(Fac.Dorm) : Math.Min(5.0, Lv()); }
 
         /// <summary>監督ランク(累計評価ポイントから。05 §3.3)。</summary>
         public int Rank()

@@ -37,12 +37,13 @@ namespace Ekiden.Domain.World
         public const double RivalFacCoef = 3.5, RivalFacExp = 0.8;
         // 資金(万円)
         public const double IncBase = 800.0, IncPrestige = 1.0, IncPrestige2 = 0.0012, IncPoint = 25.0;
-        public static readonly double[] ExpStaff = { 0, 40, 90, 160, 260 };
+        public static readonly double[] UpCostHi = { 3000, 4000, 5000 };        // Lv5→6 / 6→7 / 7→8 の強化費用(L-70。Lv5 までは UpBase + UpSlope × Lv)
+        public static readonly double[] ExpStaff = { 0, 40, 90, 160, 260, 380, 520, 680 };
         public const double ExpFacUpkeep = 8.0, ExpPerRunner = 15.0;
         public const double UpBase = 300.0, UpSlope = 250.0, Reserve = 500.0;
         // 監督ランク
         public static readonly int[] RankCum = { 0, 6, 15, 30, 50, 80, 120, 170, 230, 300 };
-        public const int FacCapBase = 3, FacCapR4 = 3, FacCapR5 = 5;
+        public const int FacCapBase = 3, FacCapR4 = 3, FacCapR5 = 5, FacCapR6 = 7, FacCapR7 = 9, FacCapR8 = 10;       // Lv6〜8 はランク 7 / 9 / 10 で解放(L-70)
         // 入学
         public const int QuotaNormal = 10, QuotaSmall = 8, RosterMax = 40;
         public const double SmallPrestige = 150.0;
