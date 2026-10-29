@@ -40,7 +40,7 @@ K = dict(
     SKILL_P=dict(mountain_god=8.0, downhill_master=5.0, ace_section=3.0, anchor=2.0, revenge=4.0),
     AVAIL_ENTRY=0.95, AVAIL_DAY=0.97,
     FORM_DIST_TAPER=[(2, 0.55), (1, 0.31), (0, 0.12), (-1, 0.02)],
-    QUAL_KM=20.0, QUAL_ENTRY=12, QUAL_COUNT=10, QUAL_PASS=10,
+    QUAL_KM=20.0, QUAL_ENTRY=12, QUAL_COUNT=10, QUAL_PASS=13,   # 第三戦 = シード 10 + 通過 13 = 23 校(04 §3。L-67)
 )
 
 W = {  # 区間タイプ別の適性値の重み (04 §4.1)

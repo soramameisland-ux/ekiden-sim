@@ -21,9 +21,9 @@ namespace Ekiden.Domain.World
 
         public static readonly Dictionary<Difficulty, Band> Bands = new Dictionary<Difficulty, Band>
         {
-            { Difficulty.Elite, new Band { Win = 0.589, WinTol = 0.053, Triple = 0.299, TripleTol = 0.063, Clear = 6.94, ClearTol = 1.29, P = 72.4, PTol = 0.4 } },
-            { Difficulty.Mid, new Band { Win = 0.535, WinTol = 0.051, Triple = 0.240, TripleTol = 0.056, Clear = 12.6, ClearTol = 1.9, P = 72.0, PTol = 0.4 } },
-            { Difficulty.Low, new Band { Win = 0.441, WinTol = 0.089, Triple = 0.188, TripleTol = 0.059, Clear = 25.4, ClearTol = 4.2, P = 70.7, PTol = 1.2 } },
+            { Difficulty.Elite, new Band { Win = 0.617, WinTol = 0.052, Triple = 0.331, TripleTol = 0.060, Clear = 6.98, ClearTol = 1.25, P = 72.49, PTol = 0.33 } },
+            { Difficulty.Mid, new Band { Win = 0.549, WinTol = 0.058, Triple = 0.262, TripleTol = 0.062, Clear = 11.65, ClearTol = 1.86, P = 72.15, PTol = 0.38 } },
+            { Difficulty.Low, new Band { Win = 0.442, WinTol = 0.079, Triple = 0.188, TripleTol = 0.055, Clear = 25.55, ClearTol = 3.84, P = 70.68, PTol = 1.22 } },
         };
 
         /// <summary>強豪県の +3(02 §6)を入れた世界の戦力 P は、入れない世界(= 参照モデルと同じ構成)より高くなる(L-44)。その差(同じシード・対)が取ってよい範囲。</summary>
@@ -145,10 +145,15 @@ namespace Ekiden.Domain.World
             return WinInBand(b, noBonus) && TripleInBand(b, noBonus) && ClearInBand(b, noBonus) && PInBand(b, noBonus);
         }
 
-        /// <summary>T4c(実体の自校): 優勝率・三冠率は帯の内側、クリア年度は帯の幅 + <see cref="REAL_CLEAR_SLACK"/> の内側、戦力 P は +3(L-44)を許した帯の内側。</summary>
+        /// <summary>実体の自校の優勝率・三冠率の、帯の下側に足す余裕。実体は抽象の自校より、同じ世界で優勝率が 0.03 前後・三冠率が 0.03〜0.06 低い(05 §14.11。L-55)。
+        /// 帯の幅は『C# の 120 シードと参照の 120 シードの差』の 3σ で、この系統的な差は見込んでいない(L-67 で参照の帯を取り直したとき、強豪の三冠率が下端を 0.009 下回った)。</summary>
+        public const double REAL_RATE_SLACK = 0.03;
+
+        /// <summary>T4c(実体の自校): 優勝率・三冠率は帯の内側(下側は <see cref="REAL_RATE_SLACK"/> まで許す)、クリア年度は帯の幅 + <see cref="REAL_CLEAR_SLACK"/> の内側、戦力 P は +3(L-44)を許した帯の内側。</summary>
         public static bool RealAccepted(Band b, SeedResult real)
         {
-            return WinInBand(b, real) && TripleInBand(b, real)
+            return real.WinRate >= b.Win - b.WinTol - REAL_RATE_SLACK && real.WinRate <= b.Win + b.WinTol
+                   && real.TripleRate >= b.Triple - b.TripleTol - REAL_RATE_SLACK && real.TripleRate <= b.Triple + b.TripleTol
                    && Math.Abs(real.Clear - b.Clear) <= b.ClearTol + REAL_CLEAR_SLACK
                    && real.P >= b.P - b.PTol && real.P <= b.P + b.PTol + L44_P_SHIFT_MAX;
         }

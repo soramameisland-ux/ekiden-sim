@@ -81,7 +81,7 @@ namespace Ekiden.SimCli
                 Console.WriteLine("  戦力 P     " + r.P.ToString("F1") + "     " + abs.Mean.P.ToString("F1") + "            " + b.P.ToString("F1") + " ± " + b.PTol.ToString("F1") + "  " + Common.Mark(Acceptance.PInBand(b, r)) + "  (+3 を許す上限 " + (b.P + b.PTol + Acceptance.L44_P_SHIFT_MAX).ToString("F1") + ")");
                 bool ok = Acceptance.RealAccepted(b, r);
                 if (!ok) bad++;
-                Console.WriteLine("  " + Common.Mark(ok) + " T4c 実体の自校: 優勝率・三冠率が帯の内側 / クリア年度が帯 ± " + Acceptance.REAL_CLEAR_SLACK.ToString("F1") + " 年度の内側 / 戦力 P が +3 を許した帯の内側");
+                Console.WriteLine("  " + Common.Mark(ok) + " T4c 実体の自校: 優勝率・三冠率が帯の内側(下側は " + Acceptance.REAL_RATE_SLACK.ToString("F2") + " まで許す)/ クリア年度が帯 ± " + Acceptance.REAL_CLEAR_SLACK.ToString("F1") + " 年度の内側 / 戦力 P が +3 を許した帯の内側");
             }
             Console.WriteLine(bad == 0 ? "T4c: すべて許容の内側" : "T4c: 許容の外 " + bad + " 件");
             return bad == 0 ? 0 : 1;

@@ -75,8 +75,8 @@ namespace Ekiden.Domain.Tests
             int ownIndex = again.FindIndex(x => x.Id == gs.School.Id);
             Assert.AreEqual(ownIndex + 1, v.OwnRank); Assert.AreEqual(again[ownIndex].Total, v.OwnTotalDs);
             Assert.AreEqual(ownIndex < RaceConstants.QualPass, v.Passed);
-            Assert.AreEqual(again[RaceConstants.QualPass - 1].Total, v.LineDs, "通過ラインは 10 位の合計");
-            if (v.Passed) Assert.AreEqual(again[RaceConstants.QualPass].Total - again[ownIndex].Total, v.MarginDs, "通過: 次点(11 位)との差");
+            Assert.AreEqual(again[RaceConstants.QualPass - 1].Total, v.LineDs, "通過ラインは通過の最下位(QualPass 位)の合計");
+            if (v.Passed) Assert.AreEqual(again[RaceConstants.QualPass].Total - again[ownIndex].Total, v.MarginDs, "通過: 次点(QualPass + 1 位)との差");
             else Assert.AreEqual(again[ownIndex].Total - again[RaceConstants.QualPass - 1].Total, v.MarginDs, "落選: 通過ラインに足りなかった差");
             Assert.GreaterOrEqual(v.MarginDs, 0, "差はどちらの向きでも 0 以上(通過 = 余裕 / 落選 = 足りなかった)");
             if (!v.Passed) Assert.Greater(v.MarginDs, 0);

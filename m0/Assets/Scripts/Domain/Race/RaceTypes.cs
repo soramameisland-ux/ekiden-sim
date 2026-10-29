@@ -58,7 +58,7 @@ namespace Ekiden.Domain.Race
         public const double GekiF0 = 0.5, GekiFMot = 0.1, GekiFBond = 0.3, GekiFLo = 0.3, GekiFHi = 1.2;          // 走者ごとの檄の効き f_k(04 §9.2)
         public const double SkillMountainGod = 8.0, SkillDownhillMaster = 5.0, SkillAceSection = 3.0, SkillAnchor = 2.0;
         public const double AvailEntry = 0.95, AvailDay = 0.97;
-        public const double QualKm = 20.0; public const int QualEntry = 12, QualCount = 10, QualPass = 10;
+        public const double QualKm = 20.0; public const int QualEntry = 12, QualCount = 10, QualPass = 13;       // 第三戦 = シード 10 + 通過 13 = 23 校(04 §3。L-67)
         public const double MultFloor = 0.85;
     }
 
