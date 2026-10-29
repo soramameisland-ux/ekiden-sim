@@ -32,6 +32,7 @@ namespace Ekiden.SimCli
                 case "records": return RecordsCmd.Run(args.Skip(1).ToArray());
                 case "diag-real": return DiagRealCmd.Run(args.Skip(1).ToArray());
                 case "extras": return ExtrasCmd.Run(args.Skip(1).ToArray());
+                case "perf": return Ekiden.Verification.PerfRunner.Run(Console.Out, Common.Flag(args, "quick")) == 0 ? 0 : 1;
                 case "help":
                 default:
                     Console.WriteLine("SimCli コマンド:");

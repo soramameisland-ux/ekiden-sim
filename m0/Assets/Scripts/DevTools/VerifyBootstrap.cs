@@ -17,6 +17,9 @@ namespace Ekiden.DevTools
     {
         public const string Arg = "-ekidenVerify";
 
+        /// <summary>これも付けると、T5 の性能の測定(<see cref="PerfRunner"/>)も走って <c>perf.txt</c> に書く(合否には入れない。09 §14.2)。例: <c>EkidenVerify.exe -batchmode -nographics -ekidenVerify C:\temp\verify -ekidenPerf</c></summary>
+        public const string PerfArg = "-ekidenPerf";
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void AutoRun()
         {
@@ -27,7 +30,11 @@ namespace Ekiden.DevTools
                 ? args[i + 1]
                 : Path.Combine(Application.persistentDataPath, "verify");
             int rc;
-            try { rc = RunAll(dir); }
+            try
+            {
+                rc = RunAll(dir);
+                if (Array.IndexOf(args, PerfArg) >= 0) WritePerf(dir);
+            }
             catch (Exception e)
             {
                 File.WriteAllText(Path.Combine(dir, "result.txt"), "NG 例外: " + e, new UTF8Encoding(false));
@@ -47,6 +54,21 @@ namespace Ekiden.DevTools
             using (var w = new StreamWriter(Path.Combine(dir, "determinism.txt"), false, utf8) { NewLine = "\n" }) bad = DeterminismRunner.Run(w, seeds, years);
             File.WriteAllText(Path.Combine(dir, "result.txt"), bad == 0 ? "OK" : "NG T3 の不一致 " + bad + " 件", utf8);
             return bad == 0 ? 0 : 1;
+        }
+
+        /// <summary>T5 の性能の測定を <c>perf.txt</c> に書く。測れなかったら例外の内容を書く(T1・T3 の結果は変えない)。</summary>
+        public static void WritePerf(string dir)
+        {
+            Directory.CreateDirectory(dir);
+            var utf8 = new UTF8Encoding(false);
+            try
+            {
+                using (var w = new StreamWriter(Path.Combine(dir, "perf.txt"), false, utf8) { NewLine = "\n" }) PerfRunner.Run(w);
+            }
+            catch (Exception e)
+            {
+                File.WriteAllText(Path.Combine(dir, "perf.txt"), "測定できなかった: " + e, utf8);
+            }
         }
 
         /// <summary>どの環境で走らせたか(記録用)。</summary>

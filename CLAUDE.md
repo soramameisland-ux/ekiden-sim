@@ -37,6 +37,7 @@ dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)
 $S accept all 120 45 --real                # T4c(約 5 分)。--skilled を足すと上級の方針との比較(約 12 分)/ --scout-button = スカウトを画面のボタンで(L-58)/ --flow-only = その基準
+$S perf --quick                            # T5 の一部(Unity でも走る PerfRunner。IL2CPP は -ekidenPerf)
 $S flow 1 Mid 2                            # 進行制御の停止の並び
 python3 -I tools/compare_vectors.py        # T1 のベクタを SimCli(C#)と参照モデルで突き合わせる(自分で SimCli を走らせる)
 python3 -I ../verify/ref_model_09.py inventory

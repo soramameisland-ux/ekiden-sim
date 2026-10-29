@@ -84,6 +84,7 @@ Unity のプロジェクトの根は `m0/` 自身(`Assets/` `Packages/` `Project
      $p.ExitCode      # 0 = T3 がすべて一致
      ```
   4. 照合: `python -I tools/compare_vectors.py Logs\verify\il2cpp\vectors.txt`(`不一致 0` が合格)。`determinism.txt` に `×` がないこと、`result.txt` が `OK` であることも見る。`env.txt` にバックエンド(IL2CPP / Mono)・OS・CPU が残る。
+  5. 性能(T5。合否には入れない): 手順 3 の引数に `"-ekidenPerf"` を足すと `perf.txt`(世界の生成・1 年度の更新・レース 1 本・週の解決・割り当て)も出る。.NET の同じ測定は `$S perf [--quick]`。結果は 09 §17.8 に記録する。
 
 ## M1: Unity での手順(画面・試験・ビルド。`UNITY_REPORT.md` に結果)
 
