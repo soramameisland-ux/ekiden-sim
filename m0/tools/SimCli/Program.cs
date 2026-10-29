@@ -29,6 +29,7 @@ namespace Ekiden.SimCli
                 case "sync-sim": return SyncSimCmd.Run(args.Skip(1).ToArray());
                 case "vectors": return VectorsCmd.Run(args.Skip(1).ToArray());
                 case "strings": return StringsCmd.Run(args.Skip(1).ToArray());
+                case "records": return RecordsCmd.Run(args.Skip(1).ToArray());
                 case "help":
                 default:
                     Console.WriteLine("SimCli コマンド:");
