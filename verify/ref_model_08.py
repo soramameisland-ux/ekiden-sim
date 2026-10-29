@@ -894,7 +894,10 @@ def validate_catalog(verbose=True):
 
 
 # ================================================================ R-14 1年度の操作時間(budget)
-T = dict(TAP=1.0, READ=2.0, TRANS=0.5, WEEK_ANIM=1.2, SEC_ANIM=6.0, DIGEST_SEC=2.0, NOTICE=4.0, INTERACT=12.0)
+T = dict(TAP=1.0, READ=2.0, TRANS=0.5, WEEK_ANIM=1.2, SEC_ANIM=6.0, DIGEST_SEC=2.0, NOTICE=4.0, INTERACT=12.0,
+         FINISH=2.0, HALF=2.0, DIGEST_PEAK=1.0)          # R-14: フィニッシュの確定表示(最終区間のあと)/ 第三戦の往路の終わりの表示 / ダイジェストの山場の区間の追加
+# 山場(首位交代・記録の更新のどちらかが見どころに入る区間)の割合。C# の実測(強豪・中堅・弱小 × 12 シード × 8 年度。`RaceHighlights.Digest(Detect(...))`)
+PEAK_SHARE = {"Fall": 0.407, "National": 0.372, "NewYear": 0.303}
 BUDGET = dict(year_start=180, plan=480, scout=240, race=720, event=180, year_end=120)   # 01 §3.4(年度末は 08 で追加)
 SECTIONS = {"Fall": 6, "National": 8, "NewYear": 10}
 SWAPS_USED = {"Fall": 1, "National": 2, "NewYear": 3}      # 当日変更の平均使用数(上限は 1 / 2 / 4)
@@ -928,7 +931,8 @@ def race_time(name, mode, manual):
         per = step(taps=1.5 + 0.5, reads=1, anim=T["SEC_ANIM"], screens=0)   # 指示 + 檄(平均0.5回)+ 区間の演出
         t += n * per
     else:   # digest
-        t += n * step(reads=0.5, anim=T["DIGEST_SEC"], screens=0)
+        t += n * step(reads=0.5, anim=T["DIGEST_SEC"] + PEAK_SHARE[name] * T["DIGEST_PEAK"], screens=0)   # 山場の区間は追加の演出(平均で割合を掛ける)
+    t += T["FINISH"] + (T["HALF"] if name == "NewYear" else 0.0)           # フィニッシュの確定表示 + 第三戦の往路の終わり
     t += step(taps=2, reads=6)                             # 結果
     return t
 
@@ -951,7 +955,7 @@ def year_time(mode, manual_entry, plan_auto, event_auto, scout_auto):
 
 def cmd_budget():
     print("== 1年度の操作時間の見積もり(R-14)。機械的な最小時間(タップ・読み取り・演出)。考える時間は含まない")
-    print(f"  定数: タップ {T['TAP']}秒 / 読み取り1項目 {T['READ']}秒 / 画面遷移 {T['TRANS']}秒 / 週の演出 {T['WEEK_ANIM']}秒 / 1区間の演出 {T['SEC_ANIM']}秒(ダイジェスト {T['DIGEST_SEC']}秒)")
+    print(f"  定数: タップ {T['TAP']}秒 / 読み取り1項目 {T['READ']}秒 / 画面遷移 {T['TRANS']}秒 / 週の演出 {T['WEEK_ANIM']}秒 / 1区間の演出 {T['SEC_ANIM']}秒(ダイジェスト {T['DIGEST_SEC']}秒 + 山場 {T['DIGEST_PEAK']}秒 × 割合)/ フィニッシュ {T['FINISH']}秒 / 往路の終わり {T['HALF']}秒")
     modes = [("A フル観戦・手動(既定の設定)", dict(mode="full", manual_entry=True, plan_auto=False, event_auto=False, scout_auto=False)),
              ("B ダイジェスト・手動の計画", dict(mode="digest", manual_entry=True, plan_auto=False, event_auto=False, scout_auto=False)),
              ("C ダイジェスト・おまかせ(計画・イベント自動)", dict(mode="digest", manual_entry=False, plan_auto=True, event_auto=True, scout_auto=False)),
