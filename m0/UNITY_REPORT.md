@@ -63,3 +63,80 @@ EditMode 試験(`Assets/Tests/EditMode`・asmdef `Ekiden.Unity.Tests`。`-runTes
 - `Platform/Fake`(`FakeClock` など)には asmdef がなく Unity では Assembly-CSharp に入るので、試験の asmdef から参照できない(`error CS0246: FakeClock`)。試験の中に同じ小さな時計 `TestClock` を置いた。
 - 最初の版の試験の誤り: ①`Advance()` は停止でしか止まらないので『毎週』を数えられなかった(23 週)→ 毎週は `StepWeek`、停止でしか出ない View は進行制御で、の 2 本に分けた ②『おまかせ』の既定では `MonthPlan` で止まらない ③復元した流れは同じ停止をもう一度出すので、`Advance()` の回数をそろえた比較は位置がずれる(`notifications` の差に見えた)→ 同じ節目でそろえて比べる。
 - 観戦モード(`TeamSettings.SpectateMode`)を変える命令(`OpResult` を返すもの)が Domain にない。設定の画面(SC-04)と試験は `State.Settings` を直接書いている(設定値で規則ではないので、08b の『— App 層』の扱い)。命令を足すかは判断待ち。
+## U3. UI Toolkit の技術検証(09 §15.5。結果の表は 09 §15.5 の直後『M1 の検証結果』)
+
+- 日本語: Noto Sans JP(Regular / Bold。OFL。`Assets/Fonts/` にライセンス文 `NotoSansJP-OFL.txt`)の**動的な** TextCore の FontAsset。使う文字 934 字(表・名前の表・整形)がすべてフォントにある(EditMode 試験)。
+- 基準キャンバス: PanelSettings = 画面サイズに合わせて拡大・基準 640×360・高さに合わせる。撮影は `m0/Captures/2026-10-30/run5/res/`(640×360・1280×720・1920×1080・2560×1440・720×1280 と、1280×720 の文字 150%)。
+- パッド / キーボード: `UiRoot` が Input System を直接読み、`FocusGrid`(08a の grid)で動かす。仮想のゲームパッドで十字キー・A・B を確認。主要 9 画面で、十字キーだけで全領域に届く。
+- フレーム時間(PC・IL2CPP): 重い 5 画面の p95 = 月間計画 1.22 ms・部員一覧 0.66 ms・レース進行 0.67 ms・スカウト 0.84 ms・歴史 0.72 ms。画面の作り直しは p95 1.2〜5.6 ms。メモリ: 確保済み 245 MB(Profiler の reserved)。
+- 世界の生成: `GameSession.New` 0.15〜0.17 秒・新規ゲーム(生成 + 最初のセーブ)0.27〜0.33 秒。裏のスレッド。
+- **判断**: PC で測れる範囲では 5 項目とも UI Toolkit で足りる。uGUI に切り替える理由は、いまのところない(モバイル実機の測定待ち)。
+
+## U4. M1 の縦切り(画面)
+
+`Assets/Scripts/Unity/UI/`。プレースホルダーの見た目で、View を表示し、命令だけで操作する。停止(`StopKind`)→ 画面は `ScreenRouter.ShowStop`。
+
+| 優先 | 作った画面 |
+|------|-----------|
+| 1 | `ScreenRouter`(停止 → 画面・戻る・作り直し時のフォーカスの復元 F3)、共通ヘッダ(戻る・画面名・校名と日付と資金・メニュー)、ダイアログ(SC-36 イベント・SC-37 確認・SC-38 通知)、トースト(失敗の理由は `OpText`)、理由つきの無効表示(F4) |
+| 2 | SC-01 タイトル(続きから / はじめから / セーブの選択。実績・追加コンテンツ・設定・クレジットは『M1 の範囲外』の無効表示)、SC-02 新規ゲーム(開始校のカード 4 種・監督名・スロット・上書きの確認・世界の生成は裏のスレッド)、SC-03 セーブの選択 |
+| 3 | SC-08 ホーム、SC-10 年間方針(重点・注目大会)、SC-16 月間計画(グループごとのテーマ・おまかせ / 手動・推奨にそろえる)、SC-11 月末レポート |
+| 4 | SC-21 エントリー(選ぶと登録 / 外す・確認が要る操作は SC-37)、予選会のエントリー(おまかせ)、SC-22 区間オーダー(区間 → 候補で入れ替え・おまかせ)、SC-24 当日(当日変更・指示・おまかせ)、SC-25 レース進行(区間ごと・檄・最後まで)、SC-26 大会の結果(総合 / 自校 / 見どころ・記録)と予選会の結果 |
+| 5 | SC-12 年度の結果と精算、SC-13 卒業・進路、SC-14 入学者発表(惜しかった候補)、SC-32 運営(**新設・追加の欄 `ExtraRows`**。ランク不足は『ランク 7 から』の理由つき無効) |
+| 6 | SC-18 部員一覧、SC-19 選手詳細(隠す情報は出さない。面談)、SC-41 コンディション警告、SC-42 故障の知らせ |
+| 7 | SC-27 スカウト(地方 → 県・おまかせ)、SC-28 候補リスト(視察・声かけ・練習会)、SC-34 歴史・殿堂、SC-38 通知の一覧、SC-40 ポーズ(再開・セーブ・文字の大きさ・観戦モード・タイトルへ) |
+
+- 完了の目安: 新規ゲーム → 1 年度(月間計画 → 3 大会 → 結果 → 年度末)を、画面の操作(各画面の既定の操作)だけで最後まで進められた(下の U5)。途中で保存して閉じ、『続きから』で同じ状態に戻ることも確認した。
+- 画面の文字は ja.json の `scr.*` / `dlg.*` / `ui.*`(327 件を追加)。UI のソースが直接引くキーはすべて表にある(作業用の道具で照合)。
+- 作っていない画面: SC-04 設定(ポーズの中に文字の大きさと観戦モードだけ)・SC-05〜07・SC-09 年間予定・SC-15 クリア・SC-17 カスタム週・SC-20 個別指導・SC-23 他校情報・SC-29 / 30 / 31・SC-33 OB・SC-35 全国の大学・SC-39 ヘルプ。
+
+## U5. 自動の通しと目視用の記録
+
+- `AutoRunner`(プレイヤーを `-ekidenAuto <フォルダ>` で起動。手順は README)。最後の実行(run5): **例外 0**、1 年度を 40 手(画面の既定の操作)で通過、`save_open_continue 一致`(第 23 週で年度の途中のセーブを退避 → 年度末まで進めて記録 → セーブを第 20 週の状態に戻して『続きから』→ 同じ節目(第 2 年度の AnnualStart)まで 33 手 → バイト一致)。所要 17 秒。
+- スクリーンショット: `m0/Captures/2026-10-30/run5/`(画面ごと 22 枚 + `res/` に解像度・文字の倍率ごと 36 枚。commit しない)。run1〜run4 は不具合を直す途中のもの(run1〜3 は UI が描かれていない黒い画像)。
+
+## U6. まとめ
+
+### 完了したこと
+- U1: ゲート B を再実行(T1 合格・T3 は Unity だけの不一致 1 件 → 原因を特定して L-71 に記録)。
+- U2: Unity 側の足場(`Ekiden.Unity`)と EditMode 試験。
+- U3: UI Toolkit の技術検証(PC で測れるもの)を 09 §15.5 に記録。
+- U4: 約 25 画面 + ダイアログ 6 種。1 年度を画面だけで通せる。
+- U5: 自動進行・撮影・測定。
+- EditMode 試験 **14 件合格**・`dotnet test` **704 件合格**・自動進行 **例外 0**。ゲームの規則(Domain / Persistence / App)は変えていない。
+
+### 未完のこと
+- **L-71 の修正**(判断待ち。上の U1)。
+- T5(IL2CPP での `bench` 相当)を `Verification` に足すこと(U2 以降を優先した)。画面のフレーム時間とメモリは U3 で測った。
+- 作っていない画面(U4 の最後の一覧)。区間オーダーの手動の配置は『入れ替え』だけ(空きを作る操作はない)。予選会のエントリーは おまかせ だけ。
+- 太字のフォント(Bold の資産を太字に割り当てる)。いまは Regular を機械的に太くしている。
+- 縦持ちの配置(08 は横画面のみ)。
+- レース進行の見出しに、当日の画面の文を流用した仮の表示(『当日変更 残り - / 予想 -位 -』)が残っている。
+- `specbook/build_spec_pdf.py` による統合版 PDF の作り直しはしていない(この Windows の環境に pandoc・pdftotext がない。09 と 00 を直したので、道具のある環境で作り直す)。
+
+### つまずいたこと(エラーと対処)
+1. **m0 の Editor を閉じられなかった**(自動の権限の判定: 実行中の作業を妨げる操作)→ リポジトリの外の作業用コピー `H:\GAME\ekiden-sim\m0-batch` で batchmode を動かし、新しい `.meta` と作った資産だけを m0 に書き戻した。
+2. `error CS0246: The type or namespace name 'FakeClock' could not be found` → `Platform/Fake` には asmdef がない。試験の中に `TestClock` を置いた。
+3. `error CS0104: 'TextAsset' is an ambiguous reference between 'UnityEngine.TextCore.Text.TextAsset' and 'UnityEngine.TextAsset'` → 完全な名前で書いた。
+4. プレイヤーで `NullReferenceException at UnityEngine.UIElements.ScrollView.ShouldDeferScrollTo` → 画面を組み立てた直後に `ScrollTo` を呼んでいた。`schedule.Execute` で次に回した。
+5. **UI が真っ黒**(撮影が全部同じ 12 KB)→ シーンの UIDocument の `m_PanelSettings: {fileID: 0}`。Editor スクリプトの `EditorSceneManager.NewScene` が、その前に読み込んだ PanelSettings を解放していた(代入しても保存されない)。シーンを作ってから読み込むようにした。
+6. 仮想のゲームパッドで十字キーと A が効かない(EventSystem + `InputSystemUIInputModule` 経由。B だけ効いた)→ `UiRoot` が Input System を直接読み、UI Toolkit の Navigation のイベントは根元で止めた(二重に動かさない)。
+7. batchmode の Unity が終わってから約 10 分待たされる → PowerShell 5.1 の `Start-Process -Wait` は子プロセス(シェーダーのコンパイラなど)の終了まで待つ。`WaitForExit()` に変えた。
+8. 一時的に Unity がパッケージの解決の途中で終わった(`[Package Manager] Failed to resolve packages: operation cancelled`)→ もう一度走らせて通った。
+9. 自分の試験の誤り: 『毎週』を `Advance()` で数えた・『おまかせ』で `MonthPlan` に止まると思った・復元後の比較を `Advance()` の回数でそろえた(U2 に詳細)。自動進行の保存の比較が、最初は年度末の自動セーブからになっていた(手数 1)→ セーブを退避・復元して年度の途中から比べた。
+
+### 私(ユーザー)が判断すること
+1. **L-71**: JSON の数の読み取りを `double.Parse` から『整数部と小数部を整数で読み `n / 10^k`』に変えるか(規則・形式は不変。直せば Unity の T3 が通る見込み)。
+2. **UI Toolkit のままでよいか**(U-17)。PC では 5 項目とも満たす。モバイル実機のフレーム時間・メモリの測定のあとで。
+3. 観戦モード・月間計画のおまかせは『設定値』で、画面が `State.Settings` を直接書いている。命令(`OpResult` を返すもの)を Domain に足すか。
+4. Unity MCP のパッケージ(作業ツリーの `Packages/manifest.json`。commit していない)をプロジェクトに入れるか。入れるなら `#main` ではなく版を固定する。
+5. 作業ツリーにある Unity の設定の保存し直し(`Assets/Settings/*.asset`・`ProjectSettings/*.asset`)と `Assets/Resources.meta`(空のフォルダ)を commit するか(触っていない)。
+6. フォント: 動的のままにするか、サブセットにして容量を減らすか(元の OTF 2 本で約 9 MB)。
+
+### 次にやること(優先順)
+1. L-71 の判断と修正 → Unity の T3(ゲート B)をもう一度。
+2. モバイル実機で `-ekidenAuto` の `perf` を測る(ユーザー)→ U-17 を決める。
+3. 残りの画面(SC-23 他校情報・SC-20 個別指導・SC-09 年間予定・SC-15 クリア・SC-04 設定)と、区間オーダーの手動の配置の改善。
+4. 観戦モードの演出(区間ごとの時間・ダイジェスト。08 R-14)と、1 年度が約 30 分に収まるかの計測(01 §13 の完了条件)。
+5. T5 の `bench` を `Verification` に足して IL2CPP で測る。
+6. 太字のフォント・縦持ち・見た目(美術)。
