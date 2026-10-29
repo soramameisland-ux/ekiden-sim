@@ -41,7 +41,20 @@ def rand_runner(rng, power=None, name=None, with_style=None):
 
 
 def dump_runner(r):
-    return dict(stats=r["stats"], skills=pre(r["skills"]), form=r["form"], fatigue=r["fatigue"], style=r.get("style"), leading=bool(r.get("leading")), name=r.get("name"))
+    return dict(stats=r["stats"], skills=pre(r["skills"]), form=r["form"], fatigue=r["fatigue"], style=r.get("style"), leading=bool(r.get("leading")), name=r.get("name"), geki_f=r.get("geki_f"))
+
+
+FREX = random.Random(20261029)                                            # 走者ごとの f_k 用
+
+
+def make_geki_f():
+    """f_k の式の検算: やる気 1〜5 × 絆平均の格子(境界を含む)と、乱数の組。"""
+    out = [dict(mot=m, bond=b, f=m4.geki_f(m, float(b))) for m in range(1, 6) for b in (0, 1, 100, 250, 500, 750, 999, 1000)]
+    r = random.Random(7)
+    for _ in range(300):
+        m, b = r.randint(1, 5), r.uniform(0.0, 1000.0)
+        out.append(dict(mot=m, bond=b, f=m4.geki_f(m, b)))
+    return out
 
 
 def rand_env(rng):
@@ -111,6 +124,9 @@ def make_races(rng, n):
         for tid in range(nteam):
             pw = base + rng.gauss(0, 4) - (14 if rng.random() < 0.08 else 0)
             lineup = [rand_runner(rng, pw + rng.gauss(0, 3)) for _ in range(ns)]
+            for r in lineup:                                                  # 走者ごとの檄の効き(別の乱数列から。主の列は動かさない)
+                if FREX.random() < 0.6:
+                    r["geki_f"] = m4.geki_f(FREX.randint(1, 5), FREX.uniform(0.0, 1000.0))
             instr = [rng.choice(["attack", "keep", "hold"]) for _ in range(ns)] if rng.random() < 0.5 else None
             team = dict(id=tid * 2 + 1, lineup=lineup, geki=rng.choice([0, 0, 2, 3, 4]), geki_min=rng.choice([0.0, 0.0, 0.02, 0.05]), geki_f=rng.choice([1.0, 1.0, 0.7]))
             if instr:
@@ -156,7 +172,7 @@ def main():
     out_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..", "m0", "tests", "Domain.Tests", "Golden")
     os.makedirs(out_dir, exist_ok=True)
     rng = random.Random(20260105)
-    data = dict(legs=make_legs(rng, 3000), hungarian=make_hung(rng, 300), races=make_races(rng, 450), plan_day=make_plan_day(rng, 240), qualifier=make_qualifier(rng, 40))
+    data = dict(legs=make_legs(rng, 3000), hungarian=make_hung(rng, 300), races=make_races(rng, 450), plan_day=make_plan_day(rng, 240), qualifier=make_qualifier(rng, 40), geki_f=make_geki_f())
     with gzip.open(os.path.join(out_dir, "race_cases.json.gz"), "wt", encoding="utf-8", compresslevel=9) as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     nk = sum(1 for r in data["races"] for s in r["results"] if s["kuriage"])

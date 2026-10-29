@@ -36,6 +36,7 @@ K = dict(
               GAUGE=(0.16, 0.26)),             # 余裕の目安: q<0.16 ◎(攻める)/ q<0.26 〇(維持)/ それ以上 △(抑える)
     ENV_SCALE=2.0,
     GEKI_ADJ=0.0025, GEKI_BRAKE_MULT=0.8, GEKI_REDUCE=0.2, GEKI_OVER_MULT=0.5, GEKI_OVER_FROM=3,
+    GEKI_F0=0.5, GEKI_F_MOT=0.1, GEKI_F_BOND=0.3, GEKI_F_LO=0.3, GEKI_F_HI=1.2,      # 走者ごとの檄の効き f_k(04 §9.2)
     SKILL_P=dict(mountain_god=8.0, downhill_master=5.0, ace_section=3.0, anchor=2.0, revenge=4.0),
     AVAIL_ENTRY=0.95, AVAIL_DAY=0.97,
     FORM_DIST_TAPER=[(2, 0.55), (1, 0.31), (0, 0.12), (-1, 0.02)],
@@ -315,6 +316,11 @@ class PyRng:
         return self.r.gauss(mu, sd)
 
 
+def geki_f(mot, bond_avg):
+    """走者ごとの檄の効き f_k(04 §9.2): clamp(0.5 + 0.1×やる気 + 0.3×絆平均/1000, 0.3, 1.2)。やる気 1〜5・絆平均 0〜1000。"""
+    return max(K["GEKI_F_LO"], min(K["GEKI_F_HI"], K["GEKI_F0"] + K["GEKI_F_MOT"] * mot + K["GEKI_F_BOND"] * bond_avg / 1000.0))
+
+
 def simulate_race(race, teams, env_by_day, rng_for, geki_policy=True):
     """複数チームのレースを区間ごとに進める。
     teams: list of dict(id, lineup=[runner dict ×区間数], geki=使える檄の回数, instr=['keep']*n)
@@ -369,7 +375,8 @@ def simulate_race(race, teams, env_by_day, rng_for, geki_policy=True):
             if geki_policy and state[tid]["geki"] > 0:
                 loss = max(brake, stall)
                 if loss > 0.0 and loss >= team.get("geki_min", 0.0):
-                    gm = 1.0 - K["GEKI_REDUCE"] * team.get("geki_f", 1.0)   # f_k = 1.0 のとき ×0.8(04 §9.2)
+                    # f_k = 1.0 のとき ×0.8(04 §9.2)。走者ごとの f_k(runner["geki_f"]。無ければ 1.0)に、チーム一律の補正(試験用。無ければ 1.0)を掛ける
+                    gm = 1.0 - K["GEKI_REDUCE"] * team.get("geki_f", 1.0) * runner.get("geki_f", 1.0)
                     if brake >= stall:
                         brake *= gm
                     else:

@@ -38,6 +38,8 @@ namespace Ekiden.Domain.Tests
                                     (StyleFlow)Enum.Parse(typeof(StyleFlow), st.GetProperty("flow").GetString()));
             JsonElement nm = e.GetProperty("name");
             if (nm.ValueKind == JsonValueKind.Number) r.Name = nm.GetInt32().ToString();
+            JsonElement gf;
+            if (e.TryGetProperty("geki_f", out gf) && gf.ValueKind == JsonValueKind.Number) r.GekiF = gf.GetDouble();       // 走者ごとの檄の効き(04 §9.2)
             return r;
         }
 
@@ -214,6 +216,27 @@ namespace Ekiden.Domain.Tests
                 }
             }
             Assert.AreEqual(40, n);
+        }
+
+        /// <summary>走者ごとの檄の効き f_k(04 §9.2): 式が参照モデルと一致(やる気 1〜5 × 絆平均の格子と乱数の組)。境界(0.3・1.2)に当たる組も含む。</summary>
+        [Test]
+        public void GekiFactor_MatchesReference_AndIsClamped()
+        {
+            int n = 0, atLo = 0, atHi = 0;
+            foreach (JsonElement c in _data.GetProperty("geki_f").EnumerateArray())
+            {
+                double got = RaceMath.GekiFactor(c.GetProperty("mot").GetInt32(), c.GetProperty("bond").GetDouble()), want = c.GetProperty("f").GetDouble();
+                Assert.AreEqual(want, got, 0.0, "mot=" + c.GetProperty("mot") + " bond=" + c.GetProperty("bond"));      // 同じ式・同じ順の double なのでビットまで一致
+                Assert.That(got, Is.InRange(0.3, 1.2));
+                if (got == 0.3) atLo++; if (got == 1.2) atHi++;
+                n++;
+            }
+            Assert.Greater(n, 300);
+            Assert.AreEqual(0.6, RaceMath.GekiFactor(1, 0.0), 1e-12, "やる気 1・絆 0");
+            Assert.AreEqual(1.2, RaceMath.GekiFactor(5, 1000.0), 0.0, "やる気 5・絆 1000 は上限");
+            Assert.AreEqual(1.0, RaceMath.GekiFactor(5, 0.0), 1e-12, "やる気 5・絆 0");
+            Assert.AreEqual(0.3, RaceMath.GekiFactor(-9, 0.0), 0.0, "下限");
+            Assert.Greater(atHi, 0, "試験の前提: 上限に当たる組がある");
         }
 
         [Test]

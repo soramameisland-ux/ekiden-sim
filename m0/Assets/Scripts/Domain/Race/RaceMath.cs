@@ -22,6 +22,13 @@ namespace Ekiden.Domain.Race
     /// <summary>区間タイムの式(04 §5〜§7)。</summary>
     public static class RaceMath
     {
+        /// <summary>走者ごとの檄の効き f_k(04 §9.2): clamp(0.5 + 0.1×やる気 + 0.3×絆平均/1000, 0.3, 1.2)。やる気 1〜5・絆平均 0〜1000。和は仕様の順(左から)に足す。</summary>
+        public static double GekiFactor(int motivation, double bondAvg)
+        {
+            double f = RaceConstants.GekiF0 + RaceConstants.GekiFMot * motivation + RaceConstants.GekiFBond * bondAvg / 1000.0;
+            return Math.Max(RaceConstants.GekiFLo, Math.Min(RaceConstants.GekiFHi, f));
+        }
+
         public static double BaseTime(double d, double terr, double p)
         {
             return d * (Pace50.Of(d) * terr - RaceConstants.K_SLOPE * (p - 50.0));

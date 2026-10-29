@@ -14,7 +14,7 @@ namespace Ekiden.Domain.Race
         public Instruction[] Instr;          // null = 全区間 Keep
         public int Geki;                     // 使える檄の回数
         public double GekiMin;               // この大きさ以上の損失のときだけ使う(おまかせの方針)
-        public double GekiF = 1.0;           // 檄の効き(f_k。04 §9.2)
+        public double GekiF = 1.0;           // チーム一律の檄の効きの補正(試験用。既定 1.0)。走者ごとの f_k は RaceRunner.GekiF(04 §9.2)
         public bool[] GekiUse;               // null = おまかせの方針(上の GekiMin)。非 null = 区間ごとに『檄を使う』と決めたところだけ、異変(ブレーキ・失速)が起きたときに使う(手動。04 §9.3 のフル)
     }
 
@@ -122,7 +122,7 @@ namespace Ekiden.Domain.Race
                         bool use = team.GekiUse != null ? (team.GekiUse[si] && loss > 0.0) : (loss > 0.0 && loss >= team.GekiMin);
                         if (use)
                         {
-                            double gm = 1.0 - RaceConstants.GekiReduce * team.GekiF;
+                            double gm = 1.0 - RaceConstants.GekiReduce * team.GekiF * runner.GekiF;       // 走者ごとの f_k に、チーム一律の補正(試験用。既定 1.0)
                             if (brake >= stall) brake *= gm; else stall *= gm;
                             res.GekiLeft -= 1;
                             res.Events.Add(new RaceEvent { Kind = "geki_brake", Section = si });
