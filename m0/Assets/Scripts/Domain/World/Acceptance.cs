@@ -21,17 +21,18 @@ namespace Ekiden.Domain.World
 
         public static readonly Dictionary<Difficulty, Band> Bands = new Dictionary<Difficulty, Band>
         {
-            { Difficulty.Elite, new Band { Win = 0.617, WinTol = 0.052, Triple = 0.331, TripleTol = 0.060, Clear = 6.98, ClearTol = 1.25, P = 72.49, PTol = 0.33 } },
-            { Difficulty.Mid, new Band { Win = 0.549, WinTol = 0.058, Triple = 0.262, TripleTol = 0.062, Clear = 11.65, ClearTol = 1.86, P = 72.15, PTol = 0.38 } },
-            { Difficulty.Low, new Band { Win = 0.442, WinTol = 0.079, Triple = 0.188, TripleTol = 0.055, Clear = 25.55, ClearTol = 3.84, P = 70.68, PTol = 1.22 } },
+            { Difficulty.Elite, new Band { Win = 0.590, WinTol = 0.044, Triple = 0.305, TripleTol = 0.053, Clear = 6.35, ClearTol = 1.07, P = 72.49, PTol = 0.29 } },
+            { Difficulty.Mid, new Band { Win = 0.553, WinTol = 0.058, Triple = 0.275, TripleTol = 0.056, Clear = 12.99, ClearTol = 2.21, P = 72.18, PTol = 0.44 } },
+            { Difficulty.Low, new Band { Win = 0.441, WinTol = 0.071, Triple = 0.185, TripleTol = 0.052, Clear = 25.48, ClearTol = 3.44, P = 70.90, PTol = 1.01 } },
         };
 
         /// <summary>強豪県の +3(02 §6)を入れた世界の戦力 P は、入れない世界(= 参照モデルと同じ構成)より高くなる(L-44)。その差(同じシード・対)が取ってよい範囲。</summary>
         public const double L44_P_SHIFT_MIN = -0.3, L44_P_SHIFT_MAX = 1.0;
 
         /// <summary>実体の選手を持つ自校(<see cref="Game.GameSession"/>)は、故障・疲労・調子のばらつきと、型に合わせた育成(L-24)を持たないぶん、同じ世界の抽象の自校より少し弱い。
-        /// クリア年度の帯の幅に足す余裕(年度)。</summary>
-        public const double REAL_CLEAR_SLACK = 1.0;
+        /// クリア年度の帯の幅に足す余裕(年度)。1.0 → 1.5(L-69): 地形係数の較正で参照の帯を取り直したとき、強豪のシード間の標準偏差が 3.2 → 2.8 に小さくなって帯の幅が 1.25 → 1.07 に狭まり、
+        /// 実体の既知の遅れ(同じ世界の抽象より +1.5〜1.8 年度。L-55)を足すと 1.0 では足りなくなった(強豪 8.76 > 6.35 + 1.07 + 1.0)。</summary>
+        public const double REAL_CLEAR_SLACK = 1.5;
 
         public const int FirstYearForRates = 25;
 

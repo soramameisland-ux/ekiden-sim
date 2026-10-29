@@ -226,8 +226,17 @@ namespace Ekiden.Domain.Tests
             Assert.AreNotEqual(before[2], rd.Lineup[2].RunnerId, "同じ区間に控えが入る");
             CollectionAssert.AreEqual(before.Where((x, i) => i != 2), Ids(rd.Lineup).Where((x, i) => i != 2));
             Assert.IsTrue(rd.Bench.Any(b => b.RunnerId == before[2]), "外れた先発は控えになる");
-            int second = rd.Bench.ToList().FindIndex(b => !before.Contains(b.RunnerId));
-            Assert.IsTrue(rd.Swap(4, second).Ok);
+            // 2 回目: 留学生の出走枠(1 人まで)で断られる控えがいる世界もあるので、先発でなかった控えを順に試して、入れられる最初の 1 人で確かめる
+            List<RaceRunner> bench2 = rd.Bench.ToList();
+            OpResult sw2 = null;
+            for (int bi = 0; bi < bench2.Count; bi++)
+            {
+                if (before.Contains(bench2[bi].RunnerId)) continue;
+                sw2 = rd.Swap(4, bi);
+                if (sw2.Ok) break;
+                Assert.AreEqual(OpErr.IntlRun.Code, sw2.Code, "断られるのは留学生の出走枠だけ");
+            }
+            Assert.IsTrue(sw2 != null && sw2.Ok, "2 回目の当日変更ができる控えがいる");
             Assert.AreEqual(2, rd.SwapsUsed);
             int third = rd.Bench.ToList().FindIndex(b => !before.Contains(b.RunnerId));
             if (third >= 0)

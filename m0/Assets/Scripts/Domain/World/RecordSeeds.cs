@@ -12,6 +12,9 @@ namespace Ekiden.Domain.World
         /// <summary>初期の記録の <see cref="CourseRecord.Year"/>(予熱の年度 −14〜0 と区別する印)。</summary>
         public const int LegacyYear = -100;
 
+        /// <summary>地形係数の較正(02 §3.5。L-69)で、初期の記録を『区間適性値がこの値の走者が標準の条件で出すタイム』とみなす P*。<c>terr = (R / d + K_SLOPE × (P* − 50)) / pace50(d)</c>(小数 3 桁)。</summary>
+        public const double TerrainPStar = 85.0;
+
         /// <summary>[大会][区間] のタイム(ds = 0.1 秒)。区間の数は <see cref="Ekiden.Domain.Race.RaceTables.Course"/> と同じ。</summary>
         public static readonly int[][] CourseDs =
         {

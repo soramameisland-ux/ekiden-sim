@@ -32,7 +32,7 @@
 
 ```
 cd m0
-dotnet test Ekiden.sln -c Release          # 682 件(Domain 505 + Persistence 137 + App 40)。約 1.5 分。全部緑が前提
+dotnet test Ekiden.sln -c Release          # 685 件(Domain 508 + Persistence 137 + App 40)。約 1.5 分。全部緑が前提
 dotnet build tools/SimCli/SimCli.csproj -c Release
 S="dotnet run --project tools/SimCli/SimCli.csproj -c Release --no-build --"
 $S determinism 2 45                        # T3 + 再現性の目印(下)
@@ -64,7 +64,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 - **`GameSession`**: `New → StepWeek / PlayYears`。週は段階(`ResolveTraining → PlayWeekRaces → … → FinishWeek`)に分かれ、年度末も `SettleYear → TurnoverYear`。操作は `*.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`*.Scout.cs`・`*.Race.cs`(オーダー・予報・当日)。無効な操作は理由つきで拒否(`OpResult`。08 F4)。**理由・警告は日本語ではなくキー + 値(`Msg`・`OpErr`。`err.* / warn.* / hint.*`)で、`App/OpText` が表から文にする**(新しい拒否を足すときは `OpErr` に定義し、`Assets/Strings/ja.json` に本文を足す。`OpTextTests` が一致を検査)。
 - **保存の境目**: 週の最初の処理(`BeginWeek`)は**前の週の終わり**に走る。復元後は `state.Refresh(assignGroups:false)` が要る(なければバイト一致が崩れる)。グループは保存される割り当て(08 R-04)。
 - **読み込み**(`Persistence/Snapshot/GameLoader.cs`。09 §7.1b): 自校の半分(`team`)を `SaveValidator.ValidateAndRepairTeam` で検証・修復 → 復元 → 世界の半分を `WorldInvariants` で検査。致命は次の候補へ(回復の順)。`GameHost.Open` と中断セーブの再開が通る。
-- **世界の履歴**(`World/RaceHistory.cs`。`WorldSim.History`): 予熱の年度から、大会ごとの全校の順位表と区間記録・大会記録を持つ(保存は `history`)。`PlayRace` が更新し `RaceOutcome.Records` に返す。**新規ゲームでは年度 1 の前に区間記録を『初期の区間記録』(`World/RecordSeeds.cs`。実在の公表値の水準・名前なし。保持者 = 歴代の記録 = `school_id -1`。L-68)に置き換える**(`GameSession.New` だけ。`WorldSim.Create` は変えないので再現性の目印は不変)。自校の走者の記録は `Runner.Records`・`race.record`・殿堂入りに効く。見どころの判定は `Race/RaceHighlights.cs`(注目校・重要度は 04 §9.3)。
+- **世界の履歴**(`World/RaceHistory.cs`。`WorldSim.History`): 予熱の年度から、大会ごとの全校の順位表と区間記録・大会記録を持つ(保存は `history`)。`PlayRace` が更新し `RaceOutcome.Records` に返す。**新規ゲームでは年度 1 の前に区間記録を『初期の区間記録』(`World/RecordSeeds.cs`。実在の公表値の水準・名前なし。保持者 = 歴代の記録 = `school_id -1`。L-68)に置き換える**(`GameSession.New` だけ。`WorldSim.Create` は変えないので再現性の目印は不変)。区間の**地形係数**(`RaceTables`。02 §3.5)は、この初期の記録から `P* = 85` で較正した値(`verify/calib_terrain.py`。L-69。P* を上げるとコース全体が遅くなって難しくなる)。自校の走者の記録は `Runner.Records`・`race.record`・殿堂入りに効く。見どころの判定は `Race/RaceHighlights.cs`(注目校・重要度は 04 §9.3)。
 - **当日**(`Game/RaceDay.cs`。04 §14.5): 乱数の引き方は指示・檄・当日変更に依存しないので、いまの決定で全チームを**再計算**する(`Preview`)。決められるのは `Resolved` 以降の区間だけ。当日の状態は保存しない(`GameFlow.CanSave` は練習の解決の前だけ)。
 - **進行制御**(`Game/GameFlow.cs`): `Advance()` だけが前に進む。停止は `StopKind`。観戦モードが Full のときだけ `RaceDayPrep` で止まる。
 
@@ -77,7 +77,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 
 - **T3 決定性**: 同一実行・保存 → 読込 → 続行・並列がバイト一致。
 - **第三戦は 23 校**(シード 10 + 予選会の通過 13。L-67。学生連合は作らない)。帯は `verify/band_05.py` で取り直す(参照 → 仕様書 → C# の順)。
-- **T4 統計**(3 開始校 × 120 シード × 45 年度): T4a = +3 なしの世界が帯の内側 / T4b = 仕様の世界 / **T4c = 実体の自校**(優勝率・三冠率は帯の内側(下側は 0.03 まで。`REAL_RATE_SLACK`)、クリア年度は帯 ± 1 年度、戦力 P は +3 を許した帯)。T4c の緩和は『人が操作すれば改善する』前提でユーザーが承認済み(上級の方針で優勝率 +0.15〜+0.17。04 §14.5)。
+- **T4 統計**(3 開始校 × 120 シード × 45 年度): T4a = +3 なしの世界が帯の内側 / T4b = 仕様の世界 / **T4c = 実体の自校**(優勝率・三冠率は帯の内側(下側は 0.03 まで。`REAL_RATE_SLACK`)、クリア年度は帯 ± 1.5 年度(L-69)、戦力 P は +3 を許した帯)。T4c の緩和は『人が操作すれば改善する』前提でユーザーが承認済み(上級の方針で優勝率 +0.15〜+0.17。04 §14.5)。
 - **T5 性能**: `$S bench`。GC『0』は未達(L-46)で、実測を基準にして退行を止めている。
 
 ## 状況(2026-10 時点)

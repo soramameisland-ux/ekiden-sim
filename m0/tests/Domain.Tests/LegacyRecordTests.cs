@@ -23,7 +23,7 @@ namespace Ekiden.Domain.Tests
         public void SeedTable_MatchesDoc02_AndTheCourses()
         {
             string text = File.ReadAllText(DocPaths.Find("02_data_spec.md"), Encoding.UTF8);
-            int start = text.IndexOf("**初期の区間記録", StringComparison.Ordinal);
+            int start = text.IndexOf("**初期の区間記録(L-68", StringComparison.Ordinal);
             Assert.GreaterOrEqual(start, 0, "02 §4.8 に『初期の区間記録』の表がある");
             int end = text.IndexOf("\n### ", start, StringComparison.Ordinal);
             string section = text.Substring(start, end - start);

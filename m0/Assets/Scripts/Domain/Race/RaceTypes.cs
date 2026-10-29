@@ -65,23 +65,24 @@ namespace Ekiden.Domain.Race
     /// <summary>04 のコースと大会の規則。</summary>
     public static class RaceTables
     {
+        // 地形係数(区間タイムの基準ペースへの倍率)は初期の区間記録から較正した値(02 §3.5。L-69。`RecordSeeds.TerrainPStar`)。
         private static readonly SectionDef[] FallCourse =
         {
-            new SectionDef(8.0, SectionType.Fast, 1.0), new SectionDef(5.8, SectionType.Fast, 1.0), new SectionDef(8.5, SectionType.Fast, 1.0),
-            new SectionDef(6.2, SectionType.Fast, 1.0), new SectionDef(6.4, SectionType.Fast, 1.0), new SectionDef(10.2, SectionType.Long, 1.0),
+            new SectionDef(8.0, SectionType.Fast, 1.022), new SectionDef(5.8, SectionType.Fast, 0.983), new SectionDef(8.5, SectionType.Fast, 0.982),
+            new SectionDef(6.2, SectionType.Fast, 1.016), new SectionDef(6.4, SectionType.Fast, 1.008), new SectionDef(10.2, SectionType.Long, 1.001),
         };
         private static readonly SectionDef[] NationalCourse =
         {
-            new SectionDef(9.5, SectionType.Fast, 1.0), new SectionDef(11.1, SectionType.Fast, 1.0), new SectionDef(11.9, SectionType.Fast, 1.0),
-            new SectionDef(11.8, SectionType.Fast, 1.0), new SectionDef(12.4, SectionType.Mid, 1.0), new SectionDef(12.8, SectionType.Mid, 1.0),
-            new SectionDef(17.6, SectionType.Long, 1.0), new SectionDef(19.7, SectionType.Long, 1.0),
+            new SectionDef(9.5, SectionType.Fast, 1.025), new SectionDef(11.1, SectionType.Fast, 1.005), new SectionDef(11.9, SectionType.Fast, 0.989),
+            new SectionDef(11.8, SectionType.Fast, 1.005), new SectionDef(12.4, SectionType.Mid, 1.011), new SectionDef(12.8, SectionType.Mid, 1.026),
+            new SectionDef(17.6, SectionType.Long, 0.996), new SectionDef(19.7, SectionType.Long, 0.994),
         };
         private static readonly SectionDef[] NewYearCourse =
         {
-            new SectionDef(21.3, SectionType.Long, 1.0), new SectionDef(23.1, SectionType.Long, 1.0), new SectionDef(21.4, SectionType.Long, 1.0),
-            new SectionDef(20.9, SectionType.Long, 1.0), new SectionDef(20.8, SectionType.Climb, 1.13), new SectionDef(20.8, SectionType.Descent, 0.93),
-            new SectionDef(21.3, SectionType.Long, 1.0), new SectionDef(21.4, SectionType.Long, 1.0), new SectionDef(23.1, SectionType.Long, 1.0),
-            new SectionDef(23.0, SectionType.Long, 1.0),
+            new SectionDef(21.3, SectionType.Long, 0.998), new SectionDef(23.1, SectionType.Long, 0.989), new SectionDef(21.4, SectionType.Long, 0.978),
+            new SectionDef(20.9, SectionType.Long, 1.009), new SectionDef(20.8, SectionType.Climb, 1.127), new SectionDef(20.8, SectionType.Descent, 0.963),
+            new SectionDef(21.3, SectionType.Long, 1.002), new SectionDef(21.4, SectionType.Long, 1.043), new SectionDef(23.1, SectionType.Long, 1.019),
+            new SectionDef(23.0, SectionType.Long, 1.031),
         };
 
         public static IReadOnlyList<SectionDef> Course(RaceKind k)

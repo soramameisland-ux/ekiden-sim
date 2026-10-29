@@ -190,6 +190,7 @@ namespace Ekiden.Domain.Tests
         public void TaperIndex_StandardShortNone_AndOverlap()
         {
             TeamState s = Team();
+            s.InQualifier = _ => false;                                    // 予選会の登録メンバーかどうかは世界(シードかどうか)で変わる。ここは第一戦だけを見る
             Runner r = s.Runners[0];
             s.Entries[0].Add(r.Id);
             int[] std = Enumerable.Range(20, 8).Select(yw => TeamWeek.TaperIndex(s, r, yw)).ToArray();                 // yw 20..27
