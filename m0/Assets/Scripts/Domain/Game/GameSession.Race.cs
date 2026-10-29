@@ -52,20 +52,20 @@ namespace Ekiden.Domain.Game
         {
             int k = (int)kind, yw = Yw;
             int n = RaceTables.Course(kind).Count;
-            if (yw < TeamWeek.EntryDeadlineWeeks[k] || yw > Calendar.RaceWeeks[k] || _weekResolved) return OpResult.Fail("オーダーを出せるのは、エントリーの締切から大会の週の初めまで");
-            if (State.Entries[k].Count == 0) return OpResult.Fail("先にエントリー(登録)が要る");
-            if (runnerIds.Count != n) return OpResult.Fail("区間数(" + n + ")と同じ人数を配置する");
-            if (runnerIds.Distinct().Count() != n) return OpResult.Fail("同じ選手を二重に配置できない");
+            if (yw < TeamWeek.EntryDeadlineWeeks[k] || yw > Calendar.RaceWeeks[k] || _weekResolved) return OpResult.Fail(OpErr.OrderWindow);
+            if (State.Entries[k].Count == 0) return OpResult.Fail(OpErr.OrderNeedEntry);
+            if (runnerIds.Count != n) return OpResult.Fail(OpErr.OrderCount, n);
+            if (runnerIds.Distinct().Count() != n) return OpResult.Fail(OpErr.OrderDup);
             int intl = 0;
             foreach (int id in runnerIds)
             {
-                if (!State.Entries[k].Contains(id)) return OpResult.Fail("登録メンバーでない選手は配置できない");
+                if (!State.Entries[k].Contains(id)) return OpResult.Fail(OpErr.OrderNotEntered);
                 Runner r = State.FindRunner(id);
-                if (r == null) return OpResult.Fail("その選手はいない");
-                if (!TeamRacing.CanPlace(r)) return OpResult.Fail("中傷以上の故障の選手は配置できない(軽傷は配置できるが、調子は −2)");
+                if (r == null) return OpResult.Fail(OpErr.RunnerNone);
+                if (!TeamRacing.CanPlace(r)) return OpResult.Fail(OpErr.OrderInjured);
                 if (r.Overseas) intl++;
             }
-            if (intl > RaceTables.Rule(kind).IntlRun) return OpResult.Fail("留学生の出走は " + RaceTables.Rule(kind).IntlRun + " 人まで");
+            if (intl > RaceTables.Rule(kind).IntlRun) return OpResult.Fail(OpErr.IntlRun, RaceTables.Rule(kind).IntlRun);
             _orders[k] = runnerIds.ToArray();
             return OpResult.Success;
         }
@@ -73,7 +73,7 @@ namespace Ekiden.Domain.Game
         /// <summary>オーダーを取り消しておまかせに戻す。</summary>
         public OpResult ClearOrder(RaceKind kind)
         {
-            if (_weekResolved) return OpResult.Fail("大会の週の練習が解決されたあとは変えられない");
+            if (_weekResolved) return OpResult.Fail(OpErr.OrderLocked);
             _orders[(int)kind] = null;
             return OpResult.Success;
         }
@@ -161,15 +161,15 @@ namespace Ekiden.Domain.Game
         public OpResult SetQualifierEntries(IReadOnlyList<int> runnerIds)
         {
             int yw = Yw;
-            if (yw < QualifierDeadlineWeek || yw > QualifierWeek || _weekResolved) return OpResult.Fail("予選会の登録は、週 " + QualifierDeadlineWeek + " から予選会の週の初めまで");
-            if (PrepareYear().Seeds.Contains(School.Id)) return OpResult.Fail("シード校は予選会に出ない");
-            if (runnerIds.Count != RaceConstants.QualEntry) return OpResult.Fail("予選会の登録は " + RaceConstants.QualEntry + " 名");
-            if (runnerIds.Distinct().Count() != runnerIds.Count) return OpResult.Fail("同じ選手を二重に登録できない");
+            if (yw < QualifierDeadlineWeek || yw > QualifierWeek || _weekResolved) return OpResult.Fail(OpErr.QualWindow, QualifierDeadlineWeek);
+            if (PrepareYear().Seeds.Contains(School.Id)) return OpResult.Fail(OpErr.QualSeed);
+            if (runnerIds.Count != RaceConstants.QualEntry) return OpResult.Fail(OpErr.QualCount, RaceConstants.QualEntry);
+            if (runnerIds.Distinct().Count() != runnerIds.Count) return OpResult.Fail(OpErr.EntryDup);
             foreach (int id in runnerIds)
             {
                 Runner r = State.FindRunner(id);
-                if (r == null) return OpResult.Fail("登録できない選手がいる");
-                if (!TeamRacing.CanRegister(r)) return OpResult.Fail("重傷の選手は登録できない");
+                if (r == null) return OpResult.Fail(OpErr.EntryUnknown);
+                if (!TeamRacing.CanRegister(r)) return OpResult.Fail(OpErr.EntrySevere);
             }
             _qualifierEntries = runnerIds.ToArray();
             return OpResult.Success;

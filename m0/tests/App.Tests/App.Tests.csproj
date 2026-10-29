@@ -11,5 +11,6 @@
     <ProjectReference Include="../../projects/Ekiden.App/Ekiden.App.csproj" />
     <ProjectReference Include="../../projects/Ekiden.Persistence/Ekiden.Persistence.csproj" />
     <ProjectReference Include="../../projects/Ekiden.Platform/Ekiden.Platform.csproj" />
+    <ProjectReference Include="../../projects/Ekiden.Verification/Ekiden.Verification.csproj" />
   </ItemGroup>
 </Project>

@@ -63,7 +63,7 @@ namespace Ekiden.Domain.Tests
             Assert.IsTrue(gs.SetEntries(RaceKind.Fall, entered, true).Ok, "軽傷・中傷の登録は通る(E3)");
             Hurt(c, InjurySeverity.Severe, 20);
             OpResult o = gs.SetEntries(RaceKind.Fall, entered, true);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("重傷", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.EntrySevere.Code, o.Code);
             EntryView ev = gs.Entry(RaceKind.Fall);
             Assert.IsTrue(ev.Roster.Single(x => x.Row.Id == a.Id).CanEnter); Assert.IsTrue(ev.Roster.Single(x => x.Row.Id == b.Id).CanEnter);
             EntryRowView sev = ev.Roster.Single(x => x.Row.Id == c.Id);
@@ -81,7 +81,7 @@ namespace Ekiden.Domain.Tests
             Assert.IsFalse(gs.Order(RaceKind.Fall).Problems.Any(p => p.Code == "order.injured"));
             var withModerate = order.ToList(); withModerate[1] = b.Id;
             OpResult r2 = gs.SetOrder(RaceKind.Fall, withModerate);
-            Assert.IsFalse(r2.Ok); StringAssert.Contains("中傷", r2.Reason);
+            Assert.IsFalse(r2.Ok); Assert.AreEqual(OpErr.OrderInjured.Code, r2.Code);
         }
 
         [Test]
@@ -115,7 +115,7 @@ namespace Ekiden.Domain.Tests
             Assert.IsTrue(q.Ok, q.Reason);
             Hurt(gs.State.FindRunner(ids[2]), InjurySeverity.Severe, 20);
             OpResult o = gs.SetQualifierEntries(ids);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("重傷", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.EntrySevere.Code, o.Code);
         }
 
         [Test]

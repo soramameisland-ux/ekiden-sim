@@ -159,7 +159,7 @@
 | SC | 表示項目 | 取得元 | 状態 |
 |----|----------|--------|------|
 | SC-36 イベント | 題・本文・当事者・選択肢とその効果の要約(R-15)・選べない理由 | `EventDialog(FiredEvent, own)` | ○ 効果は構造(`EffectView`)で 3 つまで + 『ほか n件』。文は UI が `ev.*` と効果の語から組み立てる。選べない理由の文は未(`req` の式から理由を作る規則がない。小さい)|
-| SC-37 確認 | 本文・既定の位置 | `OpResult.NeedsConfirm` / `Reason`(`problem.*`)| — |
+| SC-37 確認 | 本文・既定の位置 | `OpResult.NeedsConfirm` / `Warnings`(`warn.*`。`App/OpText.Warnings` で文にする。L-63 ③)| — |
 | SC-38 通知 | 最大 30 件(日付・種別・本文・未読)| `Notifications()` → `NotificationsView`(新しい順。`Unread`)/ `MarkNotificationRead(index)` / `MarkAllNotificationsRead()` | ○ 文は `TextKey`(`nt.*`)に `{runner}` `{n}` `{arg}`(`ArgKey` の文字列)を当てはめる。`Target` = 選んだとき開く画面 |
 | SC-39 ヘルプ・用語 | 用語・規則 | 文字列テーブル | — App 層 |
 | SC-40 ポーズ | 再開・セーブ・ロード・設定… | `GameFlow.CanSave` / `SuspendCheckpoint` | — App 層(最後の自動セーブの日時は `SlotStore`)|

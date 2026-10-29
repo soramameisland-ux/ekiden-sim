@@ -23,14 +23,14 @@ namespace Ekiden.Domain.Tests
         {
             GameSession gs = New();
             OpResult early = gs.ScoutObserve(0);
-            Assert.IsFalse(early.Ok); StringAssert.Contains("6〜11 月", early.Reason);
+            Assert.IsFalse(early.Ok); Assert.AreEqual(OpErr.ScoutObserveSeason.Code, early.Code);
             Advance(gs, 8);                                                                          // 6 月の最初の週: 4 ポイント付与
             Assert.AreEqual(4, gs.ScoutPointsAvailable);
             Assert.IsTrue(gs.ScoutObserve(0).Ok);
             Assert.AreEqual(3, gs.ScoutPointsAvailable);
             Assert.AreEqual(ScoutStage.Observed, gs.StageOf(0));
             OpResult again = gs.ScoutObserve(0);
-            Assert.IsFalse(again.Ok); StringAssert.Contains("視察済み", again.Reason);
+            Assert.IsFalse(again.Ok); Assert.AreEqual(OpErr.ScoutObservedAlready.Code, again.Code);
             Assert.IsFalse(gs.ScoutObserve(-1).Ok);
             Assert.IsFalse(gs.ScoutObserve(100000).Ok);
             Assert.AreEqual(3, gs.ScoutPointsAvailable, "拒否した操作はポイントを使わない");
@@ -43,7 +43,7 @@ namespace Ekiden.Domain.Tests
             Advance(gs, 8);
             for (int i = 0; i < 4; i++) Assert.IsTrue(gs.ScoutObserve(i).Ok);
             OpResult o = gs.ScoutObserve(4);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("ポイント", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.ScoutPoints.Code, o.Code);
             Assert.AreEqual(ScoutStage.None, gs.StageOf(4));
         }
 
@@ -56,12 +56,12 @@ namespace Ekiden.Domain.Tests
             gs.ScoutObserve(2);
             Advance(gs, 4 * 3);                                                                      // 9 月
             OpResult early = gs.ScoutTalk(1);
-            Assert.IsFalse(early.Ok); StringAssert.Contains("12〜2 月", early.Reason);
+            Assert.IsFalse(early.Ok); Assert.AreEqual(OpErr.ScoutTalkSeason.Code, early.Code);
             Advance(gs, 4 * 3);                                                                      // 12 月(month_index 8)
             OpResult noObs = gs.ScoutTalk(5);
-            Assert.IsFalse(noObs.Ok); StringAssert.Contains("視察", noObs.Reason);
+            Assert.IsFalse(noObs.Ok); Assert.AreEqual(OpErr.ScoutNeedObserve.Code, noObs.Code);
             OpResult noTalk = gs.ScoutInvite(1);
-            Assert.IsFalse(noTalk.Ok); StringAssert.Contains("声かけ", noTalk.Reason);
+            Assert.IsFalse(noTalk.Ok); Assert.AreEqual(OpErr.ScoutNeedTalk.Code, noTalk.Code);
             Assert.IsTrue(gs.ScoutTalk(1).Ok);
             Assert.AreEqual(ScoutStage.Talked, gs.StageOf(1));
             Assert.IsFalse(gs.ScoutTalk(1).Ok, "声かけは 1 回");

@@ -61,7 +61,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 ## 設計の要点(コードを読む前に)
 
 - **世界の年度処理**(`World/WorldSim.cs`)は段階: `BeginYear → PlayQualifier → PlayRace → EndYear`(`EndYear = EndYearSettle + EndYearTurnover`)。自校だけ `IPlayerSide` で差し込む。抽象の自校(`PlayerAgent`)の結果はビット同一のまま、実体の自校は `Game/GameSession.cs`。
-- **`GameSession`**: `New → StepWeek / PlayYears`。週は段階(`ResolveTraining → PlayWeekRaces → … → FinishWeek`)に分かれ、年度末も `SettleYear → TurnoverYear`。操作は `*.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`*.Scout.cs`・`*.Race.cs`(オーダー・予報・当日)。無効な操作は理由つきで拒否(`OpResult`。08 F4)。
+- **`GameSession`**: `New → StepWeek / PlayYears`。週は段階(`ResolveTraining → PlayWeekRaces → … → FinishWeek`)に分かれ、年度末も `SettleYear → TurnoverYear`。操作は `*.Commands.cs`(年間方針・月間計画・個別指導・登録・招聘・施設)・`*.Scout.cs`・`*.Race.cs`(オーダー・予報・当日)。無効な操作は理由つきで拒否(`OpResult`。08 F4)。**理由・警告は日本語ではなくキー + 値(`Msg`・`OpErr`。`err.* / warn.* / hint.*`)で、`App/OpText` が表から文にする**(新しい拒否を足すときは `OpErr` に定義し、`Assets/Strings/ja.json` に本文を足す。`OpTextTests` が一致を検査)。
 - **保存の境目**: 週の最初の処理(`BeginWeek`)は**前の週の終わり**に走る。復元後は `state.Refresh(assignGroups:false)` が要る(なければバイト一致が崩れる)。グループは保存される割り当て(08 R-04)。
 - **読み込み**(`Persistence/Snapshot/GameLoader.cs`。09 §7.1b): 自校の半分(`team`)を `SaveValidator.ValidateAndRepairTeam` で検証・修復 → 復元 → 世界の半分を `WorldInvariants` で検査。致命は次の候補へ(回復の順)。`GameHost.Open` と中断セーブの再開が通る。
 - **世界の履歴**(`World/RaceHistory.cs`。`WorldSim.History`): 予熱の年度から、大会ごとの全校の順位表と区間記録・大会記録を持つ(保存は `history`)。`PlayRace` が更新し `RaceOutcome.Records` に返す。自校の走者の記録は `Runner.Records`・`race.record`・殿堂入りに効く。見どころの判定は `Race/RaceHighlights.cs`(注目校・重要度は 04 §9.3)。
@@ -85,7 +85,7 @@ Python は必ず `python3 -I`(カレントのファイルを読み込ませな�
 - 仕様 00〜10 は一巡済み。**M0(段階 0〜10)完了**。M1 準備として、実体の自校 + 世界(`GameSession`)・手動操作の入口・スカウト・進行制御・区間オーダー・当日(L-56)・**中断セーブ(レース進行中を含む。09 §4.6。L-62)**まで Domain / Persistence に入っている。
 - **画面向けの読み取り API(Views)**: `m0/Assets/Scripts/Domain/Views/` + `Game/GameSession.Views*.cs`。画面ごとの対応(○ △ ✗)と足りないもの(G-01〜G-17)は **`08b_screen_data.md`**。Views は状態を変えず、語は文字列テーブルのキーで返し、隠す情報(素質・体質・成長タイプ・未判明の素養)を型に入れない。新しい View を足すときは、実際の状態と**独立に計算した値**との突き合わせ + 変異(わざと壊してテストが落ちること)で確かめる。型の形は `ViewSchemaTests`(リフレクション)が守る: 隠す情報の名前(`Potential` `Q` `A0` など)を持たず、`Runner` / `TeamState` / `School` などの実体を抱え込まない(例外は表に書く)。
 - **次**: M1 の段階 1 以降(Unity 上での 1 年度の縦切り。01 §13。UI Toolkit の技術検証を含む)。Unity のゲート A・B は合格。Unity Editor・IL2CPP・実機での T3〜T5 の確認は、この環境ではできない(ローカルが要る)。
-- **残っている課題**(`00_spec_index.md` の L-xx が正): L-60 ①(檄の先行使用。観戦を見てから)・L-63 ③(`OpResult` の理由が日本語の直書き。UI を作るときに `err.*` へ)・L-62 ①②(中断セーブの戻らないもの。軽微)・L-66(移行 `SaveMigrator` は最初に版を上げるときにつなぐ / クラウド同期と購入状態 / 書き込みのスレッドは Unity の層)・L-58(スカウトのおまかせが 2 つ)・L-53 ①②(予選会に出た選手の疲労・予選会のピーキング)・L-52・L-54〜L-55(高校の強さの表・実体の自校が抽象より少し弱い・資金の使い道 L-05・型に合わせた育成の自動化 L-24)・観戦モードの演出・月末レポートの項目・新規ゲームの画面(Unity の層)。L-61(予選会の当日の画面)は**作らない方針**で決定。
+- **残っている課題**(`00_spec_index.md` の L-xx が正): L-60 ①(檄の先行使用。観戦を見てから)・L-62 ①②(中断セーブの戻らないもの。軽微)・L-66(移行 `SaveMigrator` は最初に版を上げるときにつなぐ / クラウド同期と購入状態 / 書き込みのスレッドは Unity の層)・L-58(スカウトのおまかせが 2 つ)・L-53 ①②(予選会に出た選手の疲労・予選会のピーキング)・L-52・L-54〜L-55(高校の強さの表・実体の自校が抽象より少し弱い・資金の使い道 L-05・型に合わせた育成の自動化 L-24)・観戦モードの演出・月末レポートの項目・新規ゲームの画面(Unity の層)。L-61(予選会の当日の画面)は**作らない方針**で決定。
 
 ## 落とし穴(過去に踏んだもの)
 

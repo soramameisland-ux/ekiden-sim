@@ -150,14 +150,14 @@ namespace Ekiden.Domain.Game
         /// <summary>当日変更: section の先発を控え(<see cref="Bench"/> の benchIndex 番目)と入れ替える。入れ替わった選手は同じ区間を走る。上限(第一戦 1 / 第二戦 2 / 第三戦 4)。</summary>
         public OpResult Swap(int section, int benchIndex)
         {
-            if (Started) return OpResult.Fail("レースが始まったあとは当日変更できない");
-            if (section < 0 || section >= Sections) return OpResult.Fail("その区間はない");
+            if (Started) return OpResult.Fail(OpErr.DaySwapStarted);
+            if (section < 0 || section >= Sections) return OpResult.Fail(OpErr.DayNoSection);
             List<int> bench = BenchIndices();
-            if (benchIndex < 0 || benchIndex >= bench.Count) return OpResult.Fail("その控えはいない");
+            if (benchIndex < 0 || benchIndex >= bench.Count) return OpResult.Fail(OpErr.DayNoBench);
             int old = _idx[section];
             _idx[section] = bench[benchIndex];
-            if (SwapsUsed > _rule.Swap) { _idx[section] = old; return OpResult.Fail("当日変更は " + _rule.Swap + " 名まで"); }
-            if (IntlCount() > _rule.IntlRun) { _idx[section] = old; return OpResult.Fail("留学生の出走は " + _rule.IntlRun + " 人まで"); }
+            if (SwapsUsed > _rule.Swap) { _idx[section] = old; return OpResult.Fail(OpErr.DaySwapMax, _rule.Swap); }
+            if (IntlCount() > _rule.IntlRun) { _idx[section] = old; return OpResult.Fail(OpErr.IntlRun, _rule.IntlRun); }
             Touched = true;
             return OpResult.Success;
         }
@@ -165,7 +165,7 @@ namespace Ekiden.Domain.Game
         /// <summary>当日変更をすべて戻す(提出時の配置)。</summary>
         public OpResult ResetSwaps()
         {
-            if (Started) return OpResult.Fail("レースが始まったあとは変えられない");
+            if (Started) return OpResult.Fail(OpErr.DayStartedLock);
             Array.Copy(_pre, _idx, _idx.Length);
             Touched = true;
             return OpResult.Success;
@@ -174,7 +174,7 @@ namespace Ekiden.Domain.Game
         /// <summary>『おまかせ』: 当日変更は不調以下の先発を最適な控えに置き換える・指示は全区間維持・檄は自動(初期状態)。</summary>
         public OpResult UseRecommended()
         {
-            if (Started) return OpResult.Fail("レースが始まったあとは変えられない");
+            if (Started) return OpResult.Fail(OpErr.DayStartedLock);
             ApplyRecommendedSwaps();
             for (int i = 0; i < _instr.Length; i++) _instr[i] = Instruction.Keep;
             for (int i = 0; i < _geki.Length; i++) _geki[i] = null;
@@ -185,7 +185,7 @@ namespace Ekiden.Domain.Game
         /// <summary>検算用の上級者の方針(04 §14.4): 当日変更は期待時間が最小になる控えと入れ替える(おまかせは不調以下の先発だけ)。</summary>
         public OpResult UseSkilledSwaps()
         {
-            if (Started) return OpResult.Fail("レースが始まったあとは変えられない");
+            if (Started) return OpResult.Fail(OpErr.DayStartedLock);
             Array.Copy(_pre, _idx, _idx.Length);
             if (_rule.Swap > 0) DayPlanner.ApplySwaps(_plan.Day, _idx, Kind, _plan.Envs, "skilled", _rule.Swap);
             Touched = true;
@@ -205,8 +205,8 @@ namespace Ekiden.Domain.Game
         /// <summary>区間の指示(攻める / 維持 / 抑える)。通過した区間は変えられない。</summary>
         public OpResult SetInstruction(int section, Instruction instr)
         {
-            if (section < 0 || section >= Sections) return OpResult.Fail("その区間はない");
-            if (section < Resolved) return OpResult.Fail("通過した区間の指示は変えられない");
+            if (section < 0 || section >= Sections) return OpResult.Fail(OpErr.DayNoSection);
+            if (section < Resolved) return OpResult.Fail(OpErr.DayPassed);
             _instr[section] = instr;
             Touched = true;
             return OpResult.Success;
@@ -240,32 +240,32 @@ namespace Ekiden.Domain.Game
         public OpResult Restore(RaceDayRecord r)
         {
             int n = Sections;
-            if (r == null || r.Kind != Kind || r.RaceId != RaceId) return OpResult.Fail("記録は別の大会のもの");
-            if (r.Instructions == null || r.GekiUsed == null || r.Instructions.Length != n || r.GekiUsed.Length != n) return OpResult.Fail("記録の区間の数が合わない");
-            if (r.NextSection < 0 || r.NextSection > n || (r.NextSection > 0 && !r.Started)) return OpResult.Fail("記録の進み具合がおかしい");
-            if (r.GekiSpent < 0 || r.GekiSpent > _rule.Geki) return OpResult.Fail("記録の檄の回数がおかしい");
+            if (r == null || r.Kind != Kind || r.RaceId != RaceId) return OpResult.Fail(OpErr.RecOtherRace);
+            if (r.Instructions == null || r.GekiUsed == null || r.Instructions.Length != n || r.GekiUsed.Length != n) return OpResult.Fail(OpErr.RecSections);
+            if (r.NextSection < 0 || r.NextSection > n || (r.NextSection > 0 && !r.Started)) return OpResult.Fail(OpErr.RecProgress);
+            if (r.GekiSpent < 0 || r.GekiSpent > _rule.Geki) return OpResult.Fail(OpErr.RecGekiCount);
             var instr = new Instruction[n];
             var geki = new bool?[n];
             for (int i = 0; i < n; i++)
             {
-                if (r.Instructions[i] < 0 || r.Instructions[i] > (int)Instruction.Hold) return OpResult.Fail("記録の指示がおかしい");
+                if (r.Instructions[i] < 0 || r.Instructions[i] > (int)Instruction.Hold) return OpResult.Fail(OpErr.RecInstruction);
                 instr[i] = (Instruction)r.Instructions[i];
-                if (r.GekiUsed[i] < -1 || r.GekiUsed[i] > 1) return OpResult.Fail("記録の檄がおかしい");
+                if (r.GekiUsed[i] < -1 || r.GekiUsed[i] > 1) return OpResult.Fail(OpErr.RecGeki);
                 geki[i] = r.GekiUsed[i] < 0 ? (bool?)null : r.GekiUsed[i] == 1;
             }
             var idx = (int[])_pre.Clone();
             foreach (RaceDayRecord.Swap s in r.Swaps)
             {
-                if (s.Section < 0 || s.Section >= n) return OpResult.Fail("記録の当日変更の区間がおかしい");
+                if (s.Section < 0 || s.Section >= n) return OpResult.Fail(OpErr.RecSwapSection);
                 int j = _plan.Day.FindIndex(x => x.RunnerId == s.RunnerId && s.RunnerId != 0);
-                if (j < 0) return OpResult.Fail("記録の当日変更の選手がいない");
+                if (j < 0) return OpResult.Fail(OpErr.RecSwapRunner);
                 idx[s.Section] = j;
             }
-            for (int a = 0; a < n; a++) for (int b = a + 1; b < n; b++) if (idx[a] == idx[b]) return OpResult.Fail("記録の配置に同じ選手が 2 回出る");
+            for (int a = 0; a < n; a++) for (int b = a + 1; b < n; b++) if (idx[a] == idx[b]) return OpResult.Fail(OpErr.RecDup);
             int used = 0, intl = 0;
             for (int i = 0; i < n; i++) { if (idx[i] != _pre[i]) used++; if (_plan.Day[idx[i]].Overseas) intl++; }
-            if (used > _rule.Swap) return OpResult.Fail("記録の当日変更が上限を超える");
-            if (intl > _rule.IntlRun) return OpResult.Fail("記録の留学生の出走が上限を超える");
+            if (used > _rule.Swap) return OpResult.Fail(OpErr.RecSwapMax);
+            if (intl > _rule.IntlRun) return OpResult.Fail(OpErr.RecIntl);
             Array.Copy(idx, _idx, n);
             Array.Copy(instr, _instr, n);
             Array.Copy(geki, _geki, n);
@@ -301,7 +301,7 @@ namespace Ekiden.Domain.Game
         /// <summary>レースを始める(当日変更はここまで)。</summary>
         public OpResult Start()
         {
-            if (Started) return OpResult.Fail("始まっている");
+            if (Started) return OpResult.Fail(OpErr.DayAlreadyStarted);
             Started = true;
             return OpResult.Success;
         }
@@ -330,10 +330,10 @@ namespace Ekiden.Domain.Game
         /// <summary>異変に檄を使う(上限まで。異変が出ていないときは使えない)。</summary>
         public OpResult UseGeki()
         {
-            if (!Started) return OpResult.Fail("レースが始まっていない");
-            if (Resolved >= Sections) return OpResult.Fail("レースは終わっている");
-            if (GekiLeft <= 0) return OpResult.Fail("檄の回数を使い切っている");
-            if (NextIncident() == null) return OpResult.Fail("異変が出ていない");
+            if (!Started) return OpResult.Fail(OpErr.DayNotStarted);
+            if (Resolved >= Sections) return OpResult.Fail(OpErr.DayFinished);
+            if (GekiLeft <= 0) return OpResult.Fail(OpErr.GekiNone);
+            if (NextIncident() == null) return OpResult.Fail(OpErr.GekiNoIncident);
             _geki[Resolved] = true;
             Touched = true;
             return OpResult.Success;

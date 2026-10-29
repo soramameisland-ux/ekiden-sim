@@ -127,7 +127,7 @@ namespace Ekiden.Domain.Game
         /// 週の初めの停止は出さず(中断の前に済んでいる)、練習を同じ結果で解決し直して、その週の結果の停止から続ける(その週に選んだイベントの選択肢は選び直す)。</summary>
         public OpResult ResumeWeek()
         {
-            if (_phase != Phase.Start || Current != null || _queue.Count > 0) return OpResult.Fail("再開できるのは、復元したあとの最初の『続ける』の前だけ");
+            if (_phase != Phase.Start || Current != null || _queue.Count > 0) return OpResult.Fail(OpErr.ResumeFirstOnly);
             _resuming = true;
             return OpResult.Success;
         }
@@ -136,9 +136,9 @@ namespace Ekiden.Domain.Game
         /// 走り終わったあとの記録なら、当日の画面は出さず、結果とイベントの停止から続ける。</summary>
         public OpResult ResumeRace(RaceDayRecord record)
         {
-            if (_phase != Phase.Start || Current != null || _queue.Count > 0) return OpResult.Fail("再開できるのは、復元したあとの最初の『続ける』の前だけ");
+            if (_phase != Phase.Start || Current != null || _queue.Count > 0) return OpResult.Fail(OpErr.ResumeFirstOnly);
             RaceKind? race = Session.RaceThisWeek;
-            if (record == null || !race.HasValue || race.Value != record.Kind || S.Settings.SpectateMode != "Full") return OpResult.Fail("記録がこの週の大会と合わない");
+            if (record == null || !race.HasValue || race.Value != record.Kind || S.Settings.SpectateMode != "Full") return OpResult.Fail(OpErr.RecordMismatch);
             _resuming = true;
             _resume = record;
             return OpResult.Success;
@@ -304,8 +304,8 @@ namespace Ekiden.Domain.Game
         /// <summary>イベントの選択をする(<see cref="Current"/> が Event の停止のとき)。選ばずに『続ける』と既定の選択肢。</summary>
         public OpResult ChooseEvent(string choiceId)
         {
-            if (Current == null || Current.Kind != StopKind.Event) return OpResult.Fail("選ぶイベントがない");
-            if (!Current.Choices.Any(c => c.Id == choiceId)) return OpResult.Fail("その選択肢は選べない");
+            if (Current == null || Current.Kind != StopKind.Event) return OpResult.Fail(OpErr.NoEvent);
+            if (!Current.Choices.Any(c => c.Id == choiceId)) return OpResult.Fail(OpErr.BadChoice);
             _chosen[Current.Event.Def.Id] = choiceId;
             return OpResult.Success;
         }

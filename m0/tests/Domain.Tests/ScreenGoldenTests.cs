@@ -259,11 +259,11 @@ namespace Ekiden.Domain.Tests
                 {
                     string[] mn = c.GetProperty("menu").EnumerateArray().Select(x => x.ValueKind == JsonValueKind.Null ? null : x.GetString()).ToArray();
                     menu = Tuple.Create(mn[0], mn[1], mn[2]);
-                    CollectionAssert.AreEqual(Strs(c.GetProperty("errors")), PlanRules.ValidateMenu(M, mn[0], mn[1], mn[2]), "menu " + c);
+                    CollectionAssert.AreEqual(Strs(c.GetProperty("errors")), PlanRules.ValidateMenu(M, mn[0], mn[1], mn[2]).Select(m => m.Code), "menu " + c);
                 }
                 var got = PlanRules.CanGuide(M, c.GetProperty("points").GetInt32(), c.GetProperty("kind").GetString(), c.GetProperty("injured").GetBoolean(), c.GetProperty("talked").GetBoolean(), menu);
                 Assert.AreEqual(c.GetProperty("ok").GetBoolean(), got.Key, c.ToString());
-                Assert.AreEqual(c.GetProperty("reason").GetString(), got.Value, c.ToString());
+                Assert.AreEqual(c.GetProperty("reason").GetString(), got.Value.Code, c.ToString());
                 if (got.Key) okCount++;
             }
             Assert.Greater(okCount, 100);

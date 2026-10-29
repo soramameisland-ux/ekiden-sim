@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ekiden.Domain.Game;
 using Ekiden.Domain.Training;
 
 namespace Ekiden.Domain.Screens
@@ -49,39 +50,39 @@ namespace Ekiden.Domain.Screens
             return res;
         }
 
-        /// <summary>03 §5.5 の個別指定のメニューの検証。エラーの文言のリスト(空なら有効)。mileage が null なら『走行量は必須』。</summary>
-        public static List<string> ValidateMenu(TrainingMaster m, string ks1, string ks2, string mileage, bool injured = false)
+        /// <summary>03 §5.5 の個別指定のメニューの検証。エラーの文のリスト(空なら有効。<c>err.menu.*</c>)。mileage が null なら『走行量は必須』。</summary>
+        public static List<Msg> ValidateMenu(TrainingMaster m, string ks1, string ks2, string mileage, bool injured = false)
         {
-            var errs = new List<string>();
-            if (injured) errs.Add("故障中は指定できない");
-            if (ks1 == ks2) errs.Add("ポイント練習の2枠は異なるIDにする");
+            var errs = new List<Msg>();
+            if (injured) errs.Add(OpErr.MenuInjured.Make());
+            if (ks1 == ks2) errs.Add(OpErr.MenuDupKs.Make());
             foreach (string k in new[] { ks1, ks2 })
             {
-                if (k == "ks.cross_train") errs.Add("ks.cross_train は指定できない");
-                if (!m.KeySessions.ContainsKey(k)) errs.Add("未定義のポイント練習 " + k);
+                if (k == "ks.cross_train") errs.Add(OpErr.MenuCrossTrain.Make());
+                if (!m.KeySessions.ContainsKey(k)) errs.Add(OpErr.MenuUnknownKs.Make(k));
             }
-            if (mileage == null || !m.Mileages.ContainsKey(mileage)) errs.Add("走行量は必須");
+            if (mileage == null || !m.Mileages.ContainsKey(mileage)) errs.Add(OpErr.MenuMileage.Make());
             return errs;
         }
 
-        /// <summary>個別指導の可否(R-06)。kind = "menu" / "talk"。戻り値は (可否, 理由)。</summary>
-        public static KeyValuePair<bool, string> CanGuide(TrainingMaster m, int pointsLeft, string kind, bool injured, bool alreadyTalked = false, Tuple<string, string, string> menu = null)
+        /// <summary>個別指導の可否(R-06)。kind = "menu" / "talk"。戻り値は (可否, 理由またはヒントの文。<c>err.guide.*</c> / <c>hint.guide.*</c>)。</summary>
+        public static KeyValuePair<bool, Msg> CanGuide(TrainingMaster m, int pointsLeft, string kind, bool injured, bool alreadyTalked = false, Tuple<string, string, string> menu = null)
         {
-            if (pointsLeft < K_UI_GUIDE_COST) return Pair(false, "指導ポイントが足りない");
+            if (pointsLeft < K_UI_GUIDE_COST) return Pair(false, OpErr.GuidePoints);
             if (kind == "menu")
             {
-                if (injured) return Pair(false, "故障中の選手には指定できない");
-                if (menu == null || ValidateMenu(m, menu.Item1, menu.Item2, menu.Item3).Count > 0) return Pair(false, "メニューが不正");
-                return Pair(true, "今週から月末まで有効");
+                if (injured) return Pair(false, OpErr.GuideInjured);
+                if (menu == null || ValidateMenu(m, menu.Item1, menu.Item2, menu.Item3).Count > 0) return Pair(false, OpErr.GuideMenuInvalid);
+                return Pair(true, OpErr.HintGuideMenu);
             }
             if (kind == "talk")
             {
-                if (alreadyTalked) return Pair(false, "面談は1人につき月1回");
-                return Pair(true, "やる気 +1(03 M3)");
+                if (alreadyTalked) return Pair(false, OpErr.GuideTalked);
+                return Pair(true, OpErr.HintGuideTalk);
             }
-            return Pair(false, "不明な種別");
+            return Pair(false, OpErr.GuideKind);
         }
 
-        private static KeyValuePair<bool, string> Pair(bool b, string s) { return new KeyValuePair<bool, string>(b, s); }
+        private static KeyValuePair<bool, Msg> Pair(bool b, ErrDef d) { return new KeyValuePair<bool, Msg>(b, d.Make()); }
     }
 }

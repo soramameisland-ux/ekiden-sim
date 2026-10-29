@@ -56,7 +56,7 @@ namespace Ekiden.Domain.Game
         /// <summary>通知 1 件を既読にする(添字は <see cref="NotificationView.Index"/>)。</summary>
         public OpResult MarkNotificationRead(int index)
         {
-            if (index < 0 || index >= State.Notifications.Count) return OpResult.Fail("その通知はない");
+            if (index < 0 || index >= State.Notifications.Count) return OpResult.Fail(OpErr.NotifyNone);
             State.Notifications[index].Unread = false;
             return OpResult.Success;
         }

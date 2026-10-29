@@ -779,7 +779,7 @@ EntitlementGuarded(provider, cache, now, hw, run_total):
 | 項目 | 規則 |
 |------|------|
 | 形式 | `Strings/ja.json` = `{ "キー": "本文" }`(平らな辞書)。言語を足すときは `Strings/{lang}.json`。v1 は `ja` のみ(U-04)|
-| キーの名前 | `scr.{画面}.{要素}`(画面) / `ev.{イベントID}.{部分}` / `skill.{ID}.name` `skill.{ID}.desc` / `menu.{ID}.name` / `ach.{ID}.title` `ach.{ID}.desc` / `race.{種別}.name` / `err.{コード}` / `ui.{共通}` |
+| キーの名前 | `scr.{画面}.{要素}`(画面) / `ev.{イベントID}.{部分}` / `skill.{ID}.name` `skill.{ID}.desc` / `menu.{ID}.name` / `ach.{ID}.title` `ach.{ID}.desc` / `race.{種別}.name` / `err.{コード}`(操作の失敗の理由)/ `warn.{コード}`(確認が要る警告)/ `hint.{コード}`(可能なときの一言)/ `ui.{共通}` |
 | 差し込み | `{名前}` の**名前つき**。本文の `{school}` は呼び出し側が文字列で渡す(数値・時間は §13 の関数で整形してから渡す)|
 | 学校・選手の名前 | **表ではなくデータ**(セーブに入る。`SchoolState` / `Runner`)。**大会名・施設名・メニュー名**などの固定の語は表 |
 | 欠落 | 開発ビルド: 赤字で `⟦キー⟧` を表示して警告。製品: `？` を表示して診断ログに1回だけ残す。**CI で、マスタ・コード・画面から参照されるキーがすべて表にあること**と、本文の `{名前}` が呼び出しの引数と一致することを検査する(`StringsLint`)|

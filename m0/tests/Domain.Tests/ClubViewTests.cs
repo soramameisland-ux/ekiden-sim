@@ -89,7 +89,7 @@ namespace Ekiden.Domain.Tests
                     else
                     {
                         Assert.AreEqual(r.Level >= r.Cap ? "cap" : "funds", r.BlockedBy);
-                        StringAssert.Contains(r.BlockedBy == "cap" ? "上限" : "資金", res.Reason);
+                        Assert.AreEqual((r.BlockedBy == "cap" ? OpErr.FacilityCap : OpErr.FacilityFunds).Code, res.Code);
                         Assert.AreEqual(funds, g.State.Funds, "拒否されたら資金は変わらない");
                     }
                     Assert.AreEqual(r.Level >= r.Cap, r.NextCost == null);

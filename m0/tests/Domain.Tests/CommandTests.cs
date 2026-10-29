@@ -51,7 +51,7 @@ namespace Ekiden.Domain.Tests
             Advance(gs, 4);
             OpResult no = gs.ApplyRecommendedGroups();
             Assert.IsFalse(no.Ok);
-            StringAssert.Contains("4 月", no.Reason);
+            Assert.AreEqual(OpErr.RecommendApril.Code, no.Code);
             Advance(gs, 44);                                                                         // 次の年度の最初の週(おまかせ: 推奨の編成が自動で適用される)
             var order = gs.State.Runners.OrderByDescending(x => TeamState.LongP(x)).ThenBy(x => x.Id).ToList();
             for (int i = 0; i < order.Count; i++) Assert.AreEqual(i < 10 ? 0 : (i < 20 ? 1 : 2), order[i].Group, "おまかせは年度初めに推奨の編成を適用");
@@ -91,7 +91,7 @@ namespace Ekiden.Domain.Tests
             Assert.AreEqual("th.custom", gs.State.MonthlyPlan[0]);
             OpResult bad = gs.SetCustomWeeks(1, new[] { new MenuSpec("ks.hill", "ks.hill", "mil.low"), Care, Care, Care });
             Assert.IsFalse(bad.Ok);
-            StringAssert.Contains("1 週目", bad.Reason);
+            Assert.AreEqual(OpErr.CustomWeek.Code, bad.Code); Assert.AreEqual("1", bad.Error.Args[1], "n = 1 週目"); Assert.AreEqual(OpErr.MenuDupKs.Code, bad.Error.Why.Code);
             Assert.IsNull(gs.State.CustomWeeks[1], "拒否した操作は状態を変えない");
             Assert.IsFalse(gs.SetCustomWeeks(0, weeks.Take(3).ToArray()).Ok);
             bool camp, ind;
@@ -151,19 +151,19 @@ namespace Ekiden.Domain.Tests
             hurt.InjurySeverity = InjurySeverity.Moderate;
             OpResult o;
             o = gs.GuideMenu(hurt.Id, Care);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("故障", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.MenuInjured.Code, o.Code);
             o = gs.GuideMenu(r.Id, new MenuSpec("ks.hill", "ks.hill", "mil.low"));
-            Assert.IsFalse(o.Ok); StringAssert.Contains("異なる", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.MenuDupKs.Code, o.Code);
             o = gs.GuideMenu(r.Id, new MenuSpec("ks.cross_train", "ks.rest", "mil.low"));
-            Assert.IsFalse(o.Ok); StringAssert.Contains("cross_train", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.MenuCrossTrain.Code, o.Code);
             o = gs.GuideMenu(r.Id, new MenuSpec("ks.core", "ks.rest", null));
-            Assert.IsFalse(o.Ok); StringAssert.Contains("走行量", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.MenuMileage.Code, o.Code);
             Assert.IsFalse(gs.GuideMenu(999, Care).Ok);
             Assert.AreEqual(0, s.IndividualMenus.Count);
             Assert.AreEqual(4, s.GuidanceLeft, "拒否した操作はポイントを使わない");
             for (int i = 0; i < 4; i++) Assert.IsTrue(gs.GuideMenu(s.Runners[2 + i].Id, Care).Ok);
             o = gs.GuideMenu(s.Runners[7].Id, Care);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("ポイント", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.GuidePoints.Code, o.Code);
         }
 
         [Test]
@@ -176,7 +176,7 @@ namespace Ekiden.Domain.Tests
             OpResult o = gs.GuideMenu(r.Id, Care);
             Assert.IsFalse(o.Ok);
             Assert.IsTrue(o.NeedsConfirm);
-            CollectionAssert.Contains(o.Warnings, "安全網が働きません");
+            CollectionAssert.Contains(o.Warnings.Select(w => w.Code).ToList(), OpErr.WarnNoSafety.Code);
             Assert.AreEqual(4, s.GuidanceLeft, "確認の前はポイントを使わない");
             Assert.IsTrue(gs.GuideMenu(r.Id, Care, confirmed: true).Ok);
             Assert.AreEqual(3, s.GuidanceLeft);
@@ -187,7 +187,7 @@ namespace Ekiden.Domain.Tests
             e.Fatigue = 10;
             OpResult t = g2.GuideMenu(e.Id, Care);
             Assert.IsTrue(t.NeedsConfirm);
-            CollectionAssert.Contains(t.Warnings, "調整メニューを上書きします");
+            CollectionAssert.Contains(t.Warnings.Select(w => w.Code).ToList(), OpErr.WarnOverrideTaper.Code);
         }
 
         [Test]
@@ -201,7 +201,7 @@ namespace Ekiden.Domain.Tests
             Assert.AreEqual(3, r.Motivation);
             Assert.AreEqual(3, s.GuidanceLeft);
             OpResult again = gs.Talk(r.Id);
-            Assert.IsFalse(again.Ok); StringAssert.Contains("月1回", again.Reason);
+            Assert.IsFalse(again.Ok); Assert.AreEqual(OpErr.GuideTalked.Code, again.Code);
             Assert.AreEqual(3, r.Motivation);
             r = s.Runners[1]; r.Motivation = 5;
             Assert.IsTrue(gs.Talk(r.Id).Ok);
@@ -218,7 +218,7 @@ namespace Ekiden.Domain.Tests
             GameSession gs = New();
             var ids = gs.State.Runners.Take(10).Select(r => r.Id).ToList();
             OpResult early = gs.SetEntries(RaceKind.Fall, ids);
-            Assert.IsFalse(early.Ok); StringAssert.Contains("4 週前", early.Reason);
+            Assert.IsFalse(early.Ok); Assert.AreEqual(OpErr.EntryWindow.Code, early.Code);
             Advance(gs, 21);
             Assert.AreEqual(10, gs.State.Entries[0].Count, "締切の週に、おまかせ登録が初期値として入る");
             Assert.IsTrue(gs.SetEntries(RaceKind.Fall, ids).Ok);
@@ -236,17 +236,17 @@ namespace Ekiden.Domain.Tests
             List<int> all = s.Runners.Select(r => r.Id).ToList();
             OpResult o;
             o = gs.SetEntries(RaceKind.Fall, all.Take(11).ToList());
-            Assert.IsFalse(o.Ok); StringAssert.Contains("10", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.EntryMax.Code, o.Code); Assert.AreEqual("10", o.Error.Args[1]);
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[0], all[0] });
-            Assert.IsFalse(o.Ok); StringAssert.Contains("二重", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.EntryDup.Code, o.Code);
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[0], 999 });
             Assert.IsFalse(o.Ok);
             s.FindRunner(all[1]).InjurySeverity = InjurySeverity.Severe;
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[0], all[1] });
-            Assert.IsFalse(o.Ok); StringAssert.Contains("重傷", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.EntrySevere.Code, o.Code);
             for (int i = 2; i < 5; i++) s.FindRunner(all[i]).Overseas = true;
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[2], all[3], all[4] });
-            Assert.IsFalse(o.Ok); StringAssert.Contains("留学生", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.EntryIntl.Code, o.Code);
             List<int> before = s.Entries[0].ToList();
             o = gs.SetEntries(RaceKind.Fall, new List<int> { all[6], all[7] });
             Assert.IsTrue(o.NeedsConfirm, "出走人数に足りないと棄権になる");
@@ -278,11 +278,11 @@ namespace Ekiden.Domain.Tests
         {
             GameSession gs = New();
             OpResult o = gs.DeclareTicket(TicketKind.Rookie);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("ありません", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.TicketNone.Code, o.Code);
             gs.State.Tickets.Earn(TicketMilestones.WinFall, 0);
             gs.State.Tickets.Earn(TicketMilestones.WinNational, 0);
             o = gs.DeclareTicket(TicketKind.Rookie);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("6〜2 月", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.TicketMonth.Code, o.Code);
             Advance(gs, 8);                                                                          // 6 月
             Assert.IsFalse(gs.DeclareTicket(TicketKind.Intl, 13).Ok, "留学生に出身県は指定できない");
             Assert.IsFalse(gs.DeclareTicket(TicketKind.Rookie, 48).Ok);
@@ -290,7 +290,7 @@ namespace Ekiden.Domain.Tests
             Assert.AreEqual(13, gs.State.Tickets.Pending.Pref);
             Assert.AreEqual(1, gs.State.Tickets.Stock);
             o = gs.DeclareTicket(TicketKind.Intl);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("宣言済み", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.TicketPending.Code, o.Code);
             Advance(gs, 40);
             Runner t = gs.State.Runners.Single(r => r.RecruitSource == RecruitSource.Ticket);
             Assert.AreEqual(13, t.Pref, "指定した県の選手が入学する");
@@ -312,11 +312,11 @@ namespace Ekiden.Domain.Tests
             Assert.AreEqual(1500 - (300 + 250 * 2), s.Funds, "費用 = 300 + 250 × 現在 Lv");
             Assert.AreEqual(3, gs.School.Fac.Dorm, "世界の側の自校にも反映される");
             OpResult cap = gs.UpgradeFacility("dorm");
-            Assert.IsFalse(cap.Ok); StringAssert.Contains("上限", cap.Reason);
+            Assert.IsFalse(cap.Ok); Assert.AreEqual(OpErr.FacilityCap.Code, cap.Code);
             Assert.IsFalse(gs.UpgradeFacility("pool").Ok);
             s.Funds = 100;
             OpResult poor = gs.UpgradeFacility("scout");
-            Assert.IsFalse(poor.Ok); StringAssert.Contains("資金", poor.Reason);
+            Assert.IsFalse(poor.Ok); Assert.AreEqual(OpErr.FacilityFunds.Code, poor.Code);
             Assert.AreEqual(2, s.Fac.Scout);
             Assert.AreEqual(100, s.Funds);
         }

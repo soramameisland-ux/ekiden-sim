@@ -88,7 +88,7 @@ namespace Ekiden.Domain.Game
         private OpResult ScoutAct(int index, ScoutStage next)
         {
             IReadOnlyList<WorldRunner> pool = ScoutPool;
-            if (index < 0 || index >= pool.Count) return OpResult.Fail("その候補はいない");
+            if (index < 0 || index >= pool.Count) return OpResult.Fail(OpErr.ScoutNone);
             ScoutStage cur = StageOf(index);
             int month = MonthIndex;
             if (!Scouting.CanAct(cur, next, month))
@@ -96,18 +96,18 @@ namespace Ekiden.Domain.Game
                 switch (next)
                 {
                     case ScoutStage.Observed:
-                        return OpResult.Fail(cur != ScoutStage.None ? "視察済みです" : "視察できるのは 6〜11 月です");
+                        return OpResult.Fail(cur != ScoutStage.None ? OpErr.ScoutObservedAlready : OpErr.ScoutObserveSeason);
                     case ScoutStage.Talked:
-                        if (cur == ScoutStage.None) return OpResult.Fail("先に視察が要ります");
-                        if (cur != ScoutStage.Observed) return OpResult.Fail("声かけ済みです");
-                        return OpResult.Fail("声かけできるのは 12〜2 月です");
+                        if (cur == ScoutStage.None) return OpResult.Fail(OpErr.ScoutNeedObserve);
+                        if (cur != ScoutStage.Observed) return OpResult.Fail(OpErr.ScoutTalkedAlready);
+                        return OpResult.Fail(OpErr.ScoutTalkSeason);
                     default:
-                        if (cur == ScoutStage.Invited) return OpResult.Fail("練習会に招待済みです");
-                        if (cur != ScoutStage.Talked) return OpResult.Fail("先に声かけが要ります");
-                        return OpResult.Fail("練習会に招待できるのは 12〜2 月です");
+                        if (cur == ScoutStage.Invited) return OpResult.Fail(OpErr.ScoutInvitedAlready);
+                        if (cur != ScoutStage.Talked) return OpResult.Fail(OpErr.ScoutNeedTalk);
+                        return OpResult.Fail(OpErr.ScoutInviteSeason);
                 }
             }
-            if (ScoutPointsAvailable < Scouting.ObserveCost) return OpResult.Fail("スカウトのポイントが足りない");
+            if (ScoutPointsAvailable < Scouting.ObserveCost) return OpResult.Fail(OpErr.ScoutPoints);
             State.ScoutPts -= 1;                                                         // 補正ぶんを含めて使う(補正が切れると、その分だけ減る)
             _scout[index] = next;
             return OpResult.Success;

@@ -98,20 +98,20 @@ namespace Ekiden.Domain.Tests
             Assert.IsTrue(ok.All(entries.Contains));
             OpResult o;
             o = gs.SetOrder(RaceKind.Fall, ok.Take(n - 1).ToList());
-            Assert.IsFalse(o.Ok); StringAssert.Contains("区間数", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.OrderCount.Code, o.Code);
             o = gs.SetOrder(RaceKind.Fall, ok.Take(n - 1).Concat(new[] { ok[0] }).ToList());
-            Assert.IsFalse(o.Ok); StringAssert.Contains("二重", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.OrderDup.Code, o.Code);
             int outsider = s.Runners.First(r => !entries.Contains(r.Id)).Id;
             o = gs.SetOrder(RaceKind.Fall, ok.Take(n - 1).Concat(new[] { outsider }).ToList());
-            Assert.IsFalse(o.Ok); StringAssert.Contains("登録メンバー", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.OrderNotEntered.Code, o.Code);
             Runner hurt = s.FindRunner(ok[2]);
             hurt.InjurySeverity = InjurySeverity.Moderate;
             o = gs.SetOrder(RaceKind.Fall, ok);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("故障", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.OrderInjured.Code, o.Code);
             hurt.InjurySeverity = InjurySeverity.None;
             foreach (int id in entries.Take(3)) s.FindRunner(id).Overseas = true;
             o = gs.SetOrder(RaceKind.Fall, entries.Take(n).ToList());
-            Assert.IsFalse(o.Ok); StringAssert.Contains("留学生", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.IntlRun.Code, o.Code);
             foreach (int id in entries.Take(3)) s.FindRunner(id).Overseas = false;
             Assert.IsNull(gs.OrderOf(RaceKind.Fall), "拒否した操作は状態を変えない");
             Assert.IsTrue(gs.SetOrder(RaceKind.Fall, ok).Ok);
@@ -125,7 +125,7 @@ namespace Ekiden.Domain.Tests
         {
             GameSession gs = GameSession.New(Seed, Difficulty.Mid);
             OpResult early = gs.SetOrder(RaceKind.Fall, new[] { 1, 2, 3, 4, 5, 6 });
-            Assert.IsFalse(early.Ok); StringAssert.Contains("締切", early.Reason);
+            Assert.IsFalse(early.Ok); Assert.AreEqual(OpErr.OrderWindow.Code, early.Code);
             for (int i = 0; i < 21; i++) gs.StepWeek();
             int[] sug = gs.SuggestOrder(RaceKind.Fall);
             Assert.IsTrue(gs.SetOrder(RaceKind.Fall, sug).Ok);
@@ -143,7 +143,7 @@ namespace Ekiden.Domain.Tests
             Assert.IsTrue(gs.SetOrder(RaceKind.Fall, sug).Ok, "大会の週の初めまで出せる");
             gs.ResolveTraining();
             OpResult late = gs.SetOrder(RaceKind.Fall, sug);
-            Assert.IsFalse(late.Ok); StringAssert.Contains("週の初め", late.Reason);
+            Assert.IsFalse(late.Ok); Assert.AreEqual(OpErr.OrderWindow.Code, late.Code);
         }
 
         [Test]
@@ -233,7 +233,7 @@ namespace Ekiden.Domain.Tests
             if (third >= 0)
             {
                 OpResult over = rd.Swap(0, third);
-                Assert.IsFalse(over.Ok); StringAssert.Contains("2 名", over.Reason);
+                Assert.IsFalse(over.Ok); Assert.AreEqual(OpErr.DaySwapMax.Code, over.Code); Assert.AreEqual("2", over.Error.Args[1]);
                 Assert.AreEqual(2, rd.SwapsUsed);
             }
             OpResult back = rd.Swap(2, rd.Bench.ToList().FindIndex(b => b.RunnerId == before[2]));
@@ -257,7 +257,7 @@ namespace Ekiden.Domain.Tests
             Assert.AreEqual(1, rd.SwapLimit);
             Assert.IsTrue(rd.Swap(0, 0).Ok);
             OpResult o = rd.Swap(1, 0);
-            Assert.IsFalse(o.Ok); StringAssert.Contains("1 名", o.Reason);
+            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.DaySwapMax.Code, o.Code); Assert.AreEqual("1", o.Error.Args[1]);
             Assert.AreEqual(1, rd.SwapsUsed);
         }
 
@@ -279,7 +279,7 @@ namespace Ekiden.Domain.Tests
             {
                 int sec = Enumerable.Range(0, rd.Sections).First(i => gs.State.FindRunner(rd.Lineup[i].RunnerId)?.Overseas != true);
                 OpResult o = rd.Swap(sec, bi);
-                Assert.IsFalse(o.Ok); StringAssert.Contains("留学生", o.Reason);
+                Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.IntlRun.Code, o.Code);
             }
         }
 
@@ -440,7 +440,7 @@ namespace Ekiden.Domain.Tests
                                 continue;
                             }
                             OpResult o = use.UseGeki();
-                            Assert.IsFalse(o.Ok); StringAssert.Contains("使い切", o.Reason);
+                            Assert.IsFalse(o.Ok); Assert.AreEqual(OpErr.GekiNone.Code, o.Code);
                         }
                         use.Advance(); decline.Advance();
                     }

@@ -680,38 +680,38 @@ def stops_after_week(week, events, injuries, warn, race_kind, event_auto):
 
 # ================================================================ R-06 個別指導(検証)
 def validate_menu(ks1, ks2, mil, injured=False):
-    """03 §5.5 の検証。戻り値: エラーのリスト(空なら有効)。"""
+    """03 §5.5 の検証。戻り値: エラーのキー(文字列テーブルの err.menu.*)のリスト(空なら有効)。差し込みの値(未定義のポイント練習の名前)は C# の側が持つ。"""
     errs = []
     if injured:
-        errs.append("故障中は指定できない")
+        errs.append("err.menu.injured")
     if ks1 == ks2:
-        errs.append("ポイント練習の2枠は異なるIDにする")
+        errs.append("err.menu.dup_ks")
     for k in (ks1, ks2):
         if k == "ks.cross_train":
-            errs.append("ks.cross_train は指定できない")
+            errs.append("err.menu.cross_train")
         if k not in m3.KS:
-            errs.append(f"未定義のポイント練習 {k}")
+            errs.append("err.menu.unknown_ks")
     if mil not in m3.MIL:
-        errs.append("走行量は必須")
+        errs.append("err.menu.mileage")
     return errs
 
 
 def can_guide(points_left, kind, runner_state, month_week, already_talked=False, menu=None):
     """個別指導の可否。kind='menu'|'talk'。runner_state: dict(injured). month_week: 今の週(0〜3)。
-    戻り値: (可否, 理由)。"""
+    戻り値: (可否, 理由・ヒントのキー err.guide.* / hint.guide.*)。"""
     if points_left < K["GUIDE_COST"]:
-        return False, "指導ポイントが足りない"
+        return False, "err.guide.points"
     if kind == "menu":
         if runner_state.get("injured"):
-            return False, "故障中の選手には指定できない"
+            return False, "err.guide.injured"
         if menu is None or validate_menu(*menu):
-            return False, "メニューが不正"
-        return True, "今週から月末まで有効"
+            return False, "err.guide.menu_invalid"
+        return True, "hint.guide.menu"
     if kind == "talk":
         if already_talked:
-            return False, "面談は1人につき月1回"
-        return True, "やる気 +1(03 M3)"
-    return False, "不明な種別"
+            return False, "err.guide.talked"
+        return True, "hint.guide.talk"
+    return False, "err.guide.kind"
 
 
 # ================================================================ R-10 月末レポートの項目の選択
