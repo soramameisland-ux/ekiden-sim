@@ -40,3 +40,26 @@
 
 - 記録: `09_save_tech_spec.md` §17.8・`00_spec_index.md` の L-71。
 - T5(IL2CPP での `bench`)は、U2 以降を優先して後回し(下の『未完』)。
+
+## U2. Unity 側の足場
+
+asmdef `Ekiden.Unity`(`Assets/Scripts/Unity/`。参照 = Domain・Persistence・App・Platform.Abstractions・Unity.InputSystem)。
+
+| 部品 | 内容 |
+|------|------|
+| `UnityFileStore : IFileStore` | 根は `Application.persistentDataPath/save`。`WriteAtomic` = `{path}.tmp` に書く → `Flush(true)` → 読み戻して verify → `File.Replace`(置き換えがない環境は削除 + 移動。A / B の世代が電源断を受け持つ)→ verify が false / 例外なら .tmp を消して `IOException`。`List` は昇順。`FreeSpace` は取れなければ最大値 |
+| 時計 | `Platform.Abstractions` に既に `SystemClock`(UTC + `Stopwatch` の単調時計)があったので、それを使う(新しく作らない。Domain は使わない)|
+| `Strings` | `Assets/Strings/ja.json` を唯一の正とする。ビルドでは TextAsset の参照(`GameBootstrap.strings`)、Editor・試験では同じファイルを直接読む(`Strings.FromProject`)。写しは持たない。`TableLocalization`(開発ビルドで `⟦キー⟧`)|
+| `GameApp` | 起動の組み立て(MonoBehaviour なし)。`HostEnvironment` を作り `GameHost.NewGame` / `Open`、`Pause` / `Resume` / `Tick`、新しい世界の種(時計 + GUID。`BitConverter` は使わない)|
+| `GameBootstrap` | シーンに置く MonoBehaviour。`OnApplicationPause(true/false)` → `OnAppPause` / `OnAppResume`、`OnApplicationQuit` → `OnAppPause`、`Update` で 1 秒ごとに `Tick` |
+
+EditMode 試験(`Assets/Tests/EditMode`・asmdef `Ekiden.Unity.Tests`。`-runTests -testPlatform EditMode -assemblyNames Ekiden.Unity.Tests`): **8 件すべて合格**(コンパイルエラー 0・警告 0)。
+1. ja.json を読んで `StringsLint.CheckTable` の指摘 0。
+2. `UnityFileStore` の往復・一覧・削除 / 検証に落ちた書き込み・途中で切れた書き込み(.tmp が半分残る)で本物が壊れない / 最新の世代を途中で切ったセーブを `GameHost.Open` が古い世代から読む(`RecoveredFromOlder`)。
+3. `GameHost.NewGame` → 1 年度 → `SaveManual` → `Open` → 続行できる / **保存 → 開く → 続行が、続行のみとバイト一致**(年度末の卒業と入学の停止でそろえて比較。.NET でも同じ手順で一致を確認)。
+4. 全 `*View()` が例外にならない: `StepWeek` で 1 年度の毎週(約 9,350 回)と、進行制御の停止ごと(観戦 Full。当日・レース進行・月末レポート・イベント・大会の結果を含む。約 5,660 回)。
+
+つまずいたこと:
+- `Platform/Fake`(`FakeClock` など)には asmdef がなく Unity では Assembly-CSharp に入るので、試験の asmdef から参照できない(`error CS0246: FakeClock`)。試験の中に同じ小さな時計 `TestClock` を置いた。
+- 最初の版の試験の誤り: ①`Advance()` は停止でしか止まらないので『毎週』を数えられなかった(23 週)→ 毎週は `StepWeek`、停止でしか出ない View は進行制御で、の 2 本に分けた ②『おまかせ』の既定では `MonthPlan` で止まらない ③復元した流れは同じ停止をもう一度出すので、`Advance()` の回数をそろえた比較は位置がずれる(`notifications` の差に見えた)→ 同じ節目でそろえて比べる。
+- 観戦モード(`TeamSettings.SpectateMode`)を変える命令(`OpResult` を返すもの)が Domain にない。設定の画面(SC-04)と試験は `State.Settings` を直接書いている(設定値で規則ではないので、08b の『— App 層』の扱い)。命令を足すかは判断待ち。
