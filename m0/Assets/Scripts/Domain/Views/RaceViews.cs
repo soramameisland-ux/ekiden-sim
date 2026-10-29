@@ -192,7 +192,7 @@ namespace Ekiden.Domain.Views
         public bool Held;                            // 今年度の予選会の結果がある
         public bool OwnEntered;                      // 自校が出た(シード外)
         public int Teams;                            // 出場校の数
-        public int PassCount;                        // 通過校の数(上位 10 校)
+        public int PassCount;                        // 通過校の数(上位 13 校。L-67)
         public int OwnRank;                          // 自校の順位(出なければ 0)
         public bool Passed;                          // 自校が通過した
         public int OwnTotalDs;                       // 自校の合計(上位 10 名)

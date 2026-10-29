@@ -77,7 +77,7 @@ namespace Ekiden.Domain.Views
         public int Position;                        // 自校の位置(1 始まり)。第三戦は前年度の順位(シードでなければ 0)
         public bool InRange;                        // 出場権の圏内(第三戦はシード)
         public int Short;                           // 圏外のとき、あと何位(Position − Cutoff)
-        public bool NeedsQualifier;                 // 第三戦で、シードでなければ予選会(上位 10 校が通過)
+        public bool NeedsQualifier;                 // 第三戦で、シードでなければ予選会(上位 13 校が通過。L-67)
     }
 
     public sealed class WorldView

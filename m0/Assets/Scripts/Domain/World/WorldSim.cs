@@ -198,7 +198,7 @@ namespace Ekiden.Domain.World
             return new YearState { Year = year, Player = player, Result = result, Settled = true };
         }
 
-        /// <summary>予選会(10 月。シード外のみ。04 §3.2)。通過した 10 校が <see cref="YearResult.Qualified"/> に入る。</summary>
+        /// <summary>予選会(10 月。シード外のみ。04 §3.2)。通過した 13 校(<see cref="RaceConstants.QualPass"/>)が <see cref="YearResult.Qualified"/> に入る。</summary>
         public void PlayQualifier(YearState st)
         {
             int qid = st.Year * 10 + 4;
