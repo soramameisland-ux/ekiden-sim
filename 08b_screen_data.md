@@ -51,6 +51,10 @@
 | `ScoutTargets()` | `ScoutTargetsView` | SC-30 | 目標(V の高い順 = 確定の順番・9 番目以降は『ほぼ入れません』)・枠のメーター(定員 10 − 招聘の予約・自然に入る目安 3・推奨 8・上位級と奨学金枠・黄色 / 注意)| 同上 |
 | `Ops()` | `OpsView` | SC-32 | 施設・スタッフ 9 行(レベル・上限・次の費用・上げられない理由 cap / funds・推奨の順位と『推奨をすべて実行』のあとのレベル・効果と次のレベルの効果 `fx.*`)+ **新設・追加の欄 `ExtraRows`(高地・メンタル・合宿所・主務の 4 行。Lv0 = 未設置。上げられない理由に `rank` が加わる。推奨の対象外。`NewMinRank` = 7・`GuidancePoints` = 月の指導ポイント。L-70 ②)**・資金・予備費・収入 / 支出の見込み・年度末の資金の履歴 | `ClubViewTests` `FacilityExtraTests` |
 | `WorldOverview()` | `WorldView` | SC-35 | 36 校(戦力順位・名声・校格・地方・前年度の評価ポイントと第三戦の順位)・出場権に対する自校の位置(第一戦 20 / 第二戦 30 / 第三戦のシード 10 または予選会)| 同上 |
+| `Settings()` | `SettingsView` | SC-04(ゲームのタブ)| 観戦モード(と選べる値)・安全網の閾値(75 / 85 / 0)・イベント / 月間計画 / スカウトのおまかせ・自校の見た目・応援歌・BGM の番号。変えるのは `SetSpectateMode` ほか(08 §13.6)。端末の設定(`DeviceSettings`)・購入・クラウドは App の層 | `SettingsCommandTests` `MetaViewTests` |
+| `YearCalendar()` | `CalendarView` | SC-09 | 4 月〜3 月の 12 か月: 夏合宿(8 月)・視察(6〜11 月)/ 勧誘(12〜2 月)・招聘の宣言期間(6〜2 月)・年度末・月間計画のテーマ(今月 = 決めた計画 / 先の月 = 年間方針の推奨 / 過ぎた月 = なし)・行事(記録会 5・6 月の第 3 週 / エントリーの締切 / 予選会の締切と予選会(シードには出さない)/ 第一〜第三戦(出場権・出場なしの理由 `rank` / `qualifier` / `seed`・ピーキングと調整の最初の週))。月内の週 1〜4・過去 / 今週の印つき | `MetaViewTests` |
+| `Clear()` | `ClearView` | SC-15 | クリアしたか・年度・『無招聘』・開始校(シナリオ ID と難易度)・各大会の初優勝の年度・優勝の通算・三冠(実績の一覧は App の `AchievementTracker`。G-08)| 同上 |
+| `Guidance(id)` / `GuidancePreview(id, menu)` | `GuidanceView` / `GuidancePreviewView` | SC-20 | 対象の要約・指導ポイント(残りと月の最大 = 主務で 4 / 5 / 6)・面談(済み・可否と理由 / ヒント)・メニューの指定(可否と理由・いまの指定とその期限・取り消しとポイントが戻るか)・単独走◎の印・プリセット(ケア / 調整)・注意(調整メニューの上書き / 安全網が働かない)/ 予測: 選んだメニューを今週から月末まで指定したときの月末の疲労・最大・故障の確率・能力が上がる回数・区間タイプ別の適性値の伸びと、指定しなかったときの同じ値・相性の印 | 同上 |
 | `Obs()` | `ObView` | SC-33 | OB(卒業年度の新しい順)・役割のある OB と残り週数・県別ネットワーク(人数・Lv・次のレベルまであと何人)| 同上 |
 | `History()` | `HistoryView` | SC-34 | 年度ごとの戦績・各大会の初優勝の年度・優勝の通算・三冠・クリアと無招聘・殿堂入り・出身県ごとの人数と『47 県の達成 n』| 同上 |
 
@@ -98,7 +102,7 @@
 | SC-01 タイトル | 題名・版 / 続きから(直近のセーブの校名・年度・日時)/ 各ボタン | `SlotStore`(保存の一覧)と `HeaderInfo`(見出しの JSON)| ○ `SlotCatalog.List()`(ヘッダだけから)|
 | SC-02 新規ゲーム | 開始校のカード(戦力順位・施設・資金・部員数・目安)/ 世界の生成結果 / 監督名 / スロット | `Scenarios.For(difficulty)` / `GameSession.New` の結果(`School`・`Home()`)/ `TeamState.ManagerName` | △ 世界の生成(予熱 15 年度)を先に回してから見せる。クリアまでの目安時間は固定の文言 |
 | SC-03 セーブの選択 | スロットごとの校名・開始校・年度月・直近の成績・プレイ時間・日時・同期の状態 | `SlotStore` / `HeaderInfo` | ○ `SlotCatalog.List()`(プレイ時間は `GameHost` が数える)|
-| SC-04 設定 / SC-05 追加コンテンツ / SC-07 クレジット | 設定値・商品・購入状態・権利表示 | `TeamSettings`(設定値)。購入状態・ストアは App 層| — App 層 |
+| SC-04 設定 / SC-05 追加コンテンツ / SC-07 クレジット | 設定値・商品・購入状態・権利表示 | `Settings()`(ゲームのタブ。設定値)。購入状態・ストアは App 層| ○(ゲームのタブ)/ — App 層 |
 | SC-06 実績 | 名前・条件・解除日・進捗 | — | ✗ 実績の定義と判定が無い(G-08)|
 
 ### 3.2 ホームと進行
@@ -106,13 +110,13 @@
 | SC | 表示項目 | 取得元 | 状態 |
 |----|----------|--------|------|
 | SC-08 ホーム | status / next / バッジ / menu | `Home()` | ○。バッジのうち『購入状態不明』は App 層(`GameSession.Notify(Entitlement, "unknown")`)、『未読の通知』は `HomeView.UnreadNotifications`|
-| SC-09 年間予定 | 月ごとの大会・締切・合宿・記録会・スカウトの時期・招聘期間・年度末 | `Calendar.RaceWeeks` / `TeamWeek.EntryDeadlineWeeks` / `TicketK` ほかの定数 | △ 年間予定の View は無い(定数の並べ替えだけ。小さい)|
+| SC-09 年間予定 | 月ごとの大会・締切・合宿・記録会・スカウトの時期・招聘期間・年度末 | `Calendar.RaceWeeks` / `TeamWeek.EntryDeadlineWeeks` / `TicketK` ほかの定数 | ○ `YearCalendar()` |
 | SC-10 年間方針 | 重点・標準プランとの P の差(R-04)・目標大会・期待目標・ピーキング | `AnnualPlanView()` | ○ |
 | SC-11 月末レポート | summary / highlights / 大会のまとめ / 次の月への注意 | `MonthReportView(report)` | ○(`gift_reveal` を含む。判明した素養は `ReportItemView.Gifts`)|
 | SC-12 年度の結果と精算 | results / funds | `YearSummary()` | ○ |
 | SC-13 卒業・進路 | 卒業生・退部 | `Graduation()` | ○。留学生の出身国は OB に残らない(G-17)|
 | SC-14 入学者発表・入部確認 | 新入生・狙った / 自然 | `Enrollment()` | ○。『惜しかった候補』は G-05 |
-| SC-15 クリア | 演出・年度・開始校・各大会の初優勝の年度・無招聘 | `State.Cleared`(`ClearInfo`)/ `Stats[].Wins` / `State.Scenario` | △ View は無い。実績の解除(その場で解除された一覧)は G-08 |
+| SC-15 クリア | 演出・年度・開始校・各大会の初優勝の年度・無招聘 | `State.Cleared`(`ClearInfo`)/ `Stats[].Wins` / `State.Scenario` | ○ `Clear()`。実績の解除(その場で解除された一覧)は G-08 |
 
 ### 3.3 育成・部員
 
@@ -122,7 +126,7 @@
 | SC-17 カスタム週の編集 | 週ごとのメニュー・負荷 L・予測の疲労 | `Plan()` のテーマの週 / `Forecaster` / `TrainingMaster` | △ カスタム週専用の View は無い(選べるメニューの一覧は `Master`)|
 | SC-18 部員一覧 | 一覧(`RunnerRow`)・要約・グループ列・世代グラフ | `RosterRows()` | ○。並べ替え・絞り込みは画面側。世代グラフ(学年別の P 平均と上位の人数)は集計の View が無い(△ 小さい)|
 | SC-19 選手詳細 | header / stats(前月の増減)/ side / 絆 / 経歴 / この月の予測 | `RunnerDetail()` | ○。**前月の増減**は状態に無い(G-14)|
-| SC-20 個別指導 | 対象の選手・指導ポイント・面談・メニューの指定・予測・注意 | `RunnerDetail()` / `State.GuidanceLeft` / `PlanRules.CanGuide` / `GuideMenu` の理由 | △ 専用の View は無い(`RunnerDetail().IndividualMenu`・`Talked` と上の組み合わせ)|
+| SC-20 個別指導 | 対象の選手・指導ポイント・面談・メニューの指定・予測・注意 | `RunnerDetail()` / `State.GuidanceLeft` / `PlanRules.CanGuide` / `GuideMenu` の理由 | ○ `Guidance(id)` / `GuidancePreview(id, menu)` |
 
 ### 3.4 大会
 

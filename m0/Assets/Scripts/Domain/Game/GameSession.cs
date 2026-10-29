@@ -360,6 +360,7 @@ namespace Ekiden.Domain.Game
             State.Prestige = School.Prestige;
             State.CoachRank = School.Rank();
             _ys = null;
+            _yearWins = 0;                                                   // 今年度の優勝の集合は年度とともに終わる(戦績 Stats に入った。残すと、次の年度の最初の週まで History / Clear が二重に数える)
             return res;
         }
 

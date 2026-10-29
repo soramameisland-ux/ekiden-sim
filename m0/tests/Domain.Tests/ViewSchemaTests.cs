@@ -21,6 +21,7 @@ namespace Ekiden.Domain.Tests
             "Ekiden.Domain.Screens.PlanFocus",
             "Ekiden.Domain.Race.Env",                      // 環境(気温・風・雨)の値。予報として見せるもの
             "Ekiden.Domain.Entities.Style",                // 個性の型(判明した自校の選手の分だけ。候補は視察後)の値
+            "Ekiden.Domain.Game.Msg",                      // 理由・警告 = 文字列テーブルのキー + 文字列の値(err.* / warn.* / hint.*。状態を持たない)。個別指導の View(SC-20)が使う
         };
 
         private static IEnumerable<Type> ViewTypes()

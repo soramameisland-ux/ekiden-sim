@@ -82,7 +82,7 @@ namespace Ekiden.Unity.UI
             }, false, canSave, c.T("dlg.pause.cannot_save"));
             int next = r.TextScale == 100 ? 125 : r.TextScale == 125 ? 150 : 100;
             d.Button(c.T("dlg.pause.text_scale", "pct", next.ToString()), () => { r.SetTextScale(next); r.Rebuild(); });
-            bool full = c.S.State.Settings.SpectateMode == "Full";
+            bool full = c.S.Settings().SpectateMode == "Full";
             d.Button(c.T(full ? "dlg.pause.spectate_digest" : "dlg.pause.spectate_full"), () => { c.Check(c.S.SetSpectateMode(full ? "Digest" : "Full")); r.Toast(c.T(full ? "dlg.pause.spectate_digest_on" : "dlg.pause.spectate_full_on")); });
             d.Button(c.T("dlg.pause.title_screen"), () => r.Confirm(c.T("dlg.pause.title_confirm"), r.ShowTitle, true));
             d.DefaultButton = 0;

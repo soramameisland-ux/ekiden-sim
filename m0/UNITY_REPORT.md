@@ -145,3 +145,19 @@ EditMode 試験(`Assets/Tests/EditMode`・asmdef `Ekiden.Unity.Tests`。`-runTes
 1. **L-71 は直した**(09 D-13)。`Domain/Numerics/ExactDouble.cs`(整数部・小数部を整数で読み `m / 10^k`)を、JSON の数の読み取り・条件式の数・`Fmt.ParseTime` に使う。`double.Parse` の直接の呼び出しは試験(`ExactDoubleTests` のソース走査)で禁止。.NET では `dotnet test` 736 件・再現性の目印・T1・T3 すべて不変/合格。**Unity で確かめること**: ゲート B(メニュー Ekiden → Verify)を Editor と IL2CPP で再実行して T3 が全部一致すること、EditMode の `ExactNumberTests`(20 万個)が通ること。
 2. UI Toolkit のまま進める(U-17 は、モバイル実機の測定のあとで最終決定)。
 3. 観戦モード・おまかせなどの設定は、命令として Domain に足した(`GameSession.Settings.cs`: `SetSpectateMode` `SetPlanAuto` `SetEventAuto` `SetScoutAuto` `SetAutoSafety`。08 §13.6)。画面の 2 か所(`Screens.Home.cs` の月間計画のおまかせ・`Dialogs.cs` のポーズの観戦モード)は命令を呼ぶように直した。**Unity でコンパイルが通ることを確かめる**。
+
+## 実機なしで進めた作業(クラウド側。2026-10-30 の昼)
+
+残りの画面(SC-04 設定・SC-09 年間予定・SC-15 クリア・SC-20 個別指導)の**読み取りの API を Domain に足した**。Unity の画面は、これを呼んで描くだけでよい(08b に対応表)。
+
+| 画面 | API(`GameSession`)| 型 | 命令 |
+|------|----------------------|-----|------|
+| SC-04 設定(ゲームのタブ)| `Settings()` | `SettingsView`(観戦モードと選べる値・安全網・おまかせ 3 つ・見た目の番号)| `SetSpectateMode` `SetPlanAuto` `SetEventAuto` `SetScoutAuto` `SetAutoSafety` |
+| SC-09 年間予定 | `YearCalendar()` | `CalendarView` → 12 か月 `CalendarMonthView` → 行事 `CalendarItemView`(種別・月内の週・過去 / 今週・出場権と『出場なし』の理由 `rank` / `qualifier` / `seed`・調整の最初の週)| (大会の月から `SetEntries` / `SetOrder` の画面へ) |
+| SC-15 クリア | `Clear()` | `ClearView`(年度・無招聘・開始校・各大会の初優勝の年度・優勝の通算・三冠)| (続ける = 通常の進行) |
+| SC-20 個別指導 | `Guidance(id)` / `GuidancePreview(id, menu)` | `GuidanceView`(指導ポイントの残りと月の最大・面談と指定の可否と理由・いまの指定・プリセット 2 つ・注意)/ `GuidancePreviewView`(月末の疲労・故障の確率・能力が上がる回数・適性値の伸び。指定しなかったときとの比較)| `Talk` `GuideMenu` `CancelGuide` |
+
+- 画面の文字(`scr.calendar.*` `scr.guidance.*` `scr.clear.*` と『出場なし』の理由の 3 つ)は、画面を作るときに `ja.json` へ足す(`SimCli strings seed`)。
+- `Unity/UI` に残っていた `State.Settings` の直接参照 1 か所を `Settings()` に直した。以後、画面が状態に触れていないことは `UiBoundaryTests`(ソースの走査)が止める。
+- **見つけて直した不具合**: 年度の優勝の集合(`_yearWins`)が年度末に捨てられず、次の年度の最初の週まで `History().Titles`(優勝の通算)が二重に数えられていた(年度末の画面で歴史を開くと見える)。`TurnoverYear` で捨てるようにした。
+- 1 年度の停止は約 29 回(中堅・何も操作しない流れ。`SimCli flow 1 Mid 1`。月末レポート 12 回を含む)。1 年度約 30 分の目安(01 §13)は、1 停止あたり約 1 分の計算。実際に遊んでの計測は Unity で。
