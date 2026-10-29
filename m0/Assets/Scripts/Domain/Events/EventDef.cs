@@ -79,6 +79,20 @@ namespace Ekiden.Domain.Events
 
     public enum ObRole { None, Coach, ScoutHelper, Sponsor }
 
+    /// <summary>OB の役割が作る補正(06 §8)。イベントの効果(<see cref="EventPhase"/>)と、画面の効果の要約(<c>EffectView</c>)が同じ値を見る。</summary>
+    public static class ObRoles
+    {
+        public static void ModOf(ObRole role, out ModKind kind, out double value)
+        {
+            switch (role)
+            {
+                case ObRole.Coach: kind = ModKind.EMult; value = 1.06; break;
+                case ObRole.ScoutHelper: kind = ModKind.ScoutPts; value = 4; break;
+                default: kind = ModKind.FundsYear; value = 200; break;
+            }
+        }
+    }
+
     public enum SkillRank { Blue, Gold, Red }
 
     /// <summary>XP の対象の指定。能力そのもの、最も低い能力(同じなら添字の小さい方)、乱数。</summary>

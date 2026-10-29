@@ -31,6 +31,7 @@ namespace Ekiden.Verification
             AddHighlights(d);
             AddAchievements(d);
             AddNotifications(d);
+            AddEffectText(d);
             d["miss.quota"] = "定員がいっぱいだった"; d["miss.scholarship"] = "奨学金枠がいっぱいだった"; d["miss.outbid"] = "他校に競り負けた";
             return d;
         }
@@ -146,6 +147,23 @@ namespace Ekiden.Verification
             d["nt.qualifier_week"] = "今週は {arg}";
             d["nt.entitlement.unknown"] = "購入状態を確認できません";
             d["nt.autosave.failed"] = "自動セーブに失敗しました"; d["nt.autosave.disk_full"] = "空き容量が足りません";
+        }
+
+        /// <summary>選択肢の効果の要約(08 R-15。<c>App/EffectText.cs</c>)。{v} 符号つきの値 / {stat} 能力の略称 / {name} 特殊能力の名前 / {parts} 括弧の中 / {mod} 役割が作る補正の文。</summary>
+        private static void AddEffectText(Dictionary<string, string> d)
+        {
+            d["efx.mot"] = "やる気{v}"; d["efx.fat"] = "疲労{v}"; d["efx.bond"] = "絆{v}"; d["efx.funds"] = "{v}"; d["efx.scout"] = "スカウト{v}"; d["efx.guide"] = "指導Pt{v}";
+            d["efx.xp"] = "{stat}経験値{v}"; d["efx.xp.weakest"] = "弱点経験値{v}"; d["efx.xp.random"] = "ランダム経験値{v}";
+            d["efx.skill"] = "特殊能力 {name}";
+            d["efx.inj.minor"] = "軽傷"; d["efx.inj.moderate"] = "中傷"; d["efx.inj.severe"] = "重傷";
+            d["efx.mod.e_mult"] = "効率×{v}"; d["efx.mod.inj_mult"] = "故障率×{v}"; d["efx.mod.r_add"] = "回復{v}"; d["efx.mod.form_add"] = "調子{v}";
+            d["efx.mod.funds_year"] = "年収{v}"; d["efx.mod.scout_pts"] = "スカウト{v}";
+            d["efx.role.coach"] = "OBコーチ:{mod}"; d["efx.role.scouthelper"] = "OBスカウト:{mod}"; d["efx.role.sponsor"] = "OB支援:{mod}";
+            d["efx.captain"] = "主将に指名"; d["efx.bench"] = "次の大会は欠場"; d["efx.entry"] = "第三戦に登録";
+            d["efx.prob"] = "{p}%"; d["efx.weeks"] = "{n}週"; d["efx.paren"] = "({parts})"; d["efx.sep"] = "・"; d["efx.join"] = "、"; d["efx.more"] = "(ほか{n}件)";
+            d["efx.to.r"] = "本人"; d["efx.to.p"] = "相手"; d["efx.to.all"] = "全員"; d["efx.to.top10"] = "主力";
+            d["efx.to.g1"] = "1年生"; d["efx.to.g2"] = "2年生"; d["efx.to.g3"] = "3年生"; d["efx.to.g4"] = "4年生";
+            d["efx.to.samepref"] = "同郷"; d["efx.to.samegroup"] = "同グループ"; d["efx.to.far"] = "遠方出身"; d["efx.to.near"] = "近郊出身"; d["efx.to.overseas"] = "留学生"; d["efx.to.captain"] = "主将";
         }
 
         private static void AddEvents(Dictionary<string, string> d)

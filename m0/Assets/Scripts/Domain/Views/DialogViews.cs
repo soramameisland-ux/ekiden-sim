@@ -18,7 +18,7 @@ namespace Ekiden.Domain.Views
         public string SkillId;                      // skill: 'skill.…'
         public SkillRank? SkillRank;
         public InjurySeverityKind? Severity;        // inj
-        public ModKind? Mod;                        // mod
+        public ModKind? Mod;                        // mod・ob_role(役割が作る補正)
         public double ModValue;
         public int Weeks;                           // mod・ob_role: 期間(週)
         public ObRole? Role;                        // ob_role

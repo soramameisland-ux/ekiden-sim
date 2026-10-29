@@ -17,7 +17,8 @@ namespace Ekiden.Domain.Game
     {
         public const int EffectSummaryMax = 3;                      // K_UI_FX_MAX(R-15: 要約は 3 項目まで)
 
-        private EffectView EffectOf(Effect e)
+        /// <summary>効果 1 つの構造(要約の元。<see cref="EffectSummaryMax"/> を超える効果も、画面の外の検算がこれで取り出せる)。</summary>
+        public EffectView EffectOf(Effect e)
         {
             var v = new EffectView { Op = e.Op, To = e.To, Amount = e.D, Probability = e.P, StatMode = e.StatMode, Xu = e.Xu, Weeks = e.Weeks };
             switch (e.Op)
@@ -29,7 +30,12 @@ namespace Ekiden.Domain.Game
                     break;
                 case EffectOp.Inj: v.Severity = e.Sev; break;
                 case EffectOp.Mod: v.Mod = e.Kind; v.ModValue = e.Value; break;
-                case EffectOp.ObRole: v.Role = e.Role; break;
+                case EffectOp.ObRole:
+                    v.Role = e.Role;
+                    ModKind rk; double rv;
+                    ObRoles.ModOf(e.Role, out rk, out rv);
+                    v.Mod = rk; v.ModValue = rv;                                     // 役割が作る補正(要約に『効率×1.06』などを出す)
+                    break;
             }
             return v;
         }

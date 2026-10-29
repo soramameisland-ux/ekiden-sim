@@ -174,7 +174,7 @@
 | ~~G-03~~ | SC-26・34 | ~~区間記録・大会記録~~(**済**: `WorldSim.History`・`Runner.Records`・`RaceResult().Records`・`History().CourseRecords / TeamRecords`・殿堂入り・`race.record`)| 状態・保存・判定・View | — | L-53 ③ 解決 |
 | ~~G-04~~ | SC-34 | ~~歴代の優勝校~~(**済**: `History().Champions`。予熱の年度 = ゲーム開始前の歴史を含む。`PreGame`)| 世界の履歴 | — | — |
 | ~~G-05~~ | SC-14 | ~~惜しかった候補~~(**済**: `Enrollment().Missed`。`Allocator` が自校の狙った候補の入れなかった理由 = 定員 / 奨学金枠 / 競り負け(差)を返す。招聘枠に押し出された候補は定員。保存しない)| 割り当ての記録(乱数・結果は不変)| — | — |
-| G-06 | SC-36 | ~~イベントの効果の構造~~ **解決**(`EventDialog` の `EffectView`)。残り: 選択肢の本文に効果の数値が書き込まれている問題(L-63 ①)と、選べない理由の文 | 効果から本文の数値を作る | 低 | L-63 |
+| G-06 | SC-36 | ~~イベントの効果の構造~~ **解決**(`EventDialog` の `EffectView`)。L-63 ① **済**(本文から数値を外し、`App/EffectText.Summary` が構造から要約を作る)。残り: 選べない理由の文 | 効果から本文の数値を作る | 低 | L-63 |
 | ~~G-07~~ | SC-08・38 | ~~通知のログ~~(**済**: `TeamState.Notifications`(最大 `K_NOTIFY_MAX` = 30・新しい順・既読フラグ)。足す箇所 = 故障(`ResolveTraining` の `NewInjury`)・疲労の警告(月の第 3 週に 1 回)・イベント(`ResolveWeekEvents`)・特別招聘券(週の大会の後・年度末)・大会の予定(エントリー開始・大会の週・予選会の週。出場権があるときだけ)、外から `GameSession.Notify`(App 層: 自動セーブの失敗 = `GameHost.OnSaveNotice`・購入状態の不明)。保存 = `player_team.notifications`(追加の項目。ないセーブは空))| 通知の生成元の集約・保存 | — | L-65 |
 | ~~G-08~~ | SC-06・15 | ~~実績~~(**済**: `AchievementMaster`(01 §3.3 の 23 件。`{id}.title` / `.desc`)・`AchievementFacts.From(gs, race)` → `AchievementRules.Satisfied`。App の `AchievementTracker` が `ProfileData`(解除の日時・クリア)とストアへの通知待ち(`Pending`)に記録し、`GameHost.Advance` が呼ぶ。**プロフィールのファイル(`profile.a/b.eksv`)の読み書きとストアへの通知は Unity 側**)| 実績の定義・判定・解除の記録 | — | — |
 | G-09 | SC-23・35 | ~~他校の上位選手~~ **解決**(`Preview` の `Top`。名前は `look_seed` から。SC-35 の一覧には入れていない)| `NameGenerator` と 04 §11 の復元 | 済 | — |

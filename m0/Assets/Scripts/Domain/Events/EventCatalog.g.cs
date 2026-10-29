@@ -18,51 +18,51 @@ namespace Ekiden.Domain.Events
             }, new[] { "bond" }, months: new[] { 0 }, weeks: new[] { 0, 1 }, maxYear: 1, priority: 90, exempt: true, hint: "毎年4月に必ず"),
             B.E("ev.team.holiday", EventCategory.Team, "年末年始の帰省", EventScope.Team, "t.size >= 5", 1.0, new[]
             {
-                B.C("far", "遠方の選手が帰省する(疲労 −15、やる気 +1)", new[] { B.Fat(Target.Far, -15), B.Mot(Target.Far, 1) }),
+                B.C("far", "遠方の選手が帰省する", new[] { B.Fat(Target.Far, -15), B.Mot(Target.Far, 1) }),
             }, new[] { "far" }, months: new[] { 8 }, weeks: new[] { 2, 3 }, maxYear: 1, priority: 70, exempt: true),
             B.E("ev.team.send_off", EventCategory.Graduation, "追いコン(卒業生を送る会)", EventScope.Team, "t.n_g4 >= 1", 1.0, new[]
             {
-                B.C("party", "卒業生を送る(30万円。3年生のやる気 +1、絆 +15)", new[] { B.Funds(-30), B.Mot(Target.G3, 1), B.Bondg(Target.All, 15) }),
+                B.C("party", "卒業生を送る", new[] { B.Funds(-30), B.Mot(Target.G3, 1), B.Bondg(Target.All, 15) }),
             }, new[] { "party" }, months: new[] { 11 }, weeks: new[] { 1, 2 }, maxYear: 1, priority: 60, exempt: true),
             B.E("ev.team.univ_bonus", EventCategory.Management, "期待目標の達成(予算ボーナス)", EventScope.Team, "t.rank.newyear <= max(1, t.last_rank.newyear - 1)", 1.0, new[]
             {
-                B.C("ok", "予算ボーナス +200万円(目標: 前年度の第三戦より1つ上、最高1位)", new[] { B.Funds(200) }),
+                B.C("ok", "予算ボーナスを受け取る(目標: 前年度の第三戦より上の順位。首位なら維持)", new[] { B.Funds(200) }),
             }, new[] { "ok" }, months: new[] { 11 }, weeks: new[] { 1, 2 }, maxYear: 1, priority: 60, exempt: true),
             B.E("ev.team.dorm_meal", EventCategory.Management, "寮の食事の改善案", EventScope.Team, "fac.dorm <= 3 and t.funds >= 250", 0.02, new[]
             {
-                B.C("invest", "改善する(150万円)", new[] { B.Funds(-150), B.Mod(ModKind.RAdd, Target.Team, 0.02, 24) }, req: "t.funds >= 250"),
+                B.C("invest", "改善する", new[] { B.Funds(-150), B.Mod(ModKind.RAdd, Target.Team, 0.02, 24) }, req: "t.funds >= 250"),
                 B.C("skip", "見送る", null),
             }, new[] { "skip" }, cooldown: 96, priority: 40),
             B.E("ev.team.ob_visit", EventCategory.Team, "OBの来訪", EventScope.Team, "ob.total >= 6", 0.015, new[]
             {
                 B.C("coach", "練習を見てもらう", new[] { B.Mod(ModKind.EMult, Target.Team, 1.03, 4) }),
-                B.C("dinner", "食事会を開く(50万円)", new[] { B.Funds(-50), B.Bondg(Target.All, 25) }, req: "t.funds >= 150"),
+                B.C("dinner", "食事会を開く", new[] { B.Funds(-50), B.Bondg(Target.All, 25) }, req: "t.funds >= 150"),
                 B.C("decline", "お断りする", null),
             }, new[] { "coach" }, cooldown: 48, priority: 40),
             B.E("ev.team.ob_coach", EventCategory.Team, "OBがコーチを申し出る", EventScope.Team, "ob.corp >= 3 and staff.coach <= 3", 0.01, new[]
             {
-                B.C("accept", "お願いする(1年間、練習の効率 +6%)", new[] { B.ObRole(ObRole.Coach, 48) }),
+                B.C("accept", "お願いする", new[] { B.ObRole(ObRole.Coach, 48) }),
                 B.C("decline", "お断りする", null),
             }, new[] { "accept" }, cooldown: 144, priority: 40),
             B.E("ev.team.ob_scout", EventCategory.Team, "OBがスカウトに協力する", EventScope.Team, "ob.total >= 10", 0.02, new[]
             {
-                B.C("accept", "お願いする(1年間、スカウトポイント +4)", new[] { B.ObRole(ObRole.ScoutHelper, 48) }),
+                B.C("accept", "お願いする", new[] { B.ObRole(ObRole.ScoutHelper, 48) }),
                 B.C("decline", "お断りする", null),
             }, new[] { "accept" }, months: new[] { 2, 3, 4, 5, 6, 7, 8, 9, 10 }, cooldown: 48, maxYear: 1, priority: 40),
             B.E("ev.team.sponsor", EventCategory.Team, "OBがスポンサーを申し出る", EventScope.Team, "ob.total >= 12 and t.prestige >= 500", 0.01, new[]
             {
-                B.C("accept", "お受けする(1年間、収入 +200万円)", new[] { B.ObRole(ObRole.Sponsor, 48) }),
+                B.C("accept", "お受けする", new[] { B.ObRole(ObRole.Sponsor, 48) }),
                 B.C("decline", "お断りする", null),
             }, new[] { "accept" }, cooldown: 144, priority: 40),
             B.E("ev.team.slump", EventCategory.Team, "チームの停滞", EventScope.Team, "t.morale <= 35", 0.15, new[]
             {
-                B.C("meeting", "全体ミーティング(指導ポイント1)", new[] { B.Guide(-1), B.Mot(Target.All, 1, 0.5) }, req: "t.guidance >= 1"),
+                B.C("meeting", "全体ミーティング", new[] { B.Guide(-1), B.Mot(Target.All, 1, 0.5) }, req: "t.guidance >= 1"),
                 B.C("rest", "休養日にする", new[] { B.Fat(Target.All, -10), B.Mod(ModKind.EMult, Target.Team, 0.95, 1) }),
                 B.C("push", "そのまま続ける", null),
             }, new[] { "meeting", "rest" }, cooldown: 12, priority: 40),
             B.E("ev.team.camp_abroad", EventCategory.Management, "海外遠征合宿", EventScope.Team, "t.funds >= 1500 and fac.track >= 4", 0.1, new[]
             {
-                B.C("go", "遠征する(800万円)", new[] { B.Funds(-800), B.Xp(Target.Top10, "STA", 100), B.Xp(Target.Top10, "MEN", 100), B.Mot(Target.Top10, 1), B.Mod(ModKind.EMult, Target.Team, 1.03, 8) }, req: "t.funds >= 1500"),
+                B.C("go", "遠征する", new[] { B.Funds(-800), B.Xp(Target.Top10, "STA", 100), B.Xp(Target.Top10, "MEN", 100), B.Mot(Target.Top10, 1), B.Mod(ModKind.EMult, Target.Team, 1.03, 8) }, req: "t.funds >= 1500"),
                 B.C("skip", "見送る", null),
             }, new[] { "skip" }, months: new[] { 2, 4, 10 }, cooldown: 40, priority: 40, hint: "資金の使い道(L-05)"),
             B.E("ev.ind.camp_hell", EventCategory.Individual, "夏合宿の洗礼", EventScope.Runner, "r.grade == 1 and r.fatigue >= 60", 0.6, new[]
@@ -73,55 +73,55 @@ namespace Ekiden.Domain.Events
             }, new[] { "rest" }, months: new[] { 4 }, weeks: new[] { 1, 2 }, cooldown: 48, maxYear: 1),
             B.E("ev.ind.slump", EventCategory.Individual, "スランプ", EventScope.Runner, "r.motivation <= 2 and (r.fatigue >= 60 or r.form <= -1) and r.injury == 0", 0.1, new[]
             {
-                B.C("talk", "個別面談(指導ポイント1)", new[] { B.Guide(-1), B.Mot(Target.R, 1) }, req: "t.guidance >= 1"),
+                B.C("talk", "個別面談", new[] { B.Guide(-1), B.Mot(Target.R, 1) }, req: "t.guidance >= 1"),
                 B.C("rest", "休養させる", new[] { B.Fat(Target.R, -20), B.Mod(ModKind.EMult, Target.R, 0.9, 1) }),
                 B.C("grind", "練習で乗り切らせる", new[] { B.Xp(Target.R, "weakest", 100), B.Mod(ModKind.InjMult, Target.R, 1.5, 4), B.Mot(Target.R, -1, 0.4) }),
             }, new[] { "rest" }, cooldown: 16),
             B.E("ev.ind.awakening", EventCategory.Individual, "覚醒", EventScope.Runner, "r.grade >= 3 and r.motivation >= 3 and r.form >= 0 and r.gap_avg >= 12 and r.injury == 0", 0.006, new[]
             {
-                B.C("ok", "能力が急に伸びた(弱い能力に XP +250、やる気 +1)", new[] { B.Xp(Target.R, "weakest", 250), B.Mot(Target.R, 1) }),
+                B.C("ok", "能力が急に伸びた", new[] { B.Xp(Target.R, "weakest", 250), B.Mot(Target.R, 1) }),
             }, new[] { "ok" }, cooldown: 96, priority: 45, hint: "伸びしろが大きい上級生"),
             B.E("ev.ind.family_cheer", EventCategory.Individual, "家族の応援", EventScope.Runner, "cal.next_race <= 2 and r.regular == 1 and r.injury == 0", 0.06, new[]
             {
-                B.C("ok", "家族が応援に来る(やる気 +1、次の大会の調子 +2)", new[] { B.Mot(Target.R, 1), B.Mod(ModKind.FormAdd, Target.R, 2.0, 3) }),
+                B.C("ok", "家族が応援に来る", new[] { B.Mot(Target.R, 1), B.Mod(ModKind.FormAdd, Target.R, 2.0, 3) }),
             }, new[] { "ok" }, cooldown: 40, priority: 45),
             B.E("ev.ind.homesick", EventCategory.Individual, "ホームシック", EventScope.Runner, "r.grade == 1 and r.far == 1 and r.overseas == 0 and r.weeks_in <= 16", 0.04, new[]
             {
                 B.C("senior", "同郷の先輩に任せる", new[] { B.Bondg(Target.SamePref, 30) }, req: "senior_same_pref(r)"),
-                B.C("talk", "個別面談(指導ポイント1)", new[] { B.Guide(-1), B.Mot(Target.R, 1) }, req: "t.guidance >= 1"),
+                B.C("talk", "個別面談", new[] { B.Guide(-1), B.Mot(Target.R, 1) }, req: "t.guidance >= 1"),
                 B.C("none", "様子を見る", new[] { B.Mot(Target.R, -1, 0.6) }),
             }, new[] { "senior", "talk", "none" }, once: OnceKind.Runner),
             B.E("ev.ind.overseas_isolation", EventCategory.Individual, "留学生の生活の不安", EventScope.Runner, "r.overseas == 1 and r.grade == 1 and r.weeks_in <= 20", 0.1, new[]
             {
-                B.C("support", "相談役をつける(指導ポイント1)", new[] { B.Guide(-1), B.Mot(Target.R, 1), B.Bondg(Target.SameGroup, 10) }, req: "t.guidance >= 1"),
-                B.C("meal", "チームで食事会(30万円)", new[] { B.Funds(-30), B.Bondg(Target.All, 20), B.Mot(Target.R, 1, 0.5) }, req: "t.funds >= 100"),
+                B.C("support", "相談役をつける", new[] { B.Guide(-1), B.Mot(Target.R, 1), B.Bondg(Target.SameGroup, 10) }, req: "t.guidance >= 1"),
+                B.C("meal", "チームで食事会", new[] { B.Funds(-30), B.Bondg(Target.All, 20), B.Mot(Target.R, 1, 0.5) }, req: "t.funds >= 100"),
                 B.C("none", "様子を見る", new[] { B.Mot(Target.R, -1, 0.5) }),
             }, new[] { "support", "meal", "none" }, once: OnceKind.Runner, hint: "言葉・食事・生活の不安。国や人柄のステレオタイプは描かない"),
             B.E("ev.ind.overseas_return", EventCategory.Individual, "留学生の一時帰国", EventScope.Runner, "r.overseas == 1", 1.0, new[]
             {
-                B.C("ok", "家族に会って戻る(やる気 +1、疲労 −10、20万円)", new[] { B.Mot(Target.R, 1), B.Fat(Target.R, -10), B.Funds(-20) }),
+                B.C("ok", "家族に会って戻る", new[] { B.Mot(Target.R, 1), B.Fat(Target.R, -10), B.Funds(-20) }),
             }, new[] { "ok" }, months: new[] { 4 }, weeks: new[] { 2, 3 }, maxYear: 1, priority: 45),
             B.E("ev.ind.rival_reunion", EventCategory.Individual, "同じ高校のライバルとの再会", EventScope.Runner, "rival_same_hs(r) and cal.next_race <= 2 and r.regular == 1", 0.055, new[]
             {
-                B.C("ok", "切磋琢磨(やる気 +1、MEN に XP +100、次の大会の調子 +1)", new[] { B.Mot(Target.R, 1), B.Xp(Target.R, "MEN", 100), B.Mod(ModKind.FormAdd, Target.R, 1.0, 3) }),
+                B.C("ok", "切磋琢磨", new[] { B.Mot(Target.R, 1), B.Xp(Target.R, "MEN", 100), B.Mod(ModKind.FormAdd, Target.R, 1.0, 3) }),
             }, new[] { "ok" }, cooldown: 48, priority: 45, hint: "他校の選手の出身高校を持つ(RivalRunner)"),
             B.E("ev.ind.injury_return", EventCategory.Individual, "故障からの復帰", EventScope.Runner, "r.injury == 3 and r.injury_weeks == 1", 1.0, new[]
             {
-                B.C("careful", "慎重に復帰させる(8週間、故障率 ×0.8)", new[] { B.Mod(ModKind.InjMult, Target.R, 0.8, 8) }),
-                B.C("eager", "早期復帰させる(8週間、故障率 ×1.6)", new[] { B.Mod(ModKind.InjMult, Target.R, 1.6, 8), B.Xp(Target.R, "STA", 50) }),
+                B.C("careful", "慎重に復帰させる", new[] { B.Mod(ModKind.InjMult, Target.R, 0.8, 8) }),
+                B.C("eager", "早期復帰させる", new[] { B.Mod(ModKind.InjMult, Target.R, 1.6, 8), B.Xp(Target.R, "STA", 50) }),
             }, new[] { "careful" }, priority: 65, exempt: true),
             B.E("ev.ind.mentor", EventCategory.Individual, "先輩の背中", EventScope.Pair, "r.grade <= 2 and p.grade >= r.grade + 2 and bond(r, p) >= 400 and r.injury == 0", 0.011, new[]
             {
-                B.C("ok", "先輩に学ぶ(弱い能力に XP +120、絆 +50、やる気 +1)", new[] { B.Xp(Target.R, "weakest", 120), B.Bond(50), B.Mot(Target.R, 1) }),
+                B.C("ok", "先輩に学ぶ", new[] { B.Xp(Target.R, "weakest", 120), B.Bond(50), B.Mot(Target.R, 1) }),
             }, new[] { "ok" }, cooldown: 48, priority: 45),
             B.E("ev.ind.anemia", EventCategory.Individual, "貧血の疑い", EventScope.Runner, "r.fatigue >= 70 and r.stat.REC <= 52 and r.injury == 0", 0.05, new[]
             {
-                B.C("checkup", "検査と栄養指導(20万円)", new[] { B.Funds(-20), B.Fat(Target.R, -15), B.Mod(ModKind.RAdd, Target.R, 0.02, 8) }, req: "t.funds >= 100"),
+                B.C("checkup", "検査と栄養指導", new[] { B.Funds(-20), B.Fat(Target.R, -15), B.Mod(ModKind.RAdd, Target.R, 0.02, 8) }, req: "t.funds >= 100"),
                 B.C("watch", "様子を見る", new[] { B.Mod(ModKind.InjMult, Target.R, 1.3, 8) }),
             }, new[] { "checkup", "watch" }, cooldown: 48),
             B.E("ev.ind.pb_meet", EventCategory.Individual, "記録会で自己ベスト", EventScope.Runner, "r.motivation <= 4 and r.fatigue <= 50 and r.form >= 0 and r.injury == 0", 0.12, new[]
             {
-                B.C("ok", "自己ベストを更新(やる気 +1)", new[] { B.Mot(Target.R, 1) }),
+                B.C("ok", "自己ベストを更新", new[] { B.Mot(Target.R, 1) }),
             }, new[] { "ok" }, months: new[] { 1, 2 }, weeks: new[] { 2 }, cooldown: 40, maxYear: 1, priority: 40),
             B.E("ev.race.brake_recover", EventCategory.Race, "ブレーキからの再起", EventScope.Runner, "r.race.brake == 1", 1.0, new[]
             {
@@ -131,21 +131,21 @@ namespace Ekiden.Domain.Events
             }, new[] { "encourage" }, phase: EventPhaseKind.Race, priority: 85, exempt: true),
             B.E("ev.race.win_party", EventCategory.Race, "祝勝会", EventScope.Team, "race.kind > 0 and race.team_rank == 1", 0.6, new[]
             {
-                B.C("party", "祝勝会を開く(60万円)", new[] { B.Funds(-60), B.Bondg(Target.All, 20), B.Fat(Target.All, -5) }, req: "t.funds >= 150"),
+                B.C("party", "祝勝会を開く", new[] { B.Funds(-60), B.Bondg(Target.All, 20), B.Fat(Target.All, -5) }, req: "t.funds >= 150"),
                 B.C("simple", "簡単に済ませる", null),
             }, new[] { "party", "simple" }, phase: EventPhaseKind.Race, priority: 70, exempt: true),
             B.E("ev.race.record", EventCategory.Race, "区間記録の更新", EventScope.Runner, "r.race.record == 1", 1.0, new[]
             {
-                B.C("ok", "注目が集まる(100万円の寄付、スカウトポイント +2)", new[] { B.Funds(100), B.Scout(2) }),
+                B.C("ok", "注目が集まる", new[] { B.Funds(100), B.Scout(2) }),
             }, new[] { "ok" }, phase: EventPhaseKind.Race, priority: 80, exempt: true),
             B.E("ev.race.media", EventCategory.Race, "取材の殺到", EventScope.Team, "race.kind > 0 and race.team_rank == 1 and t.prestige >= 700", 0.5, new[]
             {
-                B.C("accept", "取材に応じる(150万円、スカウトポイント +2、主力の疲労 +5)", new[] { B.Funds(150), B.Scout(2), B.Fat(Target.Top10, 5) }),
+                B.C("accept", "取材に応じる", new[] { B.Funds(150), B.Scout(2), B.Fat(Target.Top10, 5) }),
                 B.C("decline", "お断りする", null),
             }, new[] { "accept" }, phase: EventPhaseKind.Race, priority: 60, exempt: true),
             B.E("ev.race.sub_awaken", EventCategory.Race, "補欠の意地", EventScope.Runner, "race.kind == 3 and r.grade >= 3 and r.race.in_lineup == 0 and r.p_rank >= 11 and r.p_rank <= 20 and r.motivation >= 3", 0.15, new[]
             {
-                B.C("ok", "補欠から力をつけた(弱い能力に XP +200、やる気 +1)", new[] { B.Xp(Target.R, "weakest", 200), B.Mot(Target.R, 1) }),
+                B.C("ok", "補欠から力をつけた", new[] { B.Xp(Target.R, "weakest", 200), B.Mot(Target.R, 1) }),
             }, new[] { "ok" }, phase: EventPhaseKind.Race, priority: 55),
             B.E("ev.race.last_relay", EventCategory.Race, "4年生の最後の襷", EventScope.Runner, "r.grade == 4 and r.regular == 0 and r.p_rank <= 24 and cal.next_race_kind == 3 and cal.next_race == 4", 0.6, new[]
             {
@@ -155,24 +155,24 @@ namespace Ekiden.Domain.Events
             B.E("ev.race.late_injury", EventCategory.Race, "直前の軽傷", EventScope.Runner, "cal.next_race <= 1 and r.regular == 1 and r.injury == 1", 1.0, new[]
             {
                 B.C("bench", "欠場させる(補欠が走る)", new[] { B.Bench() }),
-                B.C("push", "強行出走させる(大会後 4週間、故障率 ×1.5)", new[] { B.Mod(ModKind.InjMult, Target.R, 1.5, 4) }),
+                B.C("push", "強行出走させる(大会後に故障しやすくなる)", new[] { B.Mod(ModKind.InjMult, Target.R, 1.5, 4) }),
             }, new[] { "bench" }, priority: 75, exempt: true),
             B.E("ev.home.pref_assoc", EventCategory.Hometown, "県人会", EventScope.Runner, "same_pref_n(r) >= 2 and ob_level(r) >= 1", 0.01, new[]
             {
-                B.C("join", "参加する(差し入れ30万円。同郷の仲間のやる気 +1、絆 +40)", new[] { B.Funds(30), B.Bondg(Target.SamePref, 40), B.Mot(Target.SamePref, 1) }),
+                B.C("join", "参加する(差し入れをもらう)", new[] { B.Funds(30), B.Bondg(Target.SamePref, 40), B.Mot(Target.SamePref, 1) }),
                 B.C("skip", "見送る", null),
             }, new[] { "join" }, cooldown: 48, priority: 45),
             B.E("ev.home.ob_visit", EventCategory.Hometown, "県のOBの来訪", EventScope.Runner, "ob_level(r) >= 2 and r.grade <= 2 and r.injury == 0", 0.008, new[]
             {
-                B.C("ok", "同郷のOBが激励に来る(弱い能力に XP +120、やる気 +1)", new[] { B.Xp(Target.R, "weakest", 120), B.Mot(Target.R, 1) }),
+                B.C("ok", "同郷のOBが激励に来る", new[] { B.Xp(Target.R, "weakest", 120), B.Mot(Target.R, 1) }),
             }, new[] { "ok" }, cooldown: 48, priority: 45),
             B.E("ev.home.senior_reunion", EventCategory.Hometown, "同郷の先輩", EventScope.Pair, "r.pref > 0 and r.pref == p.pref and p.grade >= r.grade + 1 and bond(r, p) < 200", 0.008, new[]
             {
-                B.C("ok", "同郷の先輩と親しくなる(絆 +80、やる気 +1)", new[] { B.Bond(80), B.Mot(Target.R, 1, 0.5) }),
+                B.C("ok", "同郷の先輩と親しくなる", new[] { B.Bond(80), B.Mot(Target.R, 1, 0.5) }),
             }, new[] { "ok" }, cooldown: 144, priority: 45),
             B.E("ev.grad.hall_of_fame", EventCategory.Graduation, "殿堂入りの発表", EventScope.Runner, "r.grade == 4 and (r.section_wins >= 3 or r.stat.CLB + r.stat.STA >= 170)", 1.0, new[]
             {
-                B.C("ok", "卒業生が殿堂入りする(スカウトポイント +1)", new[] { B.Scout(1) }),
+                B.C("ok", "卒業生が殿堂入りする", new[] { B.Scout(1) }),
             }, new[] { "ok" }, months: new[] { 11 }, weeks: new[] { 2, 3 }, maxYear: 3, priority: 60, exempt: true),
             };
             var skills = new List<SkillDef>

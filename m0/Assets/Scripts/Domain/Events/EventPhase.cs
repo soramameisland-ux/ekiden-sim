@@ -395,12 +395,7 @@ namespace Ekiden.Domain.Events
         {
             ModKind kind;
             double value;
-            switch (fx.Role)
-            {
-                case ObRole.Coach: kind = ModKind.EMult; value = 1.06; break;
-                case ObRole.ScoutHelper: kind = ModKind.ScoutPts; value = 4; break;
-                default: kind = ModKind.FundsYear; value = 200; break;
-            }
+            ObRoles.ModOf(fx.Role, out kind, out value);
             OBRecord best = null;
             foreach (OBRecord o in s.Obs)
             {
