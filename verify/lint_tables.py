@@ -1,8 +1,8 @@
-"""仕様書(../*.md)の表の列数を検査する。違反が 0 なら合格(終了コード 0)。使い方: python3 -I verify/lint_tables.py"""
+"""仕様書(../*.md と ../specbook/*.md)の表の列数を検査する。違反が 0 なら合格(終了コード 0)。使い方: python3 -I verify/lint_tables.py"""
 import re, sys, glob, os
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 bad = 0
-for p in sorted(glob.glob(os.path.join(ROOT, "*.md"))):
+for p in sorted(glob.glob(os.path.join(ROOT, "*.md")) + glob.glob(os.path.join(ROOT, "specbook", "*.md"))):
     lines = open(p, encoding="utf-8").read().splitlines()
     i = 0
     in_code = False

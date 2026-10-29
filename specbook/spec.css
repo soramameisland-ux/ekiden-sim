@@ -1,0 +1,89 @@
+/* 仕様書 統合版 PDF の組版。build_spec_pdf.py が HTML に埋め込み、Chromium で印刷する。
+   ページの余白・サイズはここが唯一の定義(ヘッダ・フッタは余白の中に build_spec_pdf.py が後から押す)。 */
+@page { size: A4; margin: 20mm 16mm 18mm 16mm; }
+
+:root { --ink: #1c1f24; --muted: #5b6370; --rule: #c9ced6; --accent: #1f4e79; --tint: #f3f6fa; --code: #f5f6f8; }
+
+html { font-size: 9pt; }
+body {
+  font-family: "Inter", "IPAPGothic", "IPAGothic", "DejaVu Sans", sans-serif;
+  color: var(--ink); line-height: 1.62; margin: 0; background: #fff;
+  font-feature-settings: "palt" 0;
+  orphans: 2; widows: 2;
+}
+p { margin: .45em 0; }
+strong, b { font-weight: 700; }
+a { color: inherit; text-decoration: none; }
+
+/* 見出し */
+h1, h2, h3, h4, h5, h6 { break-after: avoid; page-break-after: avoid; line-height: 1.35; }
+h1 {
+  break-before: page; page-break-before: always;
+  font-size: 19pt; margin: 0 0 .7em; padding: 0 0 .28em; color: var(--accent);
+  border-bottom: 2.2pt solid var(--accent); font-weight: 700;
+}
+h2 { font-size: 13pt; margin: 1.5em 0 .5em; padding: .12em 0 .16em .5em; border-left: 3.2pt solid var(--accent); border-bottom: .5pt solid var(--rule); }
+h3 { font-size: 11pt; margin: 1.25em 0 .4em; color: var(--accent); }
+h4 { font-size: 9.6pt; margin: 1.1em 0 .3em; }
+h5, h6 { font-size: 9pt; margin: 1em 0 .3em; }
+.docmeta { color: var(--muted); font-size: 8pt; margin: -.2em 0 1em; display: flex; flex-wrap: wrap; gap: .2em 1.6em; }
+.docmeta code { font-size: 7.8pt; }
+
+/* 表 */
+table {
+  border-collapse: collapse; width: 100%; margin: .7em 0 .9em;
+  font-size: 7.8pt; line-height: 1.5; table-layout: auto;
+}
+th, td {
+  border: .5pt solid var(--rule); padding: 2.2pt 4pt; vertical-align: top; text-align: left;
+  overflow-wrap: break-word; word-break: normal;
+}
+th.brk, td.brk, .brk code { overflow-wrap: anywhere; }
+th.nw, td.nw { white-space: nowrap; }
+th { background: var(--tint); font-weight: 700; }
+td { font-variant-numeric: tabular-nums; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; page-break-inside: avoid; }
+td p, th p { margin: .15em 0; }
+
+/* 引用(原典の注記・前提) */
+blockquote {
+  margin: .7em 0; padding: .35em .9em; background: var(--tint);
+  border-left: 3pt solid #8fa9c4; color: #2b3540; break-inside: avoid-page;
+}
+blockquote p { margin: .25em 0; }
+
+/* コード */
+code { font-family: "JetBrains Mono", "IPAGothic", "DejaVu Sans Mono", monospace; font-size: .92em; background: var(--code); padding: .05em .25em; border-radius: 2pt; overflow-wrap: break-word; }
+pre {
+  font-family: "IPAGothic", "DejaVu Sans Mono", monospace; /* 全角=半角2つ分で揃える(罫線・図の桁) */
+  font-size: 7.6pt; line-height: 1.38; background: var(--code); border: .5pt solid #e1e4e9;
+  border-radius: 3pt; padding: 5pt 7pt; margin: .6em 0; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+pre code { background: none; padding: 0; font-family: inherit; font-size: 1em; border-radius: 0; }
+
+ul, ol { margin: .4em 0; padding-left: 1.7em; }
+li { margin: .15em 0; }
+li > p { margin: .1em 0; }
+hr { border: 0; border-top: .5pt solid var(--rule); margin: 1.1em 0; }
+img { max-width: 100%; }
+
+/* 表紙 */
+.cover { height: 256mm; display: flex; flex-direction: column; justify-content: center; }
+.cover .kicker { font-size: 12pt; letter-spacing: .25em; color: var(--muted); margin: 0 0 14mm; }
+.cover .title { font-size: 31pt; line-height: 1.28; font-weight: 700; color: var(--accent); margin: 0; }
+.cover .title small { display: block; font-size: 16pt; font-weight: 400; color: var(--muted); margin-top: 3mm; }
+.cover .bar { width: 38mm; height: 3pt; background: var(--accent); margin: 12mm 0 10mm; }
+.cover .doc { font-size: 22pt; font-weight: 700; margin: 0 0 3mm; }
+.cover .edition { font-size: 11pt; color: var(--muted); margin: 0; }
+.cover .contents { margin-top: 24mm; font-size: 9pt; color: var(--muted); border-top: .5pt solid var(--rule); padding-top: 4mm; line-height: 1.8; }
+
+/* 目次 */
+h1.toc-title { margin-bottom: .5em; }
+.toc { font-size: 8.6pt; line-height: 1.5; }
+.toc a { display: flex; align-items: baseline; }
+.toc .tt { flex: 0 1 auto; }
+.toc .dots { flex: 1 1 auto; min-width: 1.5em; border-bottom: .6pt dotted #8a919c; margin: 0 .4em; transform: translateY(-.28em); }
+.toc .pg { flex: 0 0 2.6em; text-align: right; font-variant-numeric: tabular-nums; }
+.toc .t1 { font-weight: 700; margin-top: .75em; color: var(--accent); break-after: avoid; }
+.toc .t2 { padding-left: 1.6em; }

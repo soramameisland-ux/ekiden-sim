@@ -17,6 +17,7 @@
 |------|------|
 | `00`〜`10` の `*.md` | 仕様書。00 = 索引・課題表、01 = 基本設計とマイルストーン、02 = データ、03 = 育成、04 = レース、05 = 世界・スカウト、06 = イベント、07 = 特別招聘、08 / 08a / 08b = 画面(08b = 画面ごとの必要データと読み取り API)、09 = 保存・技術・決定性、10 = 個性・素養 |
 | `verify/` | Python の参照モデル(`ref_model_03〜10.py`)・ゴールデン生成(`gen_golden_*.py`)・`lint_tables.py`。ゲーム本体ではない |
+| `specbook/` `dist/` | **仕様書 統合版 PDF**(`dist/ekiden_spec_integrated.pdf`)の元。`front.md`(全体像)・`appendix_f.md`(実装との対応)は統合版のために書いた原稿で、本文は原典(`00`〜`10`)から `build_spec_pdf.py` が組む。原典を直したら再生成する(手で PDF を直さない)|
 | `m0/` | C# の Domain / Persistence / テスト / SimCli(.NET SDK だけで動く。詳しくは `m0/README.md`) |
 | `m0/` は **Unity プロジェクトの根でもある**(`Assets/` `Packages/` `ProjectSettings/`。Unity 6.3 LTS = 6000.3.x)。`.meta` は commit する。Unity が作る `m0/*.csproj` `*.sln` `*.slnx` と `Library/` は commit しない | `Assets/Scripts/Verification` = T1/T3 の実行(SimCli と共有)、`Assets/Scripts/DevTools` = Unity 専用の確認の入口 |
 | `m0/Assets/Scripts/App/` | **App 層の入口 `GameHost`**(Unity なし。`netstandard2.1`)。自動セーブ・中断セーブ・読み込み・保存の失敗の通知・スロットの見出し(09 §17.7)。画面(Unity)はこれを呼ぶ |
@@ -43,6 +44,8 @@ python3 -I ../verify/lint_tables.py        # 仕様書の表の列数(0 が合�
 ```
 
 Python は必ず `python3 -I`(カレントのファイルを読み込ませない)。SimCli の全コマンドは `m0/README.md`。
+
+仕様書の統合版 PDF: `python3 -I specbook/build_spec_pdf.py`(約 1 分。pandoc・Node の playwright・poppler の pdftotext・Python の pypdf と reportlab が要る。しくみは同スクリプトの先頭)。`front.md` の現況(第 0 部 §7)の数字は手で直す。
 
 ## 壊してはいけない約束
 
