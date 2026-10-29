@@ -261,6 +261,7 @@ namespace Ekiden.Verification
             foreach (Stat s in Enum.GetValues(typeof(Stat))) { d["stat." + s + ".name"] = stat[s]; d["stat." + s + ".abbr"] = s.ToString(); }
             // 大会(01 §0 の仮称)・予選会
             d["race.fall.name"] = "秋雲駅伝"; d["race.national.name"] = "全国大学駅伝"; d["race.newyear.name"] = "新春大学駅伝"; d["race.qualifier.name"] = "予選会";
+            d["record.legacy_holder"] = "歴代の記録";
             // 指示(04 §9)
             d["instr.attack.name"] = "攻める"; d["instr.keep.name"] = "維持"; d["instr.hold.name"] = "抑える";
             // 故障(08 §7.3)・調子(03 §6。+2 〜 −2)

@@ -176,7 +176,7 @@
 |----|------|------|------------------------|------|------|
 | G-01 | SC-11・18・19 | ~~素養の判明が未実装~~ **解決** | 週の解決で入部 12 週後に判明(`WeekReport.GiftRevealed`)・スカウトで種類を見た選手は入部と同時・月末レポートの `gift_reveal`・部員一覧の山対策の案内(`RunnerRowView.MountainAdvice`)| 済 | L-64 |
 | ~~G-02~~ | SC-25・26 | ~~見どころ~~(**済**: `RaceHighlights`。04 §9.3。首位交代・差の変化・ブレーキ・失速・好走・区間賞・順位の変動。区間記録は G-03 待ち)| 結果からの判定(乱数なし。`TeamResult.Boost` を足しただけで結果は変わらない)| — | L-60 ③ 解決 |
-| ~~G-03~~ | SC-26・34 | ~~区間記録・大会記録~~(**済**: `WorldSim.History`・`Runner.Records`・`RaceResult().Records`・`History().CourseRecords / TeamRecords`・殿堂入り・`race.record`)| 状態・保存・判定・View | — | L-53 ③ 解決 |
+| ~~G-03~~ | SC-26・34 | ~~区間記録・大会記録~~(**済**: `WorldSim.History`・`Runner.Records`・`RaceResult().Records`・`History().CourseRecords / TeamRecords`・殿堂入り・`race.record`)| 状態・保存・判定・View | — | L-53 ③ 解決。L-68: 新規ゲームの区間記録は年度 1 の前に『初期の区間記録』(保持者 = 歴代の記録)に置き換わる。保持者が学校でないとき `SchoolId = −1`・`SchoolNameKey = record.legacy_holder`・`CourseRecordView.IsLegacy` / `RecordUpdateView.PrevIsLegacy` = true(走者名・年度は出さない)|
 | ~~G-04~~ | SC-34 | ~~歴代の優勝校~~(**済**: `History().Champions`。予熱の年度 = ゲーム開始前の歴史を含む。`PreGame`)| 世界の履歴 | — | — |
 | ~~G-05~~ | SC-14 | ~~惜しかった候補~~(**済**: `Enrollment().Missed`。`Allocator` が自校の狙った候補の入れなかった理由 = 定員 / 奨学金枠 / 競り負け(差)を返す。招聘枠に押し出された候補は定員。保存しない)| 割り当ての記録(乱数・結果は不変)| — | — |
 | G-06 | SC-36 | ~~イベントの効果の構造~~ **解決**(`EventDialog` の `EffectView`)。L-63 ① **済**(本文から数値を外し、`App/EffectText.Summary` が構造から要約を作る)。残り: 選べない理由の文 | 効果から本文の数値を作る | 低 | L-63 |

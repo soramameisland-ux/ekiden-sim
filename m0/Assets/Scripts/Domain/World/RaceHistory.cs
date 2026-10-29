@@ -44,6 +44,18 @@ namespace Ekiden.Domain.World
         public readonly CourseRecord[][] Course = new CourseRecord[3][];       // [大会][区間]。まだなければ null
         public readonly TeamRecord[] Team = new TeamRecord[3];
 
+        /// <summary>区間記録を初期の記録(<see cref="RecordSeeds"/>。保持者 = 『歴代の記録』)に置き換える(新規ゲームの年度 1 の前。L-68)。大会記録と順位表は変えない。</summary>
+        public void SeedLegacyCourseRecords()
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                int[] ds = RecordSeeds.CourseDs[k];
+                Course[k] = new CourseRecord[ds.Length];
+                for (int si = 0; si < ds.Length; si++)
+                    Course[k][si] = new CourseRecord { SchoolId = RecordSeeds.LegacySchoolId, RunnerId = 0, TimeDs = ds[si], Year = RecordSeeds.LegacyYear };
+            }
+        }
+
         /// <summary>大会の結果を履歴に加え、記録を更新する。更新があったもの(区間の順、最後に大会記録)を返す。<paramref name="teams"/> は走者の ID を引くのに使う(なくてもよい)。</summary>
         public List<RecordUpdate> Record(int year, RaceKind kind, IReadOnlyList<TeamResult> results, IReadOnlyList<RaceTeam> teams)
         {

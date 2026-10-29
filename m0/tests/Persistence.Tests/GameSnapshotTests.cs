@@ -26,6 +26,24 @@ namespace Ekiden.Persistence.Tests
         }
 
         [Test]
+        public void LegacyCourseRecords_SurviveASaveAndLoad_AtTheStartAndAfterTheyAreBeaten()
+        {
+            foreach (int weeks in new[] { 0, 120 })
+            {
+                GameSession gs = Play(Difficulty.Elite, weeks);
+                GameSession back = GameSnapshot.Restore((JsonObject)JsonValue.Parse(GameSnapshot.Capture(gs).ToJson()));
+                for (int k = 0; k < 3; k++)
+                    for (int si = 0; si < gs.World.History.Course[k].Length; si++)
+                    {
+                        CourseRecord a = gs.World.History.Course[k][si], b = back.World.History.Course[k][si];
+                        Assert.AreEqual(a.SchoolId, b.SchoolId); Assert.AreEqual(a.RunnerId, b.RunnerId); Assert.AreEqual(a.TimeDs, b.TimeDs); Assert.AreEqual(a.Year, b.Year);
+                    }
+                if (weeks == 0) Assert.IsTrue(back.World.History.Course.All(c => c.All(x => x.SchoolId == RecordSeeds.LegacySchoolId && x.Year == RecordSeeds.LegacyYear)), "開始時は全部『歴代の記録』(school_id −1)");
+                else Assert.IsTrue(back.World.History.Course.Any(c => c.Any(x => x.SchoolId >= 0)), "試験の前提: 2 年度ちょっとで破られた区間がある");
+            }
+        }
+
+        [Test]
         public void Notifications_SurviveASaveAndLoad_InOrder_WithReadFlags_AndAnOldSaveReadsAsEmpty()
         {
             GameSession gs = Play(Difficulty.Mid, 60);

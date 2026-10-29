@@ -158,6 +158,7 @@ namespace Ekiden.Domain.Views
         public int PrevTimeDs, PrevYear;             // それまでの記録
         public int PrevSchoolId;
         public string PrevSchoolNameKey = "";
+        public bool PrevIsLegacy;                    // それまでの保持者が『歴代の記録』(PrevYear は出さない)
     }
 
     /// <summary>自校の区間ごとの結果。</summary>

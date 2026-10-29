@@ -151,6 +151,7 @@ namespace Ekiden.Domain.Views
         public int Section;
         public int SchoolId;
         public string SchoolNameKey = "";
+        public bool IsLegacy;                       // 保持者が『歴代の記録』(新規ゲームの初期の記録。学校・走者・年度は出さない。02 §4.8・L-68)
         public bool IsOwn;
         public int RunnerId;                        // 自校の選手が出したときだけ(他校は 0)
         public string RunnerName = "";              // 自校の在籍・OB のとき(わからなければ空)

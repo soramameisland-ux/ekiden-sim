@@ -187,12 +187,12 @@ namespace Ekiden.Domain.Game
                         bool own = c.SchoolId == School.Id;
                         v.CourseRecords.Add(new CourseRecordView
                         {
-                            Kind = (RaceKind)k, Section = si, SchoolId = c.SchoolId, SchoolNameKey = "school." + c.SchoolId + ".name", IsOwn = own,
+                            Kind = (RaceKind)k, Section = si, SchoolId = c.SchoolId, SchoolNameKey = RecordSeeds.NameKey(c.SchoolId), IsLegacy = c.SchoolId < 0, IsOwn = own,
                             RunnerId = own ? c.RunnerId : 0, RunnerName = own ? RunnerNameOf(c.RunnerId) : "", TimeDs = c.TimeDs, Year = c.Year,
                         });
                     }
                 TeamRecord t = World.History.Team[k];
-                if (t != null) v.TeamRecords.Add(new TeamRecordView { Kind = (RaceKind)k, SchoolId = t.SchoolId, SchoolNameKey = "school." + t.SchoolId + ".name", IsOwn = t.SchoolId == School.Id, TotalDs = t.TotalDs, Year = t.Year });
+                if (t != null) v.TeamRecords.Add(new TeamRecordView { Kind = (RaceKind)k, SchoolId = t.SchoolId, SchoolNameKey = RecordSeeds.NameKey(t.SchoolId), IsOwn = t.SchoolId == School.Id, TotalDs = t.TotalDs, Year = t.Year });
             }
             foreach (PlayerYearStats st in Stats)
             {

@@ -474,7 +474,7 @@ namespace Ekiden.Domain.Game
                 v.Records.Add(new RecordUpdateView
                 {
                     Section = u.Section, SchoolId = u.SchoolId, SchoolNameKey = "school." + u.SchoolId + ".name", IsOwn = u.SchoolId == School.Id, RunnerId = u.SchoolId == School.Id ? u.RunnerId : 0,
-                    TimeDs = u.TimeDs, PrevTimeDs = u.PrevTimeDs, PrevSchoolId = u.PrevSchoolId, PrevSchoolNameKey = "school." + u.PrevSchoolId + ".name", PrevYear = u.PrevYear, Year = u.Year,
+                    TimeDs = u.TimeDs, PrevTimeDs = u.PrevTimeDs, PrevSchoolId = u.PrevSchoolId, PrevSchoolNameKey = RecordSeeds.NameKey(u.PrevSchoolId), PrevIsLegacy = u.PrevSchoolId < 0, PrevYear = u.PrevYear, Year = u.Year,
                 });
             foreach (Highlight h in RaceHighlights.Top(RaceHighlights.Detect(res, School.Id, -1, race.Records)))
                 v.Highlights.Add(HighlightOf(h, s => team != null ? team.Lineup[s].RunnerId : 0));

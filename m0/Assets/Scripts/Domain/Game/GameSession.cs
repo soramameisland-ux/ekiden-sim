@@ -103,6 +103,7 @@ namespace Ekiden.Domain.Game
         {
             var rngs = new KeyedRngFactory(seed);
             WorldSim world = WorldSim.Create(rngs, BurnInYears, elitePrefBonus);
+            world.History.SeedLegacyCourseRecords();                           // 予熱の区間記録は自校と無関係。年度 1 の前に実在の水準へ置き換える(02 §4.8。L-68)
             School school = world.ClaimPlayerSchool(difficulty);
             var gs = new GameSession(seed, rngs, world, school, TrainingMaster.CreateDefault(), EventCatalogData.Create());
             gs.Setup(difficulty);

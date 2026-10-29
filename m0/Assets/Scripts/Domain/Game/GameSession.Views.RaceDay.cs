@@ -6,6 +6,7 @@ using Ekiden.Domain.Race;
 using Ekiden.Domain.Screens;
 using Ekiden.Domain.Team;
 using Ekiden.Domain.Views;
+using Ekiden.Domain.World;
 
 namespace Ekiden.Domain.Game
 {
@@ -91,7 +92,7 @@ namespace Ekiden.Domain.Game
                 case HighlightKind.LeadChange:
                 case HighlightKind.CourseRecord:
                 case HighlightKind.TeamRecord:
-                    v.OtherSchoolId = h.OtherTeamId; v.OtherSchoolNameKey = "school." + h.OtherTeamId + ".name"; v.Ds = (int)h.Magnitude; break;
+                    v.OtherSchoolId = h.OtherTeamId; v.OtherSchoolNameKey = RecordSeeds.NameKey(h.OtherTeamId); v.Ds = (int)h.Magnitude; break;
                 case HighlightKind.GapMove:
                 case HighlightKind.SectionPrize:
                     v.Ds = (int)h.Magnitude; break;
