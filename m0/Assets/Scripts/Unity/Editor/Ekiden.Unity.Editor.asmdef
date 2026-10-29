@@ -1,0 +1,13 @@
+{
+  "name": "Ekiden.Unity.Editor",
+  "rootNamespace": "Ekiden.Unity.Editor",
+  "references": [ "Ekiden.Unity", "Ekiden.Domain", "Ekiden.Persistence", "Ekiden.App", "Ekiden.Platform.Abstractions", "Unity.InputSystem", "UnityEngine.UI" ],
+  "includePlatforms": [ "Editor" ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

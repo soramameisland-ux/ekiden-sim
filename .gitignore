@@ -25,5 +25,7 @@ Recordings/
 /m0/*.sln
 /m0/*.slnx
 !/m0/Ekiden.sln
+# 自動進行のスクリーンショット・測定の出力(目視用。commit しない)
+/m0/Captures/
 *.apk
 *.aab

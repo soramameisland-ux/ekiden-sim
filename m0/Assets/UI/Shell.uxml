@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Ekiden.uss" />
+    <!-- 画面の枠(08 §4.1): ヘッダ 40 u / 内容 264 u / 操作バー 56 u。中身は ScreenRouter が画面ごとに入れ替える -->
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="header" class="header">
+            <ui:VisualElement name="header-left" class="row" />
+            <ui:Label name="header-title" class="header-title" />
+            <ui:Label name="header-summary" class="header-summary" />
+            <ui:VisualElement name="header-right" class="row" />
+        </ui:VisualElement>
+        <ui:VisualElement name="content" class="content" />
+        <ui:VisualElement name="footer" class="footer" />
+        <ui:Label name="toast" class="toast hidden" />
+        <ui:VisualElement name="dialog-layer" class="overlay hidden" />
+    </ui:VisualElement>
+</ui:UXML>

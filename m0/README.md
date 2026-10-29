@@ -85,6 +85,23 @@ Unity のプロジェクトの根は `m0/` 自身(`Assets/` `Packages/` `Project
      ```
   4. 照合: `python -I tools/compare_vectors.py Logs\verify\il2cpp\vectors.txt`(`不一致 0` が合格)。`determinism.txt` に `×` がないこと、`result.txt` が `OK` であることも見る。`env.txt` にバックエンド(IL2CPP / Mono)・OS・CPU が残る。
 
+## M1: Unity での手順(画面・試験・ビルド。`UNITY_REPORT.md` に結果)
+
+| 場所 | 内容 |
+|------|------|
+| `Assets/Scripts/Unity/` | asmdef `Ekiden.Unity`。`UnityFileStore`(`persistentDataPath/save`)・`Strings`(ja.json が唯一の正)・`GameApp`(起動の組み立て)・`GameBootstrap`(一時停止・復帰・Tick) |
+| `Assets/Scripts/Unity/UI/` | 画面(UI Toolkit)。`ScreenRouter` = 停止(`StopKind`)→ 画面・ヘッダ・ダイアログ・トースト、`FocusGrid` = 十字キーの移動(08a の grid)、`UiRoot` = 入力(Input System を直接読む)、`Screens.*.cs` = 各画面(View を表示し、命令の失敗は `OpText` で出す)、`AutoRunner` = 自動進行(`-ekidenAuto`) |
+| `Assets/Scripts/Unity/Editor/` | `UiAssetsBuilder`: フォント資産(Noto Sans JP。OFL・`Assets/Fonts/NotoSansJP-OFL.txt`)・PanelSettings(基準 640×360・高さに合わせて拡大)・シーン `Assets/Scenes/Main.unity` を作る。Windows のプレイヤーのビルド |
+| `Assets/UI/` | `Shell.uxml`(ヘッダ 40 u / 内容 / 操作バー 56 u)・`Ekiden.uss`・テーマ・PanelSettings |
+| `Assets/Tests/EditMode/` | asmdef `Ekiden.Unity.Tests`。足場(ファイル・保存と復元・全 View)と UI 技術(フォントの文字・十字キー・パネルの設定) |
+
+- 起動: シーン `Assets/Scenes/Main.unity` を開いて Play(タイトル → はじめから / 続きから)。パッド: 十字キー = 移動・A = 選択・B = 戻る・Start = メニュー・Y = おまかせ。キーボード: 矢印・Enter / Space・Esc・F10。
+- UI の資産を作り直す: メニュー **Ekiden → UI → Build UI assets**(バッチ: `-executeMethod Ekiden.Unity.Editor.UiAssetsBuilder.BuildBatch`)。Unity の資産(.asset・.unity)は手で YAML を書かず、ここで作る。
+- EditMode の試験: `Unity.exe -batchmode -nographics -projectPath m0 -runTests -testPlatform EditMode -assemblyNames Ekiden.Unity.Tests -testResults <xml>`。
+- プレイヤー(IL2CPP): メニュー **Ekiden → UI → Build Windows player (IL2CPP)**(`Builds/ekiden-win/Ekiden.exe`。バッチ: `-executeMethod Ekiden.Unity.Editor.UiAssetsBuilder.BuildPlayer`)。
+- 自動進行・撮影・測定: `Ekiden.exe -screen-width 1280 -screen-height 720 -screen-fullscreen 0 -ekidenAuto <出力フォルダ>`。新規ゲーム → 1 年度を各画面の既定の操作(おまかせ)で進め、`auto.txt`(例外の数・世界の生成の時間・パッドの確認・十字キーの到達・p95 フレーム時間・メモリ・保存 → 開く → 続行の一致)と、画面ごとのスクリーンショット・解像度と文字 150% の撮影(`res/`)を書く。終了コード 0 = 例外 0 かつ一致。出力は `m0/Captures/<日付>/`(commit しない)。
+- 文字列: 画面の文字は `scr.*` / `dlg.*` / `ui.*` のキー(ja.json)。キーを足したら ja.json に本文を足す(`StringTable` の書式。キーの昇順)。
+
 ## 段階の進み具合(09 §17.3)
 
 | 段階 | 内容 | 状態 | 検算 |
