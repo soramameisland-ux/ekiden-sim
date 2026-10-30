@@ -14,6 +14,7 @@ namespace Ekiden.Domain.Game
     public sealed partial class GameSession
     {
         public const int StandingsTop = 3;                         // 順位表: 先頭 3 校 + 自校の前後 1 校
+        public const int ResultTableTop = 10;                      // 大会の結果の区間成績の表・順位推移のグラフ: 総合の上位 10 校(+ 自校。08a SC-26)
 
         private DayLegView LegOf(RaceDay rd, int section)
         {

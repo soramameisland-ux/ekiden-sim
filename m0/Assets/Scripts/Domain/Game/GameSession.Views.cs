@@ -478,6 +478,31 @@ namespace Ekiden.Domain.Game
                 });
             foreach (Highlight h in RaceHighlights.Top(RaceHighlights.Detect(res, School.Id, -1, race.Records)))
                 v.Highlights.Add(HighlightOf(h, s => team != null ? team.Lineup[s].RunnerId : 0));
+            v.FieldSize = res.Count;
+            int ownIdx = res.IndexOf(mine);
+            var shown = new List<int>();
+            for (int i = 0; i < Math.Min(ResultTableTop, res.Count); i++) shown.Add(i);
+            if (ownIdx >= ResultTableTop) shown.Add(ownIdx);
+            foreach (int idx in shown)
+            {
+                TeamResult t = res[idx];
+                var tv = new ResultTeamView
+                {
+                    Rank = idx + 1, SchoolId = t.Id, SchoolNameKey = "school." + t.Id + ".name", IsOwn = t.Id == School.Id, TotalDs = t.TotalDs, GapDs = t.TotalDs - first,
+                    Kuriage = t.Kuriage, SeparatorBefore = idx >= ResultTableTop,
+                };
+                for (int si = 0; si < n; si++)
+                {
+                    int secRank = 1 + res.Count(x => x.Sections[si] < t.Sections[si]);
+                    int lead = res.Min(x => x.Cum[si]);
+                    tv.Sections.Add(new ResultSectionCellView
+                    {
+                        Ds = t.Sections[si], SectionRank = secRank, CumDs = t.Cum[si], CumRank = 1 + res.Count(x => x.Cum[si] < t.Cum[si]), GapDs = t.Cum[si] - lead, Prize = secRank == 1,
+                        Brake = t.Events.Any(e => e.Section == si && e.Kind == "brake"), Stall = t.Events.Any(e => e.Section == si && e.Kind == "stall"),
+                    });
+                }
+                v.Teams.Add(tv);
+            }
             return v;
         }
     }

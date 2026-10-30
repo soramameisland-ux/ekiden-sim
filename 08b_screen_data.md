@@ -34,7 +34,7 @@
 | `Plan()` | `PlanView` | SC-16(SC-17 の一部)| グループごとの人数・故障者・平均疲労・テーマの選択肢(推奨・相性 ◎〇△の人数・4 週のメニュー・月末疲労の平均と最大・要注意・故障の見込み・安全網の週・区間タイプ別の伸び)| `PlanEntryOrderViewTests` |
 | `Entry(kind)` | `EntryView` | SC-21 | 登録枠・出走に必要な人数・締切・留学生枠・選手ごとの区間適性と調子の見込み・検証の問題(`problem.*`)| 同上 |
 | `Order(kind)` / `OrderCandidates(kind, section)` | `OrderView` / `OrderCandidateView` | SC-22 | 区間カード(距離・タイプ・地形・配置・適性・予想タイム)・候補を適性順・補欠・総合の予想タイム・検証の問題 | 同上 |
-| `RaceResult(outcome, own?)` | `RaceResultView` | SC-26 | 総合(順位・タイム差・繰り上げ・自校)・区間賞・自校の区間ごと(走者・区間順位・累積順位・指示・ブレーキ / 失速 / 檄 / 繰り上げ)・評価ポイント | `ResultViewTests` |
+| `RaceResult(outcome, own?)` | `RaceResultView` | SC-26 | 総合(順位・タイム差・繰り上げ・自校)・区間賞・自校の区間ごと(走者・区間順位・累積順位・指示・ブレーキ / 失速 / 檄 / 繰り上げ)・評価ポイント・**区間成績の表と順位推移のグラフ `Teams`(総合の上位 10 校 + 自校。区間ごとのタイム・区間順位・累積・累積順位・先頭との差・区間賞・ブレーキ / 失速)と `FieldSize`(R-18)** | `ResultViewTests` `ResultTableTests` |
 | `MonthReportView(report)` | `MonthReportView` | SC-11 | 月・平均の疲労 / 調子 / 士気とその月内の変化・テーマ・注目の項目(R-10 の種別: 重傷 / 中傷 / 覚醒 / ランクアップ / 大きな成長 / 素養の判明 / 復帰 / お知らせ / 調子の上昇)と『ほか n 件』・大会のまとめ・次の月への注意・次の大会 | `MonthViewTests` |
 | `YearSummary()` | `YearSummaryView` | SC-12 | 3 大会の順位と評価ポイント・三冠と加点・名声の前後・期待目標の達成と予算ボーナス・監督ランクの上昇と強化の上限・累計・招聘券の獲得(これまで / このあと入る節目)・収支の内訳(収入の式 / 補正 / スタッフ / 維持 / 部員費 / 強化の前後の資金 / 施設のレベル)| `YearViewTests` |
 | `Graduation()` | `GraduationView` | SC-13 | 卒業生(殿堂入りを先頭に): 名前・出身・最終の力とランク・能力ランク・特殊能力・区間賞・出走数・記録・進路・招聘の印 / 退部した選手を別枠 | 同上 |

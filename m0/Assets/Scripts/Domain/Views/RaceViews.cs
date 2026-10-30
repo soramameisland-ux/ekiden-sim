@@ -203,6 +203,31 @@ namespace Ekiden.Domain.Views
         public List<QualifierRunnerView> Own = new List<QualifierRunnerView>();   // 自校の 12 名(タイムの小さい順)
     }
 
+    /// <summary>区間成績の表・順位推移のグラフ(SC-26)の 1 区間分。ある校のその区間のタイムと順位(同タイムは同順位)。</summary>
+    public sealed class ResultSectionCellView
+    {
+        public int Ds;                               // 区間タイム
+        public int SectionRank;                      // 区間順位(全校の中で。1 = 区間賞)
+        public int CumDs;                            // その中継所での累積(繰り上げ後の公式タイム)
+        public int CumRank;                          // その中継所での累積順位(全校の中で。順位推移のグラフの縦軸)
+        public int GapDs;                            // その中継所での先頭との差
+        public bool Prize;                           // 区間賞(区間順位 1 位)
+        public bool Brake, Stall;                    // この区間でブレーキ・失速があった
+    }
+
+    /// <summary>区間成績の表と順位推移のグラフ(SC-26。08a)の 1 校分。<see cref="RaceResultView.Teams"/> は総合の上位 <see cref="Game.GameSession.ResultTableTop"/> 校 + 自校。</summary>
+    public sealed class ResultTeamView
+    {
+        public int Rank;                             // 総合順位
+        public int SchoolId;
+        public string SchoolNameKey = "";
+        public bool IsOwn;
+        public int TotalDs, GapDs;                   // 総合タイムと先頭との差
+        public bool Kuriage;
+        public bool SeparatorBefore;                 // 手前に『…』の区切りを出す(自校が上位の外のとき、最後に足した自校の行)
+        public readonly List<ResultSectionCellView> Sections = new List<ResultSectionCellView>();    // 区間の順
+    }
+
     /// <summary>大会の結果(SC-26)。総合・区間賞・自校の区間ごと・評価ポイント。大会の見どころは `Highlights`、記録の更新は `Records`。</summary>
     public sealed class RaceResultView
     {
@@ -219,5 +244,7 @@ namespace Ekiden.Domain.Views
         public List<OwnLegView> OwnLegs = new List<OwnLegView>();
         public List<HighlightView> Highlights = new List<HighlightView>();      // 大会の見どころ(最大 5 件。区間の順)
         public List<RecordUpdateView> Records = new List<RecordUpdateView>();   // 更新された記録(区間の順、最後に大会記録)
+        public int FieldSize;                        // 出場校の数(順位推移のグラフの縦軸の下限)
+        public List<ResultTeamView> Teams = new List<ResultTeamView>();         // 区間成績の表・順位推移のグラフ: 総合の上位 10 校 + 自校(上位の外なら最後に区切りつきで)
     }
 }
